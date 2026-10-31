@@ -166,6 +166,27 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--sea);outline-of
 .segb{min-height:48px;border-radius:14px;background:var(--sky);font-weight:600;border:3px solid transparent}
 .segb[aria-pressed=true]{border-color:var(--sun);background:#FFF6DA}
 a.btn{text-decoration:none}
+/* Store */
+.avatar{position:relative}
+.avatar .acc{position:absolute;top:-10px;right:-6px;font-size:34px;line-height:1}
+.shopgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.shopitem{background:var(--paper);border-radius:18px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 4px 0 var(--line);border:3px solid transparent;min-width:0}
+.shopitem .se{font-size:34px;line-height:1.2}
+.shopitem .swatch{width:36px;height:36px;border-radius:50%;border:2px solid var(--line)}
+.shopitem b{font-size:14px;font-weight:600}
+.shopitem span:last-child{font-size:13px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.shopitem.on{border-color:var(--leaf);background:#E6F8EF}
+button.chip{cursor:pointer}
+/* Parents */
+.bars{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:18px}
+.barcol{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.barcol i{display:block;width:100%;max-width:28px;background:var(--leaf);border-radius:6px 6px 0 0}
+.barcol i.low{background:var(--berry)}
+.barcol .bv{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.barcol .bd{font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.ptable{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
+.ptable th,.ptable td{text-align:right;padding:8px 4px;border-bottom:1px solid var(--line)}
+.ptable th{font-size:13px;color:var(--ink-soft);font-weight:600}
 /* Finish */
 .stars{font-size:52px;letter-spacing:6px;text-align:center}
 .center{text-align:center}
@@ -209,6 +230,8 @@ const COURSES=[
   U("family","משפחה","🏡",[["mom","אמא","👩",["mum","mam","mama"]],["dad","אבא","👨",["daddy"]],["baby","תינוק","👶"],["sister","אחות","👧"],["brother","אח","👦"],["grandpa","סבא","👴",["grandfather"]]]),
   U("fruit","פירות","🍓",[["apple","תפוח","🍎"],["banana","בננה","🍌"],["orange","תפוז","🍊"],["grapes","ענבים","🍇",["grape"]],["lemon","לימון","🍋"],["strawberry","תות","🍓"]]),
   U("toys","צעצועים","🧸",[["ball","כדור","⚽",["bowl","bull"]],["teddy bear","דובי","🧸",["teddy"]],["car","מכונית","🚗",["card"]],["balloon","בלון","🎈"],["kite","עפיפון","🪁",["kate","kit"]],["robot","רובוט","🤖"]]),
+  U("shapes","צורות","🔺",[["circle","עיגול","⭕"],["square","ריבוע","🟩"],["triangle","משולש","🔺"],["star","כוכב","⭐"],["heart","לב","❤️",["hard","art"]],["moon","ירח","🌙"]]),
+  U("at the sea","בים","🌊",[["sea","ים","🌊",["see"]],["sand","חול","🏖️"],["shell","צדף","🐚"],["crab","סרטן","🦀"],["boat","סירה","⛵"],["sun","שמש","☀️",["son"]]]),
  ]},
  {id:"g3",group:"kids",he:"כיתה ג׳",sub:"12 נושאים, 6 מילים בכל יום",e:"🌿",units:[
   U("colors","צבעים","🎨",[["red","אדום","🔴"],["blue","כחול","🔵"],["green","ירוק","🟢"],["yellow","צהוב","🟡"],["orange","כתום","🟠"],["purple","סגול","🟣"]]),
@@ -231,6 +254,8 @@ const COURSES=[
   U("sports","ספורט","🏅",[["football","כדורגל","⚽",["soccer"]],["basketball","כדורסל","🏀"],["tennis","טניס","🎾"],["baseball","בייסבול","⚾"],["volleyball","כדורעף","🏐"],["skating","החלקה על הקרח","⛸️"]]),
   U("transport","תחבורה","🚌",[["bus","אוטובוס","🚌",["boss"]],["train","רכבת","🚆"],["plane","מטוס","✈️",["airplane"]],["boat","סירה","⛵"],["taxi","מונית","🚕"],["truck","משאית","🚚"]]),
   U("my day","היום שלי","🌅",[["I wake up","אני מתעורר","🌅"],["I brush my teeth","אני מצחצח שיניים","🪥"],["I eat breakfast","אני אוכל ארוחת בוקר","🥣"],["I go to school","אני הולך לבית הספר","🏫"],["I do my homework","אני מכין שיעורי בית","📝"],["I go to bed","אני הולך לישון","🛏️"]]),
+  U("in the kitchen","במטבח","🍳",[["cup","כוס","☕",["cop"]],["plate","צלחת","🍽️"],["spoon","כפית","🥄"],["fork","מזלג","🍴"],["knife","סכין","🔪"],["bowl","קערה","🥣",["ball"]]]),
+  U("nature","טבע","🌳",[["tree","עץ","🌳",["three","3"]],["flower","פרח","🌸"],["mountain","הר","⛰️"],["river","נהר","🏞️"],["forest","יער","🌲"],["leaf","עלה","🍃",["leave"]]]),
  ]},
  {id:"g56",group:"kids",he:"כיתות ה׳–ו׳",sub:"שאלות, משפטים וזמן עבר",e:"🌲",units:[
   U("questions","שאלות","❓",[["What is your name?","איך קוראים לך?"],["How old are you?","בן כמה אתה?"],["Where do you live?","איפה אתה גר?"],["What is your favorite color?","מה הצבע האהוב עליך?"],["Do you have a pet?","יש לך חיית מחמד?"],["Can you swim?","אתה יודע לשחות?"]]),
@@ -239,6 +264,8 @@ const COURSES=[
   U("time","שעות","⏰",[["What time is it?","מה השעה?"],["It's seven o'clock.","השעה שבע."],["It's half past two.","השעה שתיים וחצי."],["I get up at seven.","אני קם בשבע."],["School starts at eight.","בית הספר מתחיל בשמונה."],["See you at five.","נתראה בחמש."]]),
   U("describing people","תיאור אנשים","👥",[["She is tall.","היא גבוהה."],["He is short.","הוא נמוך."],["She has long hair.","יש לה שיער ארוך."],["He has blue eyes.","יש לו עיניים כחולות."],["They are friends.","הם חברים."],["My dad is funny.","אבא שלי מצחיק."]]),
   U("the past","זמן עבר","🕰️",[["I played football.","שיחקתי כדורגל."],["We went to the beach.","הלכנו לים."],["She watched TV.","היא צפתה בטלוויזיה."],["I ate a sandwich.","אכלתי כריך."],["They visited grandma.","הם ביקרו את סבתא."],["He was happy.","הוא היה שמח."]]),
+  U("hobbies","תחביבים","🎨",[["I like to draw.","אני אוהב לצייר."],["She plays the guitar.","היא מנגנת בגיטרה."],["We play video games.","אנחנו משחקים במשחקי מחשב."],["He reads comics.","הוא קורא קומיקס."],["I go dancing on Mondays.","אני הולך לרקוד בימי שני."],["My hobby is cooking.","התחביב שלי הוא בישול."]]),
+  U("the future","תוכניות לעתיד","🚀",[["I will go to the park tomorrow.","אלך לפארק מחר."],["Next year I will be in seventh grade.","בשנה הבאה אהיה בכיתה ז׳."],["We are going to visit Paris.","אנחנו הולכים לבקר בפריז."],["She wants to be a doctor.","היא רוצה להיות רופאה."],["It will rain tomorrow.","מחר ירד גשם."],["What will you do this summer?","מה תעשה בקיץ הזה?"]]),
  ]},
  {id:"adult",group:"adults",he:"מבוגרים מתחילים",sub:"אנגלית לחיי היום-יום ולטיולים",e:"🧳",units:[
   U("greetings","ברכות","👋",[["Hello, how are you?","שלום, מה שלומך?"],["I'm fine, thank you.","אני בסדר, תודה."],["Nice to meet you.","נעים להכיר."],["Good morning.","בוקר טוב."],["See you later.","נתראה אחר כך."],["Have a nice day.","שיהיה לך יום נעים."]]),
@@ -249,6 +276,8 @@ const COURSES=[
   U("at the airport","בשדה התעופה","✈️",[["Where is the check-in?","איפה הצ׳ק-אין?"],["Here is my passport.","הנה הדרכון שלי."],["I have one suitcase.","יש לי מזוודה אחת."],["A window seat, please.","מושב ליד החלון, בבקשה."],["My flight is delayed.","הטיסה שלי מתעכבת."],["Where is gate twelve?","איפה שער שתים עשרה?"]]),
   U("at the hotel","במלון","🏨",[["I have a reservation.","יש לי הזמנה."],["What time is breakfast?","באיזו שעה ארוחת הבוקר?"],["Can I have a late checkout?","אפשר לעזוב מאוחר יותר?"],["The air conditioner doesn't work.","המזגן לא עובד."],["What's the Wi-Fi password?","מה הסיסמה לוויי-פיי?"],["I'd like to check out.","אני רוצה לעשות צ׳ק-אאוט."]]),
   U("at the doctor","אצל הרופא","🩺",[["I don't feel well.","אני לא מרגיש/ה טוב."],["I have a headache.","כואב לי הראש."],["My throat hurts.","כואב לי הגרון."],["Where is the pharmacy?","איפה בית המרקחת?"],["Do you have something for a cold?","יש לכם משהו נגד הצטננות?"],["How many times a day?","כמה פעמים ביום?"]]),
+  U("at the supermarket","בסופרמרקט","🛒",[["Where can I find the milk?","איפה אפשר למצוא חלב?"],["I need a bag, please.","אני צריך/ה שקית, בבקשה."],["Is this on sale?","זה במבצע?"],["Do you have fresh bread?","יש לכם לחם טרי?"],["Can I pay with cash?","אפשר לשלם במזומן?"],["Where is the exit?","איפה היציאה?"]]),
+  U("public transport","תחבורה ציבורית","🚆",[["Which bus goes to the city center?","איזה אוטובוס נוסע למרכז העיר?"],["One ticket, please.","כרטיס אחד, בבקשה."],["When is the next train?","מתי הרכבת הבאה?"],["Does this train stop at the airport?","הרכבת הזו עוצרת בשדה התעופה?"],["I want to get off here.","אני רוצה לרדת כאן."],["How long does it take?","כמה זמן זה לוקח?"]]),
  ]},
  {id:"biz",group:"adults",he:"אנגלית עסקית",sub:"פגישות, מיילים, שיחות ומכירות",e:"💼",units:[
   U("introductions","היכרות מקצועית","🤝",[["Let me introduce myself.","הרשו לי להציג את עצמי."],["I'm in charge of marketing.","אני אחראי/ת על השיווק."],["What do you do?","במה את/ה עוסק/ת?"],["It's a pleasure to meet you.","תענוג להכיר אותך."],["Here's my business card.","הנה כרטיס הביקור שלי."],["Let's keep in touch.","בואו נשמור על קשר."]]),
@@ -259,6 +288,8 @@ const COURSES=[
   U("sales","מכירות","📈",[["What are your main needs?","מה הצרכים העיקריים שלך?"],["The price includes support.","המחיר כולל תמיכה."],["We can offer a discount.","אנחנו יכולים להציע הנחה."],["Can we agree on this?","אפשר להסכים על זה?"],["Let me check and get back to you.","אבדוק ואחזור אליך."],["It's a deal.","סגרנו."]]),
   U("presentations","מצגות","📊",[["Today I'll talk about our results.","היום אדבר על התוצאות שלנו."],["Let's look at this slide.","בואו נסתכל על השקופית הזו."],["As you can see, sales went up.","כפי שאתם רואים, המכירות עלו."],["To sum up, we grew by twenty percent.","לסיכום, צמחנו בעשרים אחוז."],["Are there any questions?","יש שאלות?"],["Thank you for your attention.","תודה על ההקשבה."]]),
   U("customer service","שירות לקוחות","🎧",[["How can I help you?","איך אפשר לעזור?"],["I'm sorry for the inconvenience.","אני מצטער/ת על אי הנוחות."],["I'll look into it right away.","אבדוק את זה מיד."],["Could I have your order number?","אפשר את מספר ההזמנה שלך?"],["The issue has been resolved.","הבעיה נפתרה."],["Is there anything else I can help with?","יש עוד משהו שאפשר לעזור בו?"]]),
+  U("negotiation","משא ומתן","⚖️",[["What is your best price?","מה המחיר הכי טוב שלך?"],["That's a bit higher than we expected.","זה קצת יותר ממה שציפינו."],["Can we meet in the middle?","אפשר להיפגש באמצע?"],["We need a decision by Friday.","אנחנו צריכים החלטה עד יום שישי."],["Let's put it in writing.","בואו נעלה את זה על הכתב."],["We have a deal.","יש לנו עסקה."]]),
+  U("job interviews","ראיונות עבודה","🧑‍💼",[["I have five years of experience.","יש לי חמש שנות ניסיון."],["I'm a team player.","אני אוהב/ת לעבוד בצוות."],["My biggest strength is communication.","החוזקה הגדולה שלי היא תקשורת."],["I'm looking for new challenges.","אני מחפש/ת אתגרים חדשים."],["What are the next steps?","מה השלבים הבאים?"],["Thank you for your time.","תודה על הזמן שלך."]]),
  ]},
  {id:"talk",group:"adults",he:"תרגול דיבור",sub:"שיחות קצרות: הדמות שואלת, אתם עונים",e:"🗣️",units:[
   D("meeting someone","היכרות","👋",[["Hi! How are you?","I'm great, thanks. And you?","מצוין, תודה. ואת/ה?"],["What's your name?","My name is Noa.","קוראים לי נועה."],["Where are you from?","I'm from Israel.","אני מישראל."],["What do you do?","I'm a student.","אני סטודנט/ית."],["Do you like it here?","Yes, I love it.","כן, אני מאוד אוהב/ת את זה."],["Nice to meet you!","Nice to meet you too.","גם לי נעים להכיר."]]),
@@ -267,6 +298,8 @@ const COURSES=[
   D("job interview","ראיון עבודה","💼",[["Tell me about yourself.","I have five years of experience in marketing.","יש לי חמש שנות ניסיון בשיווק."],["Why do you want this job?","I love working with people.","אני אוהב/ת לעבוד עם אנשים."],["What are your strengths?","I'm organized and creative.","אני מסודר/ת ויצירתי/ת."],["Where do you see yourself in five years?","Leading a team.","מוביל/ה צוות."],["Do you have any questions?","Yes. What does a typical day look like?","כן. איך נראה יום עבודה רגיל?"],["When can you start?","I can start next month.","אני יכול/ה להתחיל בחודש הבא."]]),
   D("on the phone","בטלפון","📞",[["Hello, who's speaking?","Hi, it's Dana.","היי, זאת דנה."],["How can I help you?","I'd like to make an appointment.","אני רוצה לקבוע תור."],["Is Thursday okay?","Thursday is perfect.","יום חמישי מושלם."],["Morning or afternoon?","Morning, please.","בבוקר, בבקשה."],["Anything else?","No, that's all. Thank you!","לא, זה הכול. תודה!"],["Have a good day!","You too. Bye!","גם לך. ביי!"]]),
   D("travel talk","שיחה בטיול","🌍",[["Where are you going?","I'm going to London.","אני נוסע/ת ללונדון."],["How long are you staying?","For one week.","לשבוע אחד."],["Is this your first time there?","No, it's my second time.","לא, זו הפעם השנייה שלי."],["What will you do there?","Visit museums and eat good food.","לבקר במוזיאונים ולאכול אוכל טוב."],["Are you traveling alone?","No, with my family.","לא, עם המשפחה שלי."],["Have a great trip!","Thank you so much!","תודה רבה!"]]),
+  D("at the doctor","אצל הרופא","🩺",[["What's the problem?","I have a bad headache.","יש לי כאב ראש חזק."],["How long have you had it?","For two days.","כבר יומיים."],["Do you have a fever?","Yes, a little.","כן, קצת."],["Are you taking any medicine?","No, nothing.","לא, שום דבר."],["Take this twice a day.","Okay, thank you.","בסדר, תודה."],["Feel better soon!","Thanks, doctor!","תודה, דוקטור!"]]),
+  D("at the hotel","במלון","🏨",[["Good evening, can I help you?","Yes, I have a reservation.","כן, יש לי הזמנה."],["What's your name, please?","It's Dana Levi.","דנה לוי."],["How many nights?","Three nights.","שלושה לילות."],["Would you like breakfast?","Yes, please.","כן, בבקשה."],["Here is your key.","Thank you. Where is the elevator?","תודה. איפה המעלית?"],["Enjoy your stay!","Thanks a lot!","תודה רבה!"]]),
  ]},
 ];
 /* Reading texts per course, one per unit: [text, hebrew, [[question, correct, wrong, wrong], ...]] */
@@ -278,6 +311,8 @@ const READ={
   ["This is my family. My mom, my dad and my baby brother. My grandpa is funny.","זאת המשפחה שלי. אמא, אבא ואחי התינוק. סבא שלי מצחיק.",[["Who is funny?","grandpa","mom","the baby"],["Is my brother a baby?","yes","no"]]],
   ["Dan likes apples and bananas. Dan does not like lemons.","דן אוהב תפוחים ובננות. דן לא אוהב לימונים.",[["What does Dan like?","apples","lemons","grapes"],["Does Dan like lemons?","no","yes"]]],
   ["Maya has a red ball and a big teddy bear. Her robot is blue.","למאיה יש כדור אדום ודובי גדול. הרובוט שלה כחול.",[["What color is the robot?","blue","red","yellow"],["What is big?","the teddy bear","the ball","the robot"]]],
+  ["I see a red heart and a yellow star. The moon is in the sky.","אני רואה לב אדום וכוכב צהוב. הירח בשמיים.",[["What color is the heart?","red","yellow","blue"],["Where is the moon?","in the sky","in the sea","in my bag"]]],
+  ["I am at the sea. I see a crab and a shell. The sun is hot.","אני בים. אני רואה סרטן וצדף. השמש חמה.",[["What animal do I see?","a crab","a cat","a cow"],["Is the sun hot?","yes","no"]]],
  ],
  g3:[
   ["My bag is purple. My pencil is yellow. My favorite color is orange.","התיק שלי סגול. העיפרון שלי צהוב. הצבע האהוב עליי הוא כתום.",[["What is my favorite color?","orange","purple","yellow"],["What color is my bag?","purple","orange","green"]]],
@@ -300,6 +335,8 @@ const READ={
   ["Yoni plays basketball on Monday and football on Thursday. His sister plays tennis.","יוני משחק כדורסל ביום שני וכדורגל ביום חמישי. אחותו משחקת טניס.",[["What does his sister play?","tennis","football","basketball"],["When does Yoni play football?","on Thursday","on Monday","on Sunday"]]],
   ["I go to school by bus. My dad goes to work by train. In the summer we fly by plane.","אני נוסע לבית הספר באוטובוס. אבא שלי נוסע לעבודה ברכבת. בקיץ אנחנו טסים במטוס.",[["How do I go to school?","by bus","by train","by taxi"],["How does my dad go to work?","by train","by bus","by boat"]]],
   ["I wake up at seven. I brush my teeth and eat breakfast. Then I go to school. In the evening I do my homework.","אני מתעורר בשבע. אני מצחצח שיניים ואוכל ארוחת בוקר. אחר כך אני הולך לבית הספר. בערב אני מכין שיעורי בית.",[["When do I wake up?","at seven","at eight","at night"],["What do I do in the evening?","my homework","go to school","eat breakfast"]]],
+  ["In the kitchen I take a bowl and a spoon. I eat soup. My mom drinks tea from a cup.","במטבח אני לוקח קערה וכפית. אני אוכל מרק. אמא שלי שותה תה מכוס.",[["What do I eat?","soup","pizza","bread"],["What does my mom drink from?","a cup","a bowl","a plate"]]],
+  ["We walk in the forest. There are tall trees and red flowers. Next to the mountain there is a river.","אנחנו הולכים ביער. יש עצים גבוהים ופרחים אדומים. ליד ההר יש נהר.",[["What color are the flowers?","red","yellow","blue"],["What is next to the mountain?","a river","a school","a shop"]]],
  ],
  g56:[
   ["Hi! My name is Adam. I am twelve years old and I live in Haifa. I have a dog called Rocky. I can swim very well.","היי! קוראים לי אדם. אני בן שתים עשרה ואני גר בחיפה. יש לי כלב בשם רוקי. אני יודע לשחות טוב מאוד.",[["Where does Adam live?","in Haifa","in Tel Aviv","in London"],["What is the dog's name?","Rocky","Adam","Max"],["Can Adam swim?","yes, very well","no, he can't","only a little"]]],
@@ -308,6 +345,8 @@ const READ={
   ["I get up at seven o'clock. School starts at eight. I finish school at half past one and I meet my friends at five.","אני קם בשבע. בית הספר מתחיל בשמונה. אני מסיים את הלימודים באחת וחצי ונפגש עם החברים שלי בחמש.",[["When does school start?","at eight","at seven","at five"],["When do I meet my friends?","at five","at half past one","at eight"]]],
   ["Dana is tall and she has long brown hair. Her brother Gal is short and he has blue eyes. They are both very funny.","דנה גבוהה ויש לה שיער חום ארוך. לאח שלה גל יש עיניים כחולות והוא נמוך. שניהם מאוד מצחיקים.",[["Who is tall?","Dana","Gal","both of them"],["What color are Gal's eyes?","blue","brown","green"]]],
   ["Last weekend we went to the beach. I played football with my dad and my sister ate ice cream. In the evening we visited grandma. It was a great day!","בסוף השבוע שעבר הלכנו לים. שיחקתי כדורגל עם אבא שלי ואחותי אכלה גלידה. בערב ביקרנו את סבתא. זה היה יום נהדר!",[["Where did they go last weekend?","to the beach","to school","to the mall"],["What did the sister eat?","ice cream","pizza","a sandwich"],["What did they do in the evening?","they visited grandma","they played football","they went to the beach"]]],
+  ["Omer has many hobbies. He plays the guitar on Sundays and goes swimming on Wednesdays. His favorite hobby is drawing, and he wants to be an artist one day.","לעומר יש הרבה תחביבים. הוא מנגן בגיטרה בימי ראשון והולך לשחות בימי רביעי. התחביב האהוב עליו הוא ציור, והוא רוצה להיות אמן יום אחד.",[["When does Omer swim?","on Wednesdays","on Sundays","every day"],["What is his favorite hobby?","drawing","swimming","the guitar"],["What does he want to be?","an artist","a teacher","a pilot"]]],
+  ["This summer my family is going to visit Paris. We will see the Eiffel Tower and eat a lot of fresh bread. After the trip, I will start seventh grade.","בקיץ הזה המשפחה שלי הולכת לבקר בפריז. נראה את מגדל אייפל ונאכל הרבה לחם טרי. אחרי הטיול אתחיל את כיתה ז׳.",[["Where is the family going?","to Paris","to London","to Eilat"],["What will they see?","the Eiffel Tower","a big zoo","the sea"],["What will happen after the trip?","seventh grade starts","they move to a new house","they buy a dog"]]],
  ],
  adult:[
   ["Good morning, Mr. Cohen! How are you today? I'm fine, thank you. Have a nice day!","בוקר טוב, מר כהן! מה שלומך היום? אני בסדר, תודה. שיהיה לך יום נעים!",[["What time of day is it?","morning","evening","night"],["How is Mr. Cohen?","he is fine","he is sick","he is tired"]]],
@@ -318,6 +357,8 @@ const READ={
   ["Dan is at the airport. He has one suitcase and his passport. His flight to Rome is delayed by one hour, so he goes to gate twelve and waits.","דן בשדה התעופה. יש לו מזוודה אחת והדרכון שלו. הטיסה שלו לרומא מתעכבת בשעה, אז הוא הולך לשער שתים עשרה ומחכה.",[["Where is Dan flying to?","Rome","London","Paris"],["What is the problem?","the flight is delayed","he lost his passport","there are no seats"]]],
   ["Hello, I have a reservation for two nights. Welcome! Breakfast is from seven to ten. The Wi-Fi password is on your key card.","שלום, יש לי הזמנה לשני לילות. ברוכים הבאים! ארוחת הבוקר משבע עד עשר. הסיסמה לוויי-פיי נמצאת על כרטיס החדר.",[["How many nights is the reservation?","two","one","three"],["When is breakfast?","from seven to ten","from eight to eleven","all day"],["Where is the Wi-Fi password?","on the key card","in the restaurant","in an email"]]],
   ["I don't feel well. I have a headache and my throat hurts. Take this medicine three times a day and drink a lot of water.","אני לא מרגיש טוב. כואב לי הראש וכואב לי הגרון. קח את התרופה הזו שלוש פעמים ביום ושתה הרבה מים.",[["What hurts?","the head and the throat","the stomach","the back"],["How often should he take the medicine?","three times a day","once a day","twice a day"]]],
+  ["Noa goes to the supermarket. She buys milk, eggs and fresh bread. The cheese is on sale, so she buys two. She pays with cash and asks for a bag.","נועה הולכת לסופרמרקט. היא קונה חלב, ביצים ולחם טרי. הגבינה במבצע, אז היא קונה שתיים. היא משלמת במזומן ומבקשת שקית.",[["What is on sale?","the cheese","the milk","the bread"],["How does Noa pay?","with cash","by card","she doesn't pay"]]],
+  ["The next train to the airport leaves at 9:30. The ride takes forty minutes. One ticket costs fifteen dollars, and you can buy it at the machine.","הרכבת הבאה לשדה התעופה יוצאת ב-9:30. הנסיעה לוקחת ארבעים דקות. כרטיס אחד עולה חמישה עשר דולר, ואפשר לקנות אותו במכונה.",[["When does the train leave?","at 9:30","at 9:00","at 10:30"],["How long is the ride?","forty minutes","fifteen minutes","an hour"],["Where can you buy a ticket?","at the machine","on the train","only online"]]],
  ],
  biz:[
   ["Hi, let me introduce myself. I'm Lior, and I'm in charge of marketing at a tech company. Here's my business card. Let's keep in touch!","היי, הרשו לי להציג את עצמי. אני ליאור, ואני אחראי על השיווק בחברת טכנולוגיה. הנה כרטיס הביקור שלי. בואו נשמור על קשר!",[["What is Lior in charge of?","marketing","sales","finance"],["What does Lior give?","a business card","a gift","a report"]]],
@@ -328,6 +369,8 @@ const READ={
   ["Our price includes support for one year. If you sign this week, we can offer a ten percent discount. Let me check with my manager and get back to you.","המחיר שלנו כולל תמיכה לשנה. אם תחתמו השבוע, נוכל להציע הנחה של עשרה אחוזים. אבדוק עם המנהל שלי ואחזור אליך.",[["What does the price include?","support for one year","free hardware","two years of support"],["How big is the discount?","ten percent","twenty percent","five percent"],["What will the client do next?","check with the manager","sign right now","say no"]]],
   ["Today I'll talk about our results. As you can see on this slide, sales went up by twenty percent this year. Next year we plan to open two new offices.","היום אדבר על התוצאות שלנו. כפי שאתם רואים בשקופית הזו, המכירות עלו השנה בעשרים אחוז. בשנה הבאה אנחנו מתכננים לפתוח שני משרדים חדשים.",[["How much did sales grow?","twenty percent","ten percent","two percent"],["What is the plan for next year?","to open two new offices","to hire one person","to close an office"]]],
   ["Customer: My order hasn't arrived. Agent: I'm sorry for the inconvenience. Could I have your order number? I'll look into it right away. Your package will arrive tomorrow.","לקוח: ההזמנה שלי לא הגיעה. נציג: אני מצטער על אי הנוחות. אפשר את מספר ההזמנה? אבדוק את זה מיד. החבילה שלך תגיע מחר.",[["What is the problem?","the order hasn't arrived","the product is broken","the price is wrong"],["When will the package arrive?","tomorrow","today","next week"]]],
+  ["The client said our price was a bit higher than they expected. We offered a five percent discount and free training. They agreed, and we will sign the contract on Friday.","הלקוח אמר שהמחיר שלנו קצת גבוה ממה שציפה. הצענו הנחה של חמישה אחוזים והדרכה בחינם. הם הסכימו, ונחתום על החוזה ביום שישי.",[["What was the problem?","the price was too high","the date","the product"],["What did we offer?","a discount and free training","a free month","nothing"],["When will they sign?","on Friday","today","next month"]]],
+  ["Hi Daniel, thank you for coming to the interview. We liked your experience in sales and your communication skills. The next step is a meeting with our manager on Monday.","היי דניאל, תודה שהגעת לראיון. אהבנו את הניסיון שלך במכירות ואת כישורי התקשורת שלך. השלב הבא הוא פגישה עם המנהל שלנו ביום שני.",[["What did they like?","his sales experience and communication","his car","his salary"],["What is the next step?","a meeting with the manager","a written test","signing a contract"],["When is it?","on Monday","today","on Friday"]]],
  ],
 };
 const GROUPS={kids:"ילדים",adults:"מבוגרים"};
@@ -340,7 +383,7 @@ function load(){try{return JSON.parse(localStorage.getItem(KEY))||null}catch(e){
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 let S=load()||{};
 if(S.done!=null&&!S.prog){S.prog={g3:S.done};S.course="g3";delete S.done}
-S=Object.assign({name:"",char:null,course:null,prog:{},lastDate:null,streak:0,stars:0,scores:{},remind:"17:00",len:"10"},S);
+S=Object.assign({name:"",char:null,course:null,prog:{},lastDate:null,streak:0,stars:0,scores:{},remind:"17:00",len:"10",mist:{},spent:0,owned:["bg-sky"],wear:null,bg:"bg-sky"},S);
 const LEN={"5":{f:.5,he:"5 דקות"},"10":{f:1,he:"10 דקות"},"15":{f:1.5,he:"15 דקות"}};
 const nq=b=>Math.max(1,Math.round(b*(LEN[S.len]||LEN["10"]).f));
 const scoreList=c=>S.scores[c.id]||[];
@@ -423,8 +466,20 @@ const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 const nm=()=>S.name||"friend";
 const kidsCourse=()=>course().group==="kids";
 
+const SHOP=[
+ {id:"acc-bow",type:"acc",e:"🎀",he:"פפיון",p:20},{id:"acc-flower",type:"acc",e:"🌸",he:"פרח",p:20},
+ {id:"acc-cap",type:"acc",e:"🧢",he:"כובע מצחייה",p:30},{id:"acc-glasses",type:"acc",e:"🕶️",he:"משקפי שמש",p:40},
+ {id:"acc-headphones",type:"acc",e:"🎧",he:"אוזניות",p:45},{id:"acc-tophat",type:"acc",e:"🎩",he:"מגבעת",p:60},
+ {id:"acc-medal",type:"acc",e:"🏅",he:"מדליה",p:80},{id:"acc-crown",type:"acc",e:"👑",he:"כתר",p:120},
+ {id:"bg-sky",type:"bg",c:"#DDF1F7",he:"שמיים",p:0},{id:"bg-garden",type:"bg",c:"#E3F3D8",he:"גינה",p:50},
+ {id:"bg-sunset",type:"bg",c:"#FDE6D2",he:"שקיעה",p:50},{id:"bg-candy",type:"bg",c:"#FBE1EE",he:"ממתקים",p:60},
+ {id:"bg-space",type:"bg",c:"#E3DFF8",he:"חלל",p:80},{id:"bg-gold",type:"bg",c:"#FFF1C9",he:"זהב",p:150},
+];
+const balance=()=>Math.max(0,S.stars-(S.spent||0));
+function applyBg(){const b=SHOP.find(x=>x.id===S.bg)||SHOP.find(x=>x.id==="bg-sky");document.documentElement.style.setProperty("--sky",b.c)}
+function avatarHTML(){const a=SHOP.find(x=>x.id===S.wear);return `<div class="avatar" aria-hidden="true">${char().e}${a?`<span class="acc">${a.e}</span>`:""}</div>`}
 function talkHTML(en,he){
-  return `<div class="talk"><div class="avatar" aria-hidden="true">${char().e}</div>
+  return `<div class="talk">${avatarHTML()}
   <div class="bubble"><div class="line">${esc(en)}</div><div class="he" hidden>${esc(he)}</div>
   <div class="tools"><button class="mini" data-act="again">🔊 <span>שוב</span></button><button class="mini" data-act="he">עברית</button></div></div></div>`;
 }
@@ -445,6 +500,7 @@ function pickCourse(first){
   app.innerHTML=`
    ${first?`<h1>שלום! ברוכים הבאים ל-English Buddy</h1><p>בחרו מסלול. אפשר להחליף אותו בכל רגע.</p>`:`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">בחירת מסלול</h2></div>`}
    <div class="courses">${grp("kids")}${grp("adults")}</div>
+   <button class="btn ghost wide" id="place">לא בטוחים? מבחן רמה קצר</button>
    <p id="sub" class="label" style="text-transform:none;letter-spacing:0;font-size:15px;min-height:22px">${picked?esc(courseById(picked).sub):""}</p>
    <button class="btn wide" id="go" ${picked?"":"disabled"}>${first?"הבא":"שמירה"}</button>`;
   app.querySelectorAll(".course").forEach(b=>b.onclick=()=>{
@@ -452,6 +508,7 @@ function pickCourse(first){
     $("#sub").textContent=courseById(picked).sub;$("#go").disabled=false;
   });
   if($("#back"))$("#back").onclick=home;
+  $("#place").onclick=()=>placementStart(first);
   $("#go").onclick=()=>{
     const wasKids=S.course&&courseById(S.course).group==="kids";
     S.course=picked;save();
@@ -481,7 +538,7 @@ function home(){
   stopVoice();
   const C=course(),done=doneIn(C),idx=done%C.units.length,L=C.units[idx],today=doneToday();
   const last=scoreList(C).slice(-1)[0];
-  const retry=!today&&last&&last.u===idx&&last.d===dayStr()&&last.s<PASS;
+  const retry=!!(last&&last.u===idx&&last.d===dayStr()&&last.s<PASS);
   const en=today?`Great job today, ${nm()}! See you tomorrow!`:retry?`Let's practice ${L.en} again, ${nm()}. You can do it!`:`Hi ${nm()}! Today we learn about ${L.en}. Are you ready?`;
   const he=today?`כל הכבוד היום, ${nm()}! נתראה מחר!`:retry?`בואו נתרגל שוב את ${L.he}, ${nm()}. אתם יכולים!`:`היי ${nm()}! היום נלמד על ${L.he}. מוכנים?`;
   const cycle=Math.floor(done/C.units.length);
@@ -489,11 +546,13 @@ function home(){
   const canTest=Math.min(done,C.units.length)>=2;
   app.innerHTML=`
    <div class="top"><div class="grow"><div class="label">English Buddy · ${esc(C.he)}</div></div>
-     <span class="chip" title="ימים ברצף">🔥 ${liveStreak()}</span><span class="chip" title="כוכבים">⭐ ${S.stars}</span>
+     <span class="chip" title="ימים ברצף">🔥 ${liveStreak()}</span><button class="chip" id="shop" title="חנות הפרסים">⭐ ${balance()} · חנות</button>
      <button class="x" id="settings" aria-label="הגדרות">⚙️</button></div>
    ${talkHTML(en,he)}
    <div class="hero">
-     ${today?`<h2>השיעור של היום הושלם ✓</h2><p>מחר מחכה לכם נושא חדש. אפשר לחזור על שיעור שכבר למדתם.</p>
+     ${today&&!retry?`<h2>השיעור של היום הושלם ✓</h2><p>רוצים עוד? אפשר להמשיך לנושא הבא עכשיו, בלי לחכות למחר.</p>
+       <div class="today-topic"><span class="big" aria-hidden="true">${L.e}</span><div><div class="label">הנושא הבא</div><h2>${esc(L.he)} · <span class="en">${esc(cap(L.en))}</span></h2></div></div>
+       <button class="btn wide" id="start">להמשיך לשיעור הבא</button>
        <button class="btn ghost wide" id="repeat">חזרה על השיעור האחרון</button>`
      :`<div class="today-topic"><span class="big" aria-hidden="true">${L.e}</span><div><div class="label">${retry?"תרגול חוזר נדרש":"השיעור של היום"} · כ-${esc(LEN[S.len].he)}</div><h2>${esc(L.he)} · <span class="en">${esc(cap(L.en))}</span></h2></div></div>
        ${retry?`<p>הציון האחרון היה ${last.s}. צריך ${PASS} ומעלה כדי לעבור לנושא הבא.</p>`:""}
@@ -516,7 +575,7 @@ function home(){
   if($("#repeat"))$("#repeat").onclick=()=>startLesson((done-1+C.units.length)%C.units.length,true);
   $("#change").onclick=()=>pickChar(false);
   $("#course").onclick=()=>pickCourse(false);
-  $("#settings").onclick=settings;
+  $("#settings").onclick=settings;$("#shop").onclick=shop;
   if(canTest)$("#test").onclick=startTest;
 }
 
@@ -557,7 +616,9 @@ function settings(){
      <button class="btn ghost wide" id="ics">הוספה ליומן של אייפון</button>
      <p class="heard" id="icsmsg"></p>
    </div>
+   <div class="hero"><h3>מסך הורים</h3><p>ציונים, ימי רצף ומילים שקשות לילד או לילדה.</p><button class="btn ghost wide" id="parents">כניסה למסך הורים</button></div>
    <button class="btn wide" id="save">שמירה</button>`;
+  $("#parents").onclick=parentGate;
   const sync=()=>{S.remind=$("#rtime").value||"17:00";save();$("#gcal").href=googleCalLink()};
   $("#rtime").onchange=sync;
   app.querySelectorAll(".segb").forEach(b=>b.onclick=()=>{S.len=b.dataset.k;save();app.querySelectorAll(".segb").forEach(x=>x.setAttribute("aria-pressed",x===b))});
@@ -571,6 +632,105 @@ function settings(){
     }catch(e){$("#icsmsg").textContent="לא ניתן להוסיף ליומן מכאן. פתחו את האפליקציה מהקישור שלה ונסו שוב."}
   };
   $("#back").onclick=home;$("#save").onclick=()=>{sync();home()};
+}
+
+/* ===================== Store ===================== */
+function shop(){
+  stopVoice();
+  const card=x=>{const own=(S.owned||[]).includes(x.id),on=x.type==="acc"?S.wear===x.id:S.bg===x.id;
+    return `<button class="shopitem ${on?"on":""}" data-id="${x.id}">${x.type==="acc"?`<span class="se">${x.e}</span>`:`<span class="swatch" style="background:${x.c}"></span>`}
+      <b>${esc(x.he)}</b><span>${on?"בשימוש":own?"שלכם":`⭐ ${x.p}`}</span></button>`};
+  app.innerHTML=`
+   <div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">חנות הפרסים</h2><span class="chip">⭐ ${balance()}</span></div>
+   ${talkHTML(`You have ${balance()} stars. What do you want?`,`יש לכם ${balance()} כוכבים. מה תרצו?`)}
+   <p class="heard" id="msg">כוכבים מרוויחים בכל תשובה נכונה. לחצו על פריט כדי לקנות אותו או ללבוש אותו.</p>
+   <h3>אביזרים לדמות</h3><div class="shopgrid">${SHOP.filter(x=>x.type==="acc").map(card).join("")}</div>
+   <h3>צבע רקע</h3><div class="shopgrid">${SHOP.filter(x=>x.type==="bg").map(card).join("")}</div>`;
+  wireTalk(`You have ${balance()} stars.`);
+  $("#back").onclick=home;
+  app.querySelectorAll(".shopitem").forEach(b=>b.onclick=()=>{
+    const x=SHOP.find(i=>i.id===b.dataset.id);S.owned=S.owned||[];
+    if(!S.owned.includes(x.id)){
+      if(balance()<x.p){$("#msg").textContent=`חסרים עוד ${x.p-balance()} כוכבים בשביל ${x.he}. המשיכו ללמוד!`;return}
+      S.spent=(S.spent||0)+x.p;S.owned.push(x.id);say("Great choice!");
+    }
+    if(x.type==="acc")S.wear=S.wear===x.id?null:x.id;else S.bg=x.id;
+    save();applyBg();shop();
+  });
+}
+
+/* ===================== Parents ===================== */
+function parentGate(){
+  const a=12+(Math.random()*20|0),b=7+(Math.random()*15|0);
+  app.innerHTML=`
+   <div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">מסך הורים</h2></div>
+   <div class="hero"><p>כדי להיכנס, פתרו את התרגיל:</p><div class="qtext" style="text-align:center">${a} × ${b} = ?</div>
+   <div class="field"><label for="pg">התשובה</label><input id="pg" inputmode="numeric" dir="ltr"></div>
+   <p class="heard" id="pgm"></p><button class="btn wide" id="pgo">כניסה</button></div>`;
+  $("#back").onclick=settings;
+  const go=()=>{if(+$("#pg").value===a*b)parents();else $("#pgm").textContent="התשובה לא נכונה. נסו שוב."};
+  $("#pgo").onclick=go;$("#pg").addEventListener("keydown",e=>{if(e.key==="Enter")go()});
+}
+function parents(){
+  const active=COURSES.filter(c=>doneIn(c)||scoreList(c).length);
+  const C=course(),last=scoreList(C).slice(-10);
+  const weak=Object.entries(S.mist[C.id]||{}).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const totalLessons=COURSES.reduce((a,c)=>a+doneIn(c),0);
+  app.innerHTML=`
+   <div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">מסך הורים</h2></div>
+   <div class="scores">
+     <div class="stat"><span class="label">שיעורים שעברו</span><b>${totalLessons}</b></div>
+     <div class="stat"><span class="label">ימים ברצף</span><b>${liveStreak()}</b></div>
+     <div class="stat"><span class="label">כוכבים</span><b>${S.stars}</b></div>
+   </div>
+   <div class="hero"><h3>ציוני השיעורים האחרונים · ${esc(C.he)}</h3>
+     ${last.length?`<div class="bars" role="img" aria-label="ציוני השיעורים האחרונים">${last.map(x=>`<div class="barcol"><span class="bv">${x.s}</span><i class="${x.s<PASS?"low":""}" style="height:${Math.max(4,x.s)}%"></i><span class="bd">${x.d.slice(5).split("-").reverse().join("/")}</span></div>`).join("")}</div>
+     <p class="heard">קו המעבר הוא ${PASS}. עמודה אדומה היא שיעור שדרש תרגול חוזר.</p>`:`<p>עדיין אין ציונים במסלול הזה.</p>`}
+   </div>
+   <div class="hero"><h3>מילים ומשפטים שקשים כרגע</h3>
+     ${weak.length?`<div class="missed" style="justify-content:flex-start">${weak.map(([w])=>`<span class="en">${esc(w)}</span>`).join("")}</div><p class="heard">הם חוזרים אוטומטית בשיעורים הבאים עד שהם נענים נכון.</p>`:`<p>אין כרגע מילים קשות. כל הכבוד!</p>`}
+   </div>
+   <div class="hero"><h3>התקדמות בכל המסלולים</h3>
+     ${active.length?`<table class="ptable"><thead><tr><th>מסלול</th><th>שיעורים</th><th>ממוצע</th><th>מבחן אחרון</th></tr></thead><tbody>
+     ${active.map(c=>{const t=(S.tests&&S.tests[c.id])||[];return `<tr><td>${esc(c.he)}</td><td>${Math.min(doneIn(c),c.units.length)}/${c.units.length}</td><td>${avgScore(c)??"–"}</td><td>${t.length?t[t.length-1].s:"–"}</td></tr>`}).join("")}</tbody></table>`:`<p>עדיין אין התקדמות.</p>`}
+   </div>
+   <div class="hero"><h3>הגדרות לימוד</h3><p>שעת שיעור: ${esc(S.remind)} · אורך שיעור: ${esc(LEN[S.len].he)}</p></div>`;
+  $("#back").onclick=settings;
+}
+
+/* ===================== Placement test ===================== */
+function placementStart(first){
+  app.innerHTML=`
+   <div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">מבחן רמה</h2></div>
+   <p>כ-3 דקות. בסוף נמליץ על המסלול המתאים.</p>
+   <div class="courses"><button class="course" id="pk"><span class="e">🧒</span><span><b>מבחן לילדים</b><span>כיתות א׳–ו׳</span></span></button>
+   <button class="course" id="pa"><span class="e">🧑</span><span><b>מבחן למבוגרים</b><span>יום-יום או עסקי</span></span></button></div>`;
+  $("#back").onclick=()=>pickCourse(first);
+  const run=(group)=>{
+    const levels=group==="kids"?["g12","g3","g4","g56"]:["adult","biz"];
+    const steps=[{t:"place-intro"}];
+    levels.forEach((id,li)=>{
+      const its=courseById(id).units.flatMap(u=>u.items);
+      pickN(its,3).forEach((w,k)=>{const same=its.filter(x=>!!x.e===!!w.e);steps.push({t:id==="g12"||k===0?"listen":"read",w,pool:same,lv:li})});
+    });
+    LS={place:{group,levels,first},idx:-1,L:{en:"level",he:"מבחן רמה",items:[]},pic:false,steps,i:0,stars:0,hits:{}};
+    step();
+  };
+  $("#pk").onclick=()=>run("kids");$("#pa").onclick=()=>run("adults");
+}
+function placementFinish(){
+  const P=LS.place,per=P.levels.map(()=>0);
+  LS.steps.forEach((s,i)=>{if(s.lv!=null&&LS.hits[i])per[s.lv]++});
+  let passed=-1;for(let i=0;i<per.length;i++){if(per[i]>=2)passed=i;else break}
+  const rec=P.levels[Math.min(P.levels.length-1,passed+1)];
+  const C=courseById(rec);
+  app.innerHTML=talkHTML("I found your level!","מצאתי את הרמה שלכם!")+`
+   <div class="hero center"><div class="label">המסלול המומלץ</div><div style="font-size:52px">${C.e}</div><h2>${esc(C.he)}</h2><p>${esc(C.sub)}</p>
+   <div class="row">${P.levels.map((id,i)=>`<span class="chip">${esc(courseById(id).he)}: ${per[i]}/3</span>`).join("")}</div></div>
+   <button class="btn wide" id="use">להתחיל במסלול הזה</button><button class="link" id="other">לבחור מסלול אחר</button>`;
+  wireTalk("I found your level!");say("I found your level!");
+  $("#use").onclick=()=>{S.course=rec;save();if(!S.char||P.first)pickChar(P.first);else home()};
+  $("#other").onclick=()=>pickCourse(P.first);
 }
 
 /* ===================== Tests ===================== */
@@ -632,6 +792,9 @@ function startLesson(idx,isRepeat){
     pickN(L.items,nq(3)).forEach(w=>steps.push({t:"reply",w,pool:L.items}));
     steps.push({t:"write-intro"});
     pickN(L.items,nq(2)).forEach(w=>steps.push({t:"type",w,dialog:true}));
+    const dl=C.units.filter(u=>u.dialog).flatMap(u=>u.items);
+    const weakD=weakItems(C,u=>u.dialog).filter(w=>!L.items.includes(w)).slice(0,nq(3));
+    if(weakD.length){steps.push({t:"weak-intro"});weakD.forEach(w=>steps.push({t:"reply",w,pool:dl}))}
   }else{
     L.items.forEach(w=>steps.push({t:"learn",w}));
     steps.push({t:"say-intro"});
@@ -650,8 +813,13 @@ function startLesson(idx,isRepeat){
       steps.push({t:"story",R});
       R[2].slice(0,S.len==="5"?2:R[2].length).forEach(q=>steps.push({t:"rq",R,q}));
     }
-    const prevSame=prevUnits.filter(u=>!u.dialog&&isPicUnit(u)===pic).flatMap(u=>u.items);
-    if(prevSame.length>=6&&S.len!=="5"){steps.push({t:"review-intro"});pickN(prevSame,nq(2)).forEach(w=>steps.push({t:"listen",w,pool:prevSame}))}
+    const kind=u=>!u.dialog&&isPicUnit(u)===pic;
+    const allSame=C.units.filter(kind).flatMap(u=>u.items);
+    const prevSame=prevUnits.filter(kind).flatMap(u=>u.items);
+    const weak=weakItems(C,kind).filter(w=>!L.items.includes(w)).slice(0,nq(3));
+    const extra=S.len!=="5"&&prevSame.length>=6?pickN(prevSame.filter(w=>!weak.includes(w)),Math.max(0,nq(2)-weak.length)):[];
+    const rev=weak.concat(extra);
+    if(rev.length&&allSame.length>=4){steps.push({t:weak.length?"weak-intro":"review-intro"});rev.forEach((w,i)=>steps.push({t:i%2&&!pic?"read":"listen",w,pool:allSame}))}
   }
   LS={idx,L,pic,steps,i:0,stars:0,isRepeat};
   step();
@@ -678,6 +846,8 @@ function step(){
   case"listen-intro":return intro(LS.pic?"Listen and tap the right picture.":"Listen and tap the right meaning.",LS.pic?"תקשיבו ולחצו על התמונה הנכונה.":"תקשיבו ולחצו על הפירוש הנכון.");
   case"read-intro":return intro(LS.pic?"Now read the word and tap the right picture.":"Now read and tap the right meaning.",LS.pic?"עכשיו תקראו את המילה ולחצו על התמונה הנכונה.":"עכשיו תקראו ולחצו על הפירוש הנכון.");
   case"build-intro":return intro("Let's build sentences! Tap the words in the right order.","בואו נבנה משפטים! לחצו על המילים בסדר הנכון.");
+  case"weak-intro":return intro("Let's practice things that were hard for you before!","בואו נתרגל דברים שהיו קשים לכם בפעמים קודמות!");
+  case"place-intro":return intro("Let's find your level! Just do your best.","בואו נמצא את הרמה שלכם! פשוט תנסו כמה שיותר.","מתחילים");
   case"review-intro":return intro("Let's remember things from before!","בואו ניזכר במה שלמדנו בפעמים קודמות!");
   case"talk-intro":return intro("Your turn! I ask a question, and you answer.","תורכם! אני שואל/ת שאלה, ואתם עונים.");
   case"reply-intro":return intro("Listen to my question and choose the best answer.","תקשיבו לשאלה ובחרו את התשובה המתאימה.");
@@ -738,7 +908,7 @@ function speakStep(w,isAnswer){
    <div class="row"><button class="btn ghost" id="said" ${srBlocked?"":"hidden"}>אמרתי את זה!</button><button class="link" id="skip" hidden>דלגו</button></div>`);
   wireTalk(en);say(en);
   $("#hear").onclick=()=>say(w.en);
-  const ok=async()=>{LS.stars++;const[p,h]=praise();$("#heard").textContent=h;await say(p);next()};
+  const ok=async()=>{LS.stars++;if(!tries)good(w.en);const[p,h]=praise();$("#heard").textContent=h;await say(p);next()};
   $("#said").onclick=ok;$("#skip").onclick=()=>{miss(w.en);next()};
   const mic=$("#mic");if(!mic)return;
   mic.onclick=async()=>{
@@ -778,7 +948,7 @@ function choose(w,pool,mode){
     const o=opts[+b.dataset.i];
     if(o.en===w.en){
       b.classList.add("good");app.querySelectorAll(".opt").forEach(x=>x.disabled=true);
-      if(first)LS.stars++;
+      if(first){LS.stars++;good(w.en);if(LS.hits)LS.hits[LS.i]=1}
       const[p]=praise();await say(mode==="read"?`${w.en}! ${p}`:p);next();
     }else{
       if(first)miss(w.en);first=false;b.classList.remove("bad");void b.offsetWidth;b.classList.add("bad");
@@ -799,7 +969,7 @@ function chooseReply(w,pool){
     const o=opts[+b.dataset.i];
     if(o.en===w.en){
       b.classList.add("good");app.querySelectorAll(".opt").forEach(x=>x.disabled=true);
-      if(first)LS.stars++;
+      if(first){LS.stars++;good(w.en)}
       await say(w.en);next();
     }else{if(first)miss(w.en);first=false;b.classList.remove("bad");void b.offsetWidth;b.classList.add("bad");say("Hmm, try another answer.")}
   });
@@ -828,7 +998,7 @@ function build(w){
     const ans=picked.map(k=>bank[k].t).join(" ");
     if(ans===w.en){
       $("#slot").className="slot good";$("#check").disabled=true;
-      if(first)LS.stars++;
+      if(first){LS.stars++;good(w.en)}
       await say(`${w.en} ${praise()[0]}`);next();
     }else{
       if(first)miss(w.en);first=false;const s=$("#slot");s.className="slot";void s.offsetWidth;s.className="slot bad";
@@ -890,7 +1060,7 @@ function spell(w){
   $("#clear").onclick=()=>{picked=[];$("#slot").className="slot spell";draw()};
   $("#skip").onclick=async()=>{$("#slot").innerHTML=letters.map(l=>`<span class="tok letter">${esc(l)}</span>`).join("");await say(`${w.en}. ${[...w.en].join(", ")}.`);next()};
   $("#check").onclick=async()=>{
-    if(picked.map(k=>bank[k].t).join("")===word){$("#slot").className="slot spell good";$("#check").disabled=true;if(first)LS.stars++;await say(`${w.en}! ${praise()[0]}`);next()}
+    if(picked.map(k=>bank[k].t).join("")===word){$("#slot").className="slot spell good";$("#check").disabled=true;if(first){LS.stars++;good(w.en)}await say(`${w.en}! ${praise()[0]}`);next()}
     else{if(first)miss(w.en);first=false;$("#skip").hidden=false;const s=$("#slot");s.className="slot spell";void s.offsetWidth;s.className="slot spell bad";say("Almost! Try again.")}
   };
   draw();
@@ -914,7 +1084,7 @@ function typeStep(w,dialog){
     if(!a)return;
     if(a===b||(b.length>8&&lev(a,b)<=1)){
       inp.classList.add("good");$("#check").disabled=true;
-      if(tries===0&&hint===0)LS.stars++;else miss(w.en);
+      if(tries===0&&hint===0){LS.stars++;good(w.en)}else miss(w.en);
       $("#fb").textContent=a===b?"מצוין!":`כמעט מושלם. הכתיב הנכון: ${w.en}`;
       await say(`${w.en}. ${praise()[0]}`);next();
     }else{
@@ -926,11 +1096,27 @@ function typeStep(w,dialog){
   };
   $("#check").onclick=check;inp.addEventListener("keydown",e=>{if(e.key==="Enter")check()});
 }
-function miss(x){LS.missed=LS.missed||[];if(!LS.missed.includes(x))LS.missed.push(x)}
+function miss(x){
+  if(LS.place)return;
+  LS.missed=LS.missed||[];if(!LS.missed.includes(x))LS.missed.push(x);
+  if(!itemByEn(course(),x))return;
+  const m=S.mist[course().id]=S.mist[course().id]||{};m[x]=Math.min(5,(m[x]||0)+2);save();
+}
+function good(x){
+  if(LS.place)return;
+  const m=S.mist[course().id];if(!m||!m[x])return;
+  m[x]--;if(m[x]<=0)delete m[x];save();
+}
+function itemByEn(C,en){for(const u of C.units)for(const i of u.items)if(i.en===en)return i;return null}
+function weakItems(C,kind){
+  const m=S.mist[C.id]||{};
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([en])=>{for(const u of C.units)if(kind(u))for(const i of u.items)if(i.en===en)return i;return null}).filter(Boolean);
+}
 
 /* ---- Finish, score, extra practice ---- */
 const PASS=70;
 function finish(){
+  if(LS.place)return placementFinish();
   if(LS.test)return testFinish();
   const C=course();
   const max=LS.steps.filter(s=>["say","answer","listen","read","reply","build","spell","type","rq"].includes(s.t)).length;
@@ -938,26 +1124,27 @@ function finish(){
   const passed=score>=PASS;
   (S.scores[C.id]=S.scores[C.id]||[]).push({d:dayStr(),u:LS.idx,s:score});
   if(S.scores[C.id].length>60)S.scores[C.id].shift();
-  if(passed&&!LS.isRepeat&&!doneToday()&&LS.idx===doneIn(C)%C.units.length){
-    S.streak=S.lastDate===yesterday()?S.streak+1:1;
-    S.lastDate=dayStr();S.prog[C.id]=doneIn(C)+1;
+  if(passed&&!LS.isRepeat&&LS.idx===doneIn(C)%C.units.length){
+    if(!doneToday()){S.streak=S.lastDate===yesterday()?S.streak+1:1;S.lastDate=dayStr()}
+    S.prog[C.id]=doneIn(C)+1;
   }
   S.stars+=LS.stars;save();
   const n=score>=85?3:score>=PASS?2:1;
   const cnt=LS.L.items.length;
   let en,he;
   if(!passed){en=`Good try, ${nm()}! Let's practice this lesson again. You can do it!`;he=`ניסיון יפה, ${nm()}! בואו נתרגל את השיעור הזה שוב. אתם יכולים!`}
-  else if(LS.L.dialog){en=`You did it, ${nm()}! Great conversation. See you tomorrow!`;he=`הצלחתם, ${nm()}! שיחה מעולה. נתראה מחר!`}
-  else{en=`You did it, ${nm()}! You learned ${cnt} new ${LS.pic?"words":"phrases"}. See you tomorrow!`;he=`הצלחתם, ${nm()}! למדתם ${cnt} ${LS.pic?"מילים חדשות":"משפטים חדשים"}. נתראה מחר!`}
+  else if(LS.L.dialog){en=`You did it, ${nm()}! Great conversation.`;he=`הצלחתם, ${nm()}! שיחה מעולה.`}
+  else{en=`You did it, ${nm()}! You learned ${cnt} new ${LS.pic?"words":"phrases"}.`;he=`הצלחתם, ${nm()}! למדתם ${cnt} ${LS.pic?"מילים חדשות":"משפטים חדשים"}.`}
   const missed=(LS.missed||[]).slice(0,6);
   app.innerHTML=talkHTML(en,he)+`
    <div class="hero center"><div class="stars" aria-label="${n} כוכבים">${"⭐".repeat(n)}${"☆".repeat(3-n)}</div>
    <div class="score ${passed?"":"low"}"><b>${score}</b><span>${gradeHe(score)}</span></div>
    ${passed?`<p>🔥 ${S.streak} ${S.streak===1?"יום":"ימים"} ברצף</p>`:`<p><b>הציון נמוך מ-${PASS}, ולכן צריך לתרגל את השיעור שוב לפני שעוברים לנושא הבא.</b></p>`}
    ${missed.length?`<div class="missed"><div class="label">כדאי לחזור על</div>${missed.map(m=>`<span class="en">${esc(m)}</span>`).join("")}</div>`:""}</div>
-   ${passed?`<button class="btn wide" id="home">חזרה למסך הבית</button>`:`<button class="btn wide" id="again">תרגול חוזר עכשיו</button><button class="link" id="home">אתרגל מאוחר יותר</button>`}`;
+   ${passed?`<button class="btn wide" id="more">להמשיך לשיעור הבא</button><button class="btn ghost wide" id="home">סיימתי להיום</button>`:`<button class="btn wide" id="again">תרגול חוזר עכשיו</button><button class="link" id="home">אתרגל מאוחר יותר</button>`}`;
   wireTalk(en);say(en);$("#home").onclick=home;
   if($("#again"))$("#again").onclick=()=>startLesson(LS.idx,LS.isRepeat);
+  if($("#more"))$("#more").onclick=()=>startLesson(doneIn(C)%C.units.length);
   if(passed&&!matchMedia("(prefers-reduced-motion: reduce)").matches){
     const c=document.createElement("div");c.className="confetti";
     const cols=["#FFC83D","#2FB57C","#E8506A","#2D7FD3"];
@@ -966,6 +1153,7 @@ function finish(){
   }
 }
 
+applyBg();
 render();
 </script>
 
