@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="he"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="theme-color" content="#DDF1F7"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>
+<title>English Buddy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Rubik:wght@400;500;700&display=swap">
+<style>
+/* Layout: one narrow column like a picture book page; the character sits on top and talks in a bubble, the activity fills the page below. Bright single-theme look by choice. */
+:root{
+  --sky:#DDF1F7;        /* page ground */
+  --paper:#FFFFFF;      /* cards */
+  --ink:#1D2B4F;        /* text */
+  --ink-soft:#5A6788;   /* secondary text */
+  --sun:#FFC83D;        /* accent: stars, main button */
+  --sun-deep:#E8A400;
+  --leaf:#2FB57C;       /* correct */
+  --berry:#E8506A;      /* wrong */
+  --sea:#2D7FD3;        /* listen / links */
+  --line:#BFDCE8;
+  --display:"Fredoka","Rubik",system-ui,sans-serif;
+  --body:"Rubik",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--sky);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-tap-highlight-color:transparent}
+.app{max-width:520px;margin:0 auto;padding-block:16px 32px;display:flex;flex-direction:column;gap:16px;min-height:100%}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.15}
+h1{font-size:30px;font-weight:700}
+h2{font-size:24px;font-weight:600}
+p{margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--sea);outline-offset:3px}
+.en{direction:ltr;unicode-bidi:isolate;font-family:var(--display)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;padding:0 24px;border-radius:999px;
+  font-family:var(--display);font-weight:600;font-size:20px;background:var(--sun);color:var(--ink);box-shadow:0 5px 0 var(--sun-deep);transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--sun-deep)}
+.btn.wide{width:100%}
+.btn.ghost{background:var(--paper);box-shadow:0 5px 0 var(--line)}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.link{color:var(--sea);font-weight:500;font-size:15px;text-decoration:underline;text-underline-offset:3px;padding:8px}
+
+/* Top bar */
+.top{display:flex;align-items:center;gap:12px}
+.top .grow{flex:1;min-width:0}
+.bar{height:14px;border-radius:999px;background:var(--paper);overflow:hidden;border:2px solid var(--line)}
+.bar>i{display:block;height:100%;width:0;background:var(--leaf);border-radius:999px;transition:width .35s}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border-radius:999px;padding:6px 12px;font-weight:700;font-variant-numeric:tabular-nums;border:2px solid var(--line);font-size:15px}
+.x{width:44px;height:44px;border-radius:50%;background:var(--paper);font-size:20px;border:2px solid var(--line)}
+
+/* Character + bubble */
+.talk{display:flex;align-items:flex-end;gap:12px}
+.avatar{flex:none;width:92px;height:92px;border-radius:50%;background:var(--paper);display:grid;place-items:center;font-size:58px;border:3px solid var(--sun);box-shadow:0 4px 0 var(--line)}
+.avatar.speaking{animation:bob .5s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-6px) rotate(-3deg)}}
+.bubble{position:relative;flex:1;min-width:0;background:var(--paper);border-radius:22px 22px 22px 6px;padding:14px 16px;box-shadow:0 4px 0 var(--line)}
+[dir=rtl] .bubble{border-radius:22px 22px 6px 22px}
+.bubble .line{font-size:20px;font-weight:600;direction:ltr;text-align:left}
+.bubble .he{margin-top:6px;color:var(--ink-soft);font-size:16px}
+.bubble .tools{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.mini{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:999px;background:var(--sky);font-weight:500;font-size:15px}
+
+/* Word card */
+.card{background:var(--paper);border-radius:28px;padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 6px 0 var(--line);text-align:center}
+.pic{font-size:110px;line-height:1.1}
+.word{font-size:46px;font-weight:700;direction:ltr}
+.word-he{color:var(--ink-soft);font-size:18px}
+.speak{width:72px;height:72px;border-radius:50%;background:var(--sea);color:#fff;font-size:32px;box-shadow:0 5px 0 #1B5C9F}
+.speak:active{transform:translateY(3px);box-shadow:0 2px 0 #1B5C9F}
+
+/* Choices */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{background:var(--paper);border-radius:22px;min-height:120px;display:grid;place-items:center;font-size:64px;box-shadow:0 5px 0 var(--line);border:3px solid transparent;transition:transform .08s}
+.opt:active{transform:translateY(3px)}
+.opt.good{border-color:var(--leaf);background:#E6F8EF}
+.opt.bad{border-color:var(--berry);background:#FDECEF;animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.prompt-word{font-size:44px;font-weight:700;text-align:center;direction:ltr;background:var(--paper);border-radius:22px;padding:16px;box-shadow:0 5px 0 var(--line)}
+
+/* Mic */
+.mic{width:110px;height:110px;border-radius:50%;background:var(--berry);color:#fff;font-size:46px;box-shadow:0 6px 0 #B73350}
+.mic.on{animation:pulse 1s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,80,106,.5),0 6px 0 #B73350}100%{box-shadow:0 0 0 22px rgba(232,80,106,0),0 6px 0 #B73350}}
+.heard{min-height:24px;color:var(--ink-soft);font-size:16px}
+.row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* Home */
+.hero{background:var(--paper);border-radius:28px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 6px 0 var(--line)}
+.today-topic{display:flex;align-items:center;gap:14px}
+.today-topic .big{font-size:52px}
+.label{font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--ink-soft);text-transform:uppercase}
+.path{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.dot{aspect-ratio:1;max-width:100%;border-radius:50%;display:grid;place-items:center;font-size:24px;background:var(--paper);border:3px dashed var(--line)}
+.dot.done{border:3px solid var(--leaf);background:#E6F8EF}
+.dot.next{border:3px solid var(--sun);background:#FFF6DA;animation:bob 1s ease-in-out infinite alternate}
+.dot.lock{opacity:.45}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+
+/* Onboarding */
+.chars{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.char{background:var(--paper);border-radius:22px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;border:3px solid transparent;box-shadow:0 5px 0 var(--line)}
+.char .e{font-size:54px;line-height:1.1}
+.char .n{font-family:var(--display);font-weight:600;font-size:17px;direction:ltr}
+.char[aria-pressed=true]{border-color:var(--sun);background:#FFF6DA}
+.field{display:flex;flex-direction:column;gap:6px}
+.field input{font:inherit;font-size:20px;padding:14px 16px;border-radius:16px;border:2px solid var(--line);background:var(--paper);color:var(--ink)}
+.note{font-size:14px;color:var(--ink-soft);background:var(--paper);border-radius:16px;padding:12px 14px;border:2px dashed var(--line)}
+
+/* Finish */
+.stars{font-size:52px;letter-spacing:6px;text-align:center}
+.center{text-align:center}
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.confetti i{position:absolute;top:-20px;width:10px;height:16px;border-radius:3px;animation:fall 2.4s linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app" id="app" dir="rtl"></div>
+
+<script>
+/* ---------- Content ---------- */
+const CHARS=[
+ {id:"mimi",name:"Mimi",e:"🐱",he:"מימי החתולה",pitch:1.45,rate:.85},
+ {id:"rex",name:"Rex",e:"🦖",he:"רקס הדינוזאור",pitch:.8,rate:.85},
+ {id:"bolt",name:"Bolt",e:"🤖",he:"בולט הרובוט",pitch:1.1,rate:.82},
+ {id:"luna",name:"Luna",e:"🦄",he:"לונה החד-קרן",pitch:1.35,rate:.85},
+ {id:"foxy",name:"Foxy",e:"🦊",he:"פוקסי השועלה",pitch:1.25,rate:.88},
+ {id:"pip",name:"Pip",e:"🐧",he:"פיפ הפינגווין",pitch:1.0,rate:.85},
+];
+const W=(en,he,e,alt)=>({en,he,e,alt:alt||[]});
+const LESSONS=[
+ {en:"colors",he:"צבעים",e:"🎨",words:[W("red","אדום","🔴"),W("blue","כחול","🔵"),W("green","ירוק","🟢"),W("yellow","צהוב","🟡"),W("orange","כתום","🟠"),W("purple","סגול","🟣")]},
+ {en:"animals",he:"חיות",e:"🐾",words:[W("cat","חתול","🐱"),W("dog","כלב","🐶"),W("bird","ציפור","🐦"),W("fish","דג","🐟"),W("horse","סוס","🐴"),W("cow","פרה","🐮")]},
+ {en:"numbers",he:"מספרים",e:"🔢",words:[W("one","אחת","1️⃣",["1","won"]),W("two","שתיים","2️⃣",["2","to","too"]),W("three","שלוש","3️⃣",["3","tree"]),W("four","ארבע","4️⃣",["4","for"]),W("five","חמש","5️⃣",["5"]),W("six","שש","6️⃣",["6","sex","sax"])]},
+ {en:"family",he:"משפחה",e:"🏡",words:[W("mom","אמא","👩",["mum","mam","mama"]),W("dad","אבא","👨",["daddy","that"]),W("baby","תינוק","👶"),W("sister","אחות","👧"),W("brother","אח","👦"),W("grandma","סבתא","👵",["grandmother","granny"])]},
+ {en:"food",he:"אוכל",e:"🍽️",words:[W("apple","תפוח","🍎"),W("banana","בננה","🍌"),W("bread","לחם","🍞",["bred"]),W("milk","חלב","🥛"),W("egg","ביצה","🥚",["eggs"]),W("pizza","פיצה","🍕")]},
+ {en:"my body",he:"הגוף שלי",e:"🙋",words:[W("eye","עין","👁️",["i","eyes","hi"]),W("ear","אוזן","👂",["ears","here"]),W("nose","אף","👃",["knows","no's"]),W("mouth","פה","👄"),W("hand","יד","✋",["hands"]),W("foot","רגל","🦶",["feet","put"])]},
+ {en:"clothes",he:"בגדים",e:"👚",words:[W("shirt","חולצה","👕"),W("dress","שמלה","👗"),W("hat","כובע","🧢",["had","hot"]),W("shoes","נעליים","👟",["shoe","choose"]),W("socks","גרביים","🧦",["sock","sucks"]),W("coat","מעיל","🧥",["code","cold"])]},
+ {en:"school",he:"בית ספר",e:"🏫",words:[W("book","ספר","📕"),W("pencil","עיפרון","✏️"),W("bag","תיק","🎒",["back","beg"]),W("ruler","סרגל","📏"),W("scissors","מספריים","✂️"),W("teacher","מורה","🧑‍🏫")]},
+ {en:"my home",he:"הבית שלי",e:"🏠",words:[W("house","בית","🏠"),W("bed","מיטה","🛏️",["bad"]),W("chair","כיסא","🪑",["share"]),W("door","דלת","🚪"),W("window","חלון","🪟"),W("key","מפתח","🔑",["kee"])]},
+ {en:"weather",he:"מזג אוויר",e:"🌤️",words:[W("sun","שמש","☀️",["son"]),W("rain","גשם","🌧️",["rainy"]),W("cloud","ענן","☁️",["clouds"]),W("snow","שלג","❄️"),W("wind","רוח","🌬️",["windy"]),W("rainbow","קשת","🌈")]},
+ {en:"feelings",he:"רגשות",e:"💛",words:[W("happy","שמחה","😀"),W("sad","עצובה","😢"),W("angry","כועסת","😠"),W("tired","עייפה","😴"),W("scared","מפחדת","😨"),W("surprised","מופתעת","😮")]},
+ {en:"toys",he:"צעצועים",e:"🧸",words:[W("ball","כדור","⚽",["bowl","bull"]),W("teddy bear","דובי","🧸",["teddy"]),W("kite","עפיפון","🪁",["kate","kit"]),W("car","מכונית","🚗",["card"]),W("bike","אופניים","🚲",["bicycle"]),W("balloon","בלון","🎈")]},
+];
+
+/* ---------- Storage (safe) ---------- */
+const KEY="english-buddy-v1";
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||null}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+let S=load()||{name:"",char:null,done:0,lastDate:null,streak:0,stars:0};
+
+const dayStr=d=>{d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const yesterday=()=>{const d=new Date();d.setDate(d.getDate()-1);return dayStr(d)};
+const doneToday=()=>S.lastDate===dayStr();
+const liveStreak=()=>(S.lastDate===dayStr()||S.lastDate===yesterday())?S.streak:0;
+const char=()=>CHARS.find(c=>c.id===S.char)||CHARS[0];
+
+/* ---------- Voice ---------- */
+let VOICE=null;
+function pickVoice(){
+  if(!("speechSynthesis" in window))return;
+  const v=speechSynthesis.getVoices().filter(v=>/^en[-_]/i.test(v.lang));
+  VOICE=v.find(x=>/en[-_]US/i.test(x.lang)&&/samantha|google|female|aria|jenny/i.test(x.name))||v.find(x=>/en[-_]US/i.test(x.lang))||v[0]||null;
+}
+if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function say(text,{slow=false}={}){
+  return new Promise(res=>{
+    if(!("speechSynthesis" in window)){res();return}
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    const c=char();u.lang="en-US";if(VOICE)u.voice=VOICE;
+    u.pitch=c.pitch;u.rate=slow?.6:c.rate;
+    const av=document.querySelector(".avatar");
+    u.onstart=()=>av&&av.classList.add("speaking");
+    const end=()=>{const a=document.querySelector(".avatar");a&&a.classList.remove("speaking");res()};
+    u.onend=end;u.onerror=end;
+    setTimeout(end,Math.max(2500,text.length*140));
+    speechSynthesis.speak(u);
+  });
+}
+
+/* ---------- Speech recognition ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let srBlocked=!SR;
+function lev(a,b){const m=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=m[0];m[0]=i;for(let j=1;j<=b.length;j++){const t=m[j];m[j]=Math.min(m[j]+1,m[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return m[b.length]}
+function matches(heardList,w){
+  const targets=[w.en,...w.alt].map(t=>t.toLowerCase());
+  for(const h of heardList){
+    const s=h.toLowerCase().replace(/[^a-z0-9' ]/g," ").trim();
+    for(const t of targets){
+      if((" "+s+" ").includes(" "+t+" "))return true;
+      for(const tok of s.split(/\s+/)) if(t.length>3&&lev(tok,t)<=1)return true;
+      if(t.includes(" ")&&lev(s,t)<=2)return true;
+    }
+  }
+  return false;
+}
+function listenOnce(){
+  return new Promise((res,rej)=>{
+    const r=new SR();r.lang="en-US";r.interimResults=false;r.maxAlternatives=5;
+    let got=false;
+    r.onresult=e=>{got=true;res([...e.results[0]].map(a=>a.transcript))};
+    r.onerror=e=>{rej(e.error||"error")};
+    r.onend=()=>{if(!got)res([])};
+    try{r.start()}catch(e){rej("start")}
+  });
+}
+
+/* ---------- Helpers ---------- */
+const $=s=>document.querySelector(s);
+const app=$("#app");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const pickN=(a,n)=>shuffle(a).slice(0,n);
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const nm=()=>S.name||"friend";
+
+function talkHTML(en,he){
+  return `<div class="talk"><div class="avatar" aria-hidden="true">${char().e}</div>
+  <div class="bubble"><div class="line">${esc(en)}</div><div class="he" hidden>${esc(he)}</div>
+  <div class="tools"><button class="mini" data-act="again">🔊 <span>שוב</span></button><button class="mini" data-act="he">עברית</button></div></div></div>`;
+}
+function wireTalk(en){
+  const b=app.querySelector(".bubble");if(!b)return;
+  b.querySelector('[data-act="again"]').onclick=()=>say(en);
+  b.querySelector('[data-act="he"]').onclick=()=>{const h=b.querySelector(".he");h.hidden=!h.hidden};
+}
+
+/* ---------- Screens ---------- */
+function render(){ if(!S.char) onboarding(); else home(); }
+
+function onboarding(){
+  let picked=S.char;
+  app.innerHTML=`
+   <h1>שלום! בואי נכיר חבר חדש</h1>
+   <p>בחרי את הדמות שתלמד איתך אנגלית כל יום.</p>
+   <div class="chars">${CHARS.map(c=>`<button class="char" data-id="${c.id}" aria-pressed="${c.id===picked}"><span class="e">${c.e}</span><span class="n">${c.name}</span></button>`).join("")}</div>
+   <div class="field"><label for="kidname">איך קוראים לך? (באנגלית או בעברית)</label><input id="kidname" autocomplete="off" maxlength="20" value="${esc(S.name)}" placeholder="השם שלך"></div>
+   <button class="btn wide" id="go" ${picked?"":"disabled"}>יאללה, מתחילים!</button>`;
+  app.querySelectorAll(".char").forEach(b=>b.onclick=()=>{
+    picked=b.dataset.id;app.querySelectorAll(".char").forEach(x=>x.setAttribute("aria-pressed",x===b));
+    $("#go").disabled=false;S.char=picked;say(`Hi! I'm ${CHARS.find(c=>c.id===picked).name}!`);
+  });
+  $("#go").onclick=()=>{S.char=picked;S.name=$("#kidname").value.trim();save();home()};
+}
+
+function home(){
+  const c=char(),idx=S.done%LESSONS.length,L=LESSONS[idx],today=doneToday();
+  const en=today?`Great job today, ${nm()}! See you tomorrow!`:`Hi ${nm()}! Today we learn about ${L.en}. Are you ready?`;
+  const he=today?`כל הכבוד היום, ${nm()}! נתראה מחר!`:`היי ${nm()}! היום נלמד על ${L.he}. את מוכנה?`;
+  const cycle=Math.floor(S.done/LESSONS.length);
+  app.innerHTML=`
+   <div class="top"><div class="grow"><div class="label">English Buddy</div></div>
+     <span class="chip" title="ימים ברצף">🔥 ${liveStreak()}</span><span class="chip" title="כוכבים">⭐ ${S.stars}</span></div>
+   ${talkHTML(en,he)}
+   <div class="hero">
+     ${today?`<h2>השיעור של היום הושלם ✓</h2><p>מחר מחכה לך נושא חדש. אפשר לחזור על שיעור שכבר למדת.</p>
+       <button class="btn ghost wide" id="repeat">חזרה על השיעור האחרון</button>`
+     :`<div class="today-topic"><span class="big" aria-hidden="true">${L.e}</span><div><div class="label">השיעור של היום · כ-10 דקות</div><h2>${L.he} · <span class="en">${cap(L.en)}</span></h2></div></div>
+       <button class="btn wide" id="start">מתחילים את השיעור</button>`}
+   </div>
+   <div><div class="label" style="margin-bottom:10px">המסלול שלי${cycle?` · סיבוב ${cycle+1}`:""}</div>
+   <div class="path">${LESSONS.map((l,i)=>{const done=i<idx||(cycle>0&&i>=idx);const cls=i===idx&&!today?"next":(i<idx?"done":(cycle>0?"done":"lock"));return `<div class="dot ${cls}" title="${l.he}">${l.e}</div>`}).join("")}</div></div>
+   <div class="row"><button class="link" id="change">החלפת דמות או שם</button></div>`;
+  wireTalk(en);
+  if($("#start"))$("#start").onclick=()=>startLesson(idx);
+  if($("#repeat"))$("#repeat").onclick=()=>startLesson((S.done-1+LESSONS.length)%LESSONS.length,true);
+  $("#change").onclick=onboarding;
+}
+
+/* ---------- Lesson engine ---------- */
+let LS=null;
+function startLesson(idx,isRepeat){
+  const L=LESSONS[idx];
+  const prev=[];for(let i=0;i<Math.min(S.done,LESSONS.length);i++)if(i!==idx)prev.push(...LESSONS[i].words);
+  const steps=[];
+  steps.push({t:"intro"});
+  L.words.forEach(w=>steps.push({t:"learn",w}));
+  steps.push({t:"say-intro"});
+  pickN(L.words,3).forEach(w=>steps.push({t:"say",w}));
+  steps.push({t:"listen-intro"});
+  pickN(L.words,4).forEach(w=>steps.push({t:"listen",w,pool:L.words}));
+  steps.push({t:"read-intro"});
+  pickN(L.words,4).forEach(w=>steps.push({t:"read",w,pool:L.words}));
+  if(prev.length>=4){steps.push({t:"review-intro"});pickN(prev,3).forEach(w=>steps.push({t:"listen",w,pool:prev}))}
+  LS={idx,L,steps,i:0,stars:0,isRepeat};
+  step();
+}
+function frame(inner){
+  const pct=Math.round(LS.i/LS.steps.length*100);
+  app.innerHTML=`<div class="top"><button class="x" id="quit" aria-label="יציאה מהשיעור">✕</button>
+    <div class="grow"><div class="bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div></div>
+    <span class="chip">⭐ ${LS.stars}</span></div>${inner}`;
+  $("#quit").onclick=()=>{speechSynthesis&&speechSynthesis.cancel();home()};
+}
+function next(){LS.i++;LS.i>=LS.steps.length?finish():step()}
+const PRAISE=[["Yes! Well done!","כן! כל הכבוד!"],["Super!","סופר!"],["You got it!","הצלחת!"],["Amazing!","מדהים!"]];
+const praise=()=>PRAISE[Math.random()*PRAISE.length|0];
+
+function step(){
+  const s=LS.steps[LS.i],L=LS.L;
+  const intro=(en,he,btn="בואי נתחיל")=>{frame(talkHTML(en,he)+`<button class="btn wide" id="nx">${btn}</button>`);wireTalk(en);say(en);$("#nx").onclick=next};
+  switch(s.t){
+  case"intro":return intro(`Hi ${nm()}! Today we learn about ${L.en}. Listen and repeat after me!`,`היי ${nm()}! היום נלמד על ${L.he}. תקשיבי ותחזרי אחריי!`);
+  case"say-intro":return intro("Now you talk! Tap the microphone and say the word.","עכשיו את מדברת! לחצי על המיקרופון ותגידי את המילה.");
+  case"listen-intro":return intro("Listen and tap the right picture.","תקשיבי ותלחצי על התמונה הנכונה.");
+  case"read-intro":return intro("Now read the word and tap the right picture.","עכשיו תקראי את המילה ותלחצי על התמונה הנכונה.");
+  case"review-intro":return intro("Let's remember words from before!","בואי ניזכר במילים מפעמים קודמות!");
+  case"learn":return learn(s.w);
+  case"say":return speakStep(s.w);
+  case"listen":return choose(s.w,s.pool,"listen");
+  case"read":return choose(s.w,s.pool,"read");
+  }
+}
+
+function learn(w){
+  const en=`This is ${w.en}. Say: ${w.en}!`;
+  frame(talkHTML(en,`${w.he} באנגלית זה ${w.en}.`)+`
+   <div class="card"><div class="pic" aria-hidden="true">${w.e}</div><div class="word">${esc(w.en)}</div><div class="word-he">${esc(w.he)}</div>
+   <div class="row"><button class="speak" id="hear" aria-label="להשמיע">🔊</button><button class="speak" id="slow" aria-label="להשמיע לאט" style="background:var(--leaf);box-shadow:0 5px 0 #1F8A5C">🐢</button></div></div>
+   <button class="btn wide" id="nx">הבא</button>`);
+  wireTalk(en);
+  $("#hear").onclick=()=>say(w.en);$("#slow").onclick=()=>say(w.en,{slow:true});
+  $("#nx").onclick=next;say(en);
+}
+
+function speakStep(w){
+  let tries=0;
+  const en=`Can you say ${w.en}?`;
+  frame(talkHTML(en,`את יכולה להגיד ${w.en}? (${w.he})`)+`
+   <div class="card"><div class="pic" aria-hidden="true">${w.e}</div><div class="word">${esc(w.en)}</div>
+   <button class="speak" id="hear" aria-label="להשמיע">🔊</button>
+   <div class="row" id="microw">${srBlocked?"":`<button class="mic" id="mic" aria-label="לחצי ודברי">🎤</button>`}</div>
+   <div class="heard" id="heard">${srBlocked?"אמרי את המילה בקול, ואז לחצי על הכפתור.":"לחצי על המיקרופון ודברי"}</div></div>
+   <div class="row"><button class="btn ghost" id="said" ${srBlocked?"":"hidden"}>אמרתי את זה!</button><button class="link" id="skip" hidden>דלגי</button></div>`);
+  wireTalk(en);say(en);
+  $("#hear").onclick=()=>say(w.en);
+  const ok=async()=>{LS.stars++;const[p,h]=praise();$("#heard").textContent=h;await say(p);next()};
+  $("#said").onclick=ok;$("#skip").onclick=next;
+  const mic=$("#mic");if(!mic)return;
+  mic.onclick=async()=>{
+    speechSynthesis&&speechSynthesis.cancel();
+    mic.classList.add("on");$("#heard").textContent="מקשיבה...";
+    try{
+      const heard=await listenOnce();mic.classList.remove("on");
+      if(matches(heard,w))return ok();
+      tries++;
+      $("#heard").textContent=heard.length?`שמעתי: "${heard[0]}". כמעט! נסי שוב.`:"לא שמעתי. נסי שוב, קצת יותר חזק.";
+      await say(`Almost! Listen: ${w.en}. Try again!`);
+      if(tries>=2)$("#skip").hidden=false;
+      if(tries>=3)$("#said").hidden=false;
+    }catch(err){
+      mic.classList.remove("on");srBlocked=true;mic.remove();
+      $("#heard").textContent="המיקרופון לא זמין כאן. אמרי את המילה בקול, ואז לחצי על הכפתור.";
+      $("#said").hidden=false;
+    }
+  };
+}
+
+function choose(w,pool,mode){
+  const others=pickN(pool.filter(x=>x.en!==w.en&&x.e!==w.e),3);
+  const opts=shuffle([w,...others]);
+  let first=true;
+  const en=mode==="listen"?"Where is it? Listen!":"Read and tap the picture.";
+  const he=mode==="listen"?"איפה זה? תקשיבי!":"תקראי ותלחצי על התמונה.";
+  frame(talkHTML(en,he)+
+   (mode==="listen"?`<div class="row"><button class="speak" id="hear" aria-label="להשמיע שוב">🔊</button></div>`
+    :`<div class="prompt-word">${esc(w.en)}</div>`)+
+   `<div class="grid">${opts.map((o,i)=>`<button class="opt" data-i="${i}" aria-label="אפשרות ${i+1}">${o.e}</button>`).join("")}</div>`);
+  wireTalk(en);
+  if(mode==="listen"){$("#hear").onclick=()=>say(w.en);say(w.en)}
+  app.querySelectorAll(".opt").forEach(b=>b.onclick=async()=>{
+    const o=opts[+b.dataset.i];
+    if(o.en===w.en){
+      b.classList.add("good");app.querySelectorAll(".opt").forEach(x=>x.disabled=true);
+      if(first)LS.stars++;
+      const[p]=praise();await say(mode==="read"?`${w.en}! ${p}`:p);next();
+    }else{
+      first=false;b.classList.remove("bad");void b.offsetWidth;b.classList.add("bad");
+      say(mode==="read"?`Oops! That is ${o.en}. Try again!`:`Oops! That is ${o.en}. Listen: ${w.en}.`);
+    }
+  });
+}
+
+function finish(){
+  if(!LS.isRepeat&&!doneToday()){
+    S.streak=S.lastDate===yesterday()?S.streak+1:1;
+    S.lastDate=dayStr();S.done++;
+  }
+  S.stars+=LS.stars;save();
+  const max=LS.steps.filter(s=>["say","listen","read"].includes(s.t)).length;
+  const r=LS.stars/max,n=r>.85?3:r>.5?2:1;
+  const en=`You did it, ${nm()}! You learned ${LS.L.words.length} new words. See you tomorrow!`;
+  app.innerHTML=talkHTML(en,`הצלחת, ${nm()}! למדת ${LS.L.words.length} מילים חדשות. נתראה מחר!`)+`
+   <div class="hero center"><div class="stars" aria-label="${n} כוכבים">${"⭐".repeat(n)}${"☆".repeat(3-n)}</div>
+   <h2>${LS.stars} כוכבים בשיעור הזה</h2><p>🔥 ${S.streak} ${S.streak===1?"יום":"ימים"} ברצף</p>
+   <div class="row" style="font-size:40px">${LS.L.words.map(w=>`<span title="${esc(w.en)}">${w.e}</span>`).join("")}</div></div>
+   <button class="btn wide" id="home">חזרה למסך הבית</button>`;
+  wireTalk(en);say(en);$("#home").onclick=home;
+  if(!matchMedia("(prefers-reduced-motion: reduce)").matches){
+    const c=document.createElement("div");c.className="confetti";
+    const cols=["#FFC83D","#2FB57C","#E8506A","#2D7FD3"];
+    for(let i=0;i<40;i++){const p=document.createElement("i");p.style.left=Math.random()*100+"%";p.style.background=cols[i%4];p.style.animationDelay=Math.random()*.8+"s";c.appendChild(p)}
+    document.body.appendChild(c);setTimeout(()=>c.remove(),3500);
+  }
+}
+
+render();
+</script>
+
+</body></html>
