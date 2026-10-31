@@ -187,6 +187,15 @@ button.chip{cursor:pointer}
 .ptable{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
 .ptable th,.ptable td{text-align:right;padding:8px 4px;border-bottom:1px solid var(--line)}
 .ptable th{font-size:13px;color:var(--ink-soft);font-weight:600}
+/* Welcome */
+.welcome{min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+.welcome .avatar.big{width:150px;height:150px;font-size:96px;border-width:4px;animation:bob 1.2s ease-in-out infinite alternate}
+.welcome .avatar.big .acc{font-size:52px;top:-14px;right:-4px}
+.welcome .wave{font-size:44px;animation:wave 1s ease-in-out infinite alternate;transform-origin:70% 70%}
+@keyframes wave{to{transform:rotate(20deg)}}
+.welcome h1{font-size:40px}
+.welcome .hello{font-size:24px;font-weight:600;color:var(--sea)}
+.welcome .sub{color:var(--ink-soft);max-width:34ch}
 /* Finish */
 .stars{font-size:52px;letter-spacing:6px;text-align:center}
 .center{text-align:center}
@@ -490,7 +499,28 @@ function wireTalk(en){
 }
 
 /* ===================== Onboarding ===================== */
-function render(){ if(!S.char||!S.course) pickCourse(true); else home(); }
+function render(){ if(!S.char||!S.course) pickCourse(true); else welcome(); }
+
+function welcome(){
+  const h=new Date().getHours();
+  const [gEn,gHe]=h<12?["Good morning","בוקר טוב"]:h<17?["Good afternoon","צהריים טובים"]:["Good evening","ערב טוב"];
+  const n=S.name;
+  const C=course(),done=doneIn(C),L=C.units[done%C.units.length];
+  const st=liveStreak();
+  app.innerHTML=`
+   <div class="welcome">
+     <div class="wave" aria-hidden="true">👋</div>
+     <div class="avatar big">${char().e}${(SHOP.find(x=>x.id===S.wear)||{}).e?`<span class="acc">${SHOP.find(x=>x.id===S.wear).e}</span>`:""}</div>
+     <h1>שלום${n?`, ${esc(n)}`:""}!</h1>
+     <p class="en hello">${gEn}${n?`, ${esc(n)}`:""}!</p>
+     <p class="sub">${gHe}! ${esc(char().name)} מחכה לך.${doneToday()?" השיעור של היום כבר הושלם, אבל תמיד אפשר להמשיך.":` היום: ${esc(L.he)} ${L.e}`}</p>
+     ${st?`<span class="chip">🔥 ${st} ${st===1?"יום":"ימים"} ברצף</span>`:""}
+     <button class="btn wide" id="go">יאללה, מתחילים!</button>
+     <button class="link" id="notme">זה לא אני? החלפת שם</button>
+   </div>`;
+  $("#go").onclick=()=>{home();say(`${gEn}${n?", "+n:""}! I'm so happy to see you!`)};
+  $("#notme").onclick=()=>pickChar(false);
+}
 
 function pickCourse(first){
   let picked=S.course;
