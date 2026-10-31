@@ -387,7 +387,8 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let srBlocked=!SR;
 const NUMW={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20};
 function lev(a,b){const m=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=m[0];m[0]=i;for(let j=1;j<=b.length;j++){const t=m[j];m[j]=Math.min(m[j]+1,m[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return m[b.length]}
-const norm=s=>String(s).toLowerCase().replace(/[’']/g,"").replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(Boolean).map(t=>NUMW[t]!=null?String(NUMW[t]):t);
+const CONTR=[[/\b(it|that|what|there|he|she|where|who)'s\b/g,"$1 is"],[/\bi'm\b/g,"i am"],[/\b(\w+)'re\b/g,"$1 are"],[/\b(\w+)'ll\b/g,"$1 will"],[/\b(\w+)'d\b/g,"$1 would"],[/\b(\w+)'ve\b/g,"$1 have"],[/\bcan't\b/g,"can not"],[/\bwon't\b/g,"will not"],[/\b(\w+)n't\b/g,"$1 not"],[/\bcannot\b/g,"can not"]];
+const norm=s=>CONTR.reduce((t,[r,v])=>t.replace(r,v),String(s).toLowerCase().replace(/[’]/g,"'")).replace(/'/g,"").replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(Boolean).map(t=>NUMW[t]!=null?String(NUMW[t]):t);
 function matchScore(heard,target){
   const T=norm(target),H=norm(heard);if(!T.length)return 0;
   const hit=T.filter(t=>H.some(h=>h===t||(t.length>3&&lev(h,t)<=1))).length;
