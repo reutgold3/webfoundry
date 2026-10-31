@@ -392,7 +392,8 @@ function load(){try{return JSON.parse(localStorage.getItem(KEY))||null}catch(e){
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 let S=load()||{};
 if(S.done!=null&&!S.prog){S.prog={g3:S.done};S.course="g3";delete S.done}
-S=Object.assign({name:"",char:null,course:null,prog:{},lastDate:null,streak:0,stars:0,scores:{},remind:"17:00",len:"10",mist:{},spent:0,owned:["bg-sky"],wear:null,bg:"bg-sky"},S);
+S=Object.assign({name:"",char:null,course:null,prog:{},lastDate:null,streak:0,stars:0,scores:{},remind:"17:00",len:"10",mist:{},spent:0,owned:["bg-sky"],wear:null,bg:"bg-sky",speed:"slow"},S);
+const SPEED={xslow:{f:.7,he:"איטי מאוד"},slow:{f:.85,he:"איטי"},normal:{f:1,he:"רגיל"}};
 const LEN={"5":{f:.5,he:"5 דקות"},"10":{f:1,he:"10 דקות"},"15":{f:1.5,he:"15 דקות"}};
 const nq=b=>Math.max(1,Math.round(b*(LEN[S.len]||LEN["10"]).f));
 const scoreList=c=>S.scores[c.id]||[];
@@ -422,7 +423,7 @@ function say(text,{slow=false}={}){
     speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text);
     const c=char();u.lang="en-US";if(VOICE)u.voice=VOICE;
-    u.pitch=c.pitch;u.rate=slow?.6:c.rate;
+    u.pitch=c.pitch;u.rate=slow?.55:Math.max(.5,c.rate*(SPEED[S.speed]||SPEED.slow).f);
     const av=document.querySelector(".avatar");
     u.onstart=()=>av&&av.classList.add("speaking");
     let done=false;
@@ -636,6 +637,8 @@ function settings(){
    <div class="hero">
      <h3>שעת השיעור היומי</h3>
      <div class="field"><label for="rtime">באיזו שעה לומדים כל יום?</label><input id="rtime" type="time" value="${esc(S.remind)}"></div>
+     <h3>מהירות הדיבור של הדמות</h3>
+     <div class="seg" role="group" aria-label="מהירות הדיבור">${Object.keys(SPEED).map(k=>`<button class="segb sp" data-k="${k}" aria-pressed="${S.speed===k}">${SPEED[k].he}</button>`).join("")}</div>
      <h3>אורך השיעור</h3>
      <div class="seg" role="group" aria-label="אורך השיעור">${Object.keys(LEN).map(k=>`<button class="segb" data-k="${k}" aria-pressed="${S.len===k}">${LEN[k].he}</button>`).join("")}</div>
    </div>
@@ -651,7 +654,8 @@ function settings(){
   $("#parents").onclick=parentGate;
   const sync=()=>{S.remind=$("#rtime").value||"17:00";save();$("#gcal").href=googleCalLink()};
   $("#rtime").onchange=sync;
-  app.querySelectorAll(".segb").forEach(b=>b.onclick=()=>{S.len=b.dataset.k;save();app.querySelectorAll(".segb").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+  app.querySelectorAll(".segb:not(.sp)").forEach(b=>b.onclick=()=>{S.len=b.dataset.k;save();app.querySelectorAll(".segb:not(.sp)").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+  app.querySelectorAll(".segb.sp").forEach(b=>b.onclick=()=>{S.speed=b.dataset.k;save();app.querySelectorAll(".segb.sp").forEach(x=>x.setAttribute("aria-pressed",x===b));say("Hello! This is how I speak now.")});
   $("#ics").onclick=()=>{
     sync();
     try{
@@ -862,6 +866,7 @@ function frame(inner){
   $("#quit").onclick=home;
 }
 function next(){LS.i++;LS.i>=LS.steps.length?finish():step()}
+const pause=(ms=900)=>new Promise(r=>setTimeout(r,ms));
 const PRAISE=[["Yes! Well done!","כן! כל הכבוד!"],["Super!","סופר!"],["You got it!","הצלחתם!"],["Amazing!","מדהים!"],["Excellent!","מצוין!"]];
 const praise=()=>PRAISE[Math.random()*PRAISE.length|0];
 
@@ -938,7 +943,7 @@ function speakStep(w,isAnswer){
    <div class="row"><button class="btn ghost" id="said" ${srBlocked?"":"hidden"}>אמרתי את זה!</button><button class="link" id="skip" hidden>דלגו</button></div>`);
   wireTalk(en);say(en);
   $("#hear").onclick=()=>say(w.en);
-  const ok=async()=>{LS.stars++;if(!tries)good(w.en);const[p,h]=praise();$("#heard").textContent=h;await say(p);next()};
+  const ok=async()=>{LS.stars++;if(!tries)good(w.en);const[p,h]=praise();$("#heard").textContent=h;await say(p);await pause();next()};
   $("#said").onclick=ok;$("#skip").onclick=()=>{miss(w.en);next()};
   const mic=$("#mic");if(!mic)return;
   mic.onclick=async()=>{
@@ -979,7 +984,7 @@ function choose(w,pool,mode){
     if(o.en===w.en){
       b.classList.add("good");app.querySelectorAll(".opt").forEach(x=>x.disabled=true);
       if(first){LS.stars++;good(w.en);if(LS.hits)LS.hits[LS.i]=1}
-      const[p]=praise();await say(mode==="read"?`${w.en}! ${p}`:p);next();
+      const[p]=praise();await say(mode==="read"?`${w.en}! ${p}`:p);await pause();next();
     }else{
       if(first)miss(w.en);first=false;b.classList.remove("bad");void b.offsetWidth;b.classList.add("bad");
       say(pic?(mode==="read"?`Oops! That is ${o.en}. Try again!`:`Oops! That is ${o.en}. Listen: ${w.en}.`):`Oops! Try again. ${w.en}`);
@@ -1000,7 +1005,7 @@ function chooseReply(w,pool){
     if(o.en===w.en){
       b.classList.add("good");app.querySelectorAll(".opt").forEach(x=>x.disabled=true);
       if(first){LS.stars++;good(w.en)}
-      await say(w.en);next();
+      await say(w.en);await pause();next();
     }else{if(first)miss(w.en);first=false;b.classList.remove("bad");void b.offsetWidth;b.classList.add("bad");say("Hmm, try another answer.")}
   });
 }
@@ -1029,7 +1034,7 @@ function build(w){
     if(ans===w.en){
       $("#slot").className="slot good";$("#check").disabled=true;
       if(first){LS.stars++;good(w.en)}
-      await say(`${w.en} ${praise()[0]}`);next();
+      await say(`${w.en} ${praise()[0]}`);await pause();next();
     }else{
       if(first)miss(w.en);first=false;const s=$("#slot");s.className="slot";void s.offsetWidth;s.className="slot bad";
       say("Almost! Try again.");
@@ -1061,7 +1066,7 @@ function readQ(R,q){
   wireTalk(q[0]);wireStory(R);say(q[0]);
   app.querySelectorAll(".opt").forEach(b=>b.onclick=async()=>{
     const o=opts[+b.dataset.i];
-    if(o.ok){b.classList.add("good");app.querySelectorAll(".opt").forEach(x=>x.disabled=true);if(first)LS.stars++;else miss(q[0]);await say(praise()[0]);next()}
+    if(o.ok){b.classList.add("good");app.querySelectorAll(".opt").forEach(x=>x.disabled=true);if(first)LS.stars++;else miss(q[0]);await say(praise()[0]);await pause();next()}
     else{if(first)miss(q[0]);first=false;b.classList.remove("bad");void b.offsetWidth;b.classList.add("bad");say("Not quite. Read again and try.")}
   });
 }
@@ -1090,7 +1095,7 @@ function spell(w){
   $("#clear").onclick=()=>{picked=[];$("#slot").className="slot spell";draw()};
   $("#skip").onclick=async()=>{$("#slot").innerHTML=letters.map(l=>`<span class="tok letter">${esc(l)}</span>`).join("");await say(`${w.en}. ${[...w.en].join(", ")}.`);next()};
   $("#check").onclick=async()=>{
-    if(picked.map(k=>bank[k].t).join("")===word){$("#slot").className="slot spell good";$("#check").disabled=true;if(first){LS.stars++;good(w.en)}await say(`${w.en}! ${praise()[0]}`);next()}
+    if(picked.map(k=>bank[k].t).join("")===word){$("#slot").className="slot spell good";$("#check").disabled=true;if(first){LS.stars++;good(w.en)}await say(`${w.en}! ${praise()[0]}`);await pause();next()}
     else{if(first)miss(w.en);first=false;$("#skip").hidden=false;const s=$("#slot");s.className="slot spell";void s.offsetWidth;s.className="slot spell bad";say("Almost! Try again.")}
   };
   draw();
@@ -1116,7 +1121,7 @@ function typeStep(w,dialog){
       inp.classList.add("good");$("#check").disabled=true;
       if(tries===0&&hint===0){LS.stars++;good(w.en)}else miss(w.en);
       $("#fb").textContent=a===b?"מצוין!":`כמעט מושלם. הכתיב הנכון: ${w.en}`;
-      await say(`${w.en}. ${praise()[0]}`);next();
+      await say(`${w.en}. ${praise()[0]}`);await pause();next();
     }else{
       tries++;inp.classList.remove("bad");void inp.offsetWidth;inp.classList.add("bad");
       const ok=norm(inp.value).filter((t,i)=>norm(w.en)[i]===t).length;
