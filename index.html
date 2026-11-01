@@ -1,6 +1,6 @@
 <!doctype html>
-<html lang="he"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="theme-color" content="#DDF1F7"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icons/icon-192.png"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"><title>English Buddy</title><style>[hidden]{display:none!important}body{margin:0}</style></head><body>
-<title>English Buddy</title>
+<html lang="he"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="theme-color" content="#DDF1F7"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icons/icon-192.png"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"><title>Yalla English</title><style>[hidden]{display:none!important}body{margin:0}</style></head><body>
+<title>Yalla English</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Rubik:wght@400;500;700&display=swap">
@@ -672,7 +672,7 @@ function pickCourse(first){
     ${COURSES.filter(c=>c.group===g).map(c=>`<button class="course" data-id="${c.id}" aria-pressed="${c.id===picked}"><span class="e" aria-hidden="true">${c.e}</span><span><b>${c.he}</b><span>${c.units.length} שיעורים</span></span></button>`).join("")}
     ${grid(g)?`</div>`:""}</div>`;
   app.innerHTML=`
-   ${first?`<h1>שלום! ברוכים הבאים ל-English Buddy</h1><p>בחרו מסלול. אפשר להחליף אותו בכל רגע.</p>`:`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">בחירת מסלול</h2></div>`}
+   ${first?`<h1>שלום! ברוכים הבאים ל-Yalla English!</h1><p>בחרו מסלול. אפשר להחליף אותו בכל רגע.</p>`:`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">בחירת מסלול</h2></div>`}
    <div class="courses">${Object.keys(GROUPS).map(grp).join("")}</div>
    <button class="btn ghost wide" id="place">לא בטוחים? מבחן רמה קצר</button>
    <p id="sub" class="label" style="text-transform:none;letter-spacing:0;font-size:15px;min-height:22px">${picked?esc(courseById(picked).sub):""}</p>
@@ -719,7 +719,7 @@ function home(){
   const avg=avgScore(C),best=bestScore(C),tests=(S.tests&&S.tests[C.id])||[];
   const canTest=Math.min(done,C.units.length)>=2;
   app.innerHTML=`
-   <div class="top"><div class="grow"><div class="label">English Buddy · ${esc(C.he)}</div></div>
+   <div class="top"><div class="grow"><div class="label">Yalla English · ${esc(C.he)}</div></div>
      <span class="chip" title="ימים ברצף">🔥 ${liveStreak()}</span><button class="chip" id="shop" title="חנות הפרסים">⭐ ${balance()} · חנות</button>
      <button class="x" id="settings" aria-label="הגדרות">⚙️</button></div>
    ${talkHTML(en,he)}
@@ -766,14 +766,14 @@ function reminderDates(){
 }
 function googleCalLink(){
   const [a,b]=reminderDates();
-  const p=new URLSearchParams({action:"TEMPLATE",text:"English Buddy – שיעור אנגלית",details:"הגיע הזמן לשיעור היומי! "+location.href,dates:`${a}/${b}`,ctz:"Asia/Jerusalem",recur:"RRULE:FREQ=DAILY"});
+  const p=new URLSearchParams({action:"TEMPLATE",text:"Yalla English – שיעור אנגלית",details:"הגיע הזמן לשיעור היומי! "+location.href,dates:`${a}/${b}`,ctz:"Asia/Jerusalem",recur:"RRULE:FREQ=DAILY"});
   return "https://calendar.google.com/calendar/render?"+p.toString();
 }
 function icsText(){
   const [a,b]=reminderDates();
-  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//English Buddy//HE","BEGIN:VEVENT","UID:english-buddy-daily@englishbuddy","DTSTAMP:"+a,
-   "DTSTART;TZID=Asia/Jerusalem:"+a,"DTEND;TZID=Asia/Jerusalem:"+b,"RRULE:FREQ=DAILY","SUMMARY:English Buddy – שיעור אנגלית",
-   "DESCRIPTION:הגיע הזמן לשיעור היומי!","BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:English Buddy","TRIGGER:PT0M","END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Yalla English//HE","BEGIN:VEVENT","UID:english-buddy-daily@englishbuddy","DTSTAMP:"+a,
+   "DTSTART;TZID=Asia/Jerusalem:"+a,"DTEND;TZID=Asia/Jerusalem:"+b,"RRULE:FREQ=DAILY","SUMMARY:Yalla English – שיעור אנגלית",
+   "DESCRIPTION:הגיע הזמן לשיעור היומי!","BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:Yalla English","TRIGGER:PT0M","END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
 }
 function settings(){
   stopVoice();
