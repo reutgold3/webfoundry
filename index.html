@@ -107,6 +107,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--sea);outline-of
 .mic.on{animation:pulse 1s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,80,106,.5),0 6px 0 #B73350}100%{box-shadow:0 0 0 22px rgba(232,80,106,0),0 6px 0 #B73350}}
 .heard{min-height:24px;color:var(--ink-soft);font-size:16px}
+.mic.small{width:72px;height:72px;font-size:30px}
+.center{text-align:center}
 .row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 
 /* Home */
@@ -596,6 +598,22 @@ function listenOnce(){
     r.onend=()=>{if(!got)res([])};
     try{r.start()}catch(e){rej("start")}
   });
+}
+
+/* ===================== Voice answers ===================== */
+const micHTML=()=>srBlocked?"":`<div class="row"><button class="mic small" id="am" aria-label="לענות בקול">🎤</button></div><div class="heard center" id="amh">אפשר גם לענות בקול: לחצו על המיקרופון ואמרו את התשובה</div>`;
+function wireMic(cands){ // cands: [{text, pick}]
+  const b=document.getElementById("am");if(!b)return;
+  b.onclick=async()=>{
+    stopVoice();b.classList.add("on");const h=document.getElementById("amh");h.textContent="מקשיב...";
+    try{
+      const heard=await listenOnce();b.classList.remove("on");
+      let best=null,bs=0;
+      for(const c of cands)for(const t of heard){const sc=matchScore(t,c.text);if(sc>bs){bs=sc;best=c}}
+      if(best&&bs>=.6){h.textContent=`שמעתי: "${heard[0]}"`;best.pick()}
+      else h.textContent=heard.length?`שמעתי: "${heard[0]}". נסו שוב, או לחצו על התשובה.`:"לא שמעתי. נסו שוב, קצת יותר חזק.";
+    }catch(e){b.classList.remove("on");srBlocked=true;b.remove();const h2=document.getElementById("amh");if(h2)h2.textContent="המיקרופון לא זמין כאן. לחצו על התשובה."}
+  };
 }
 
 /* ===================== Helpers ===================== */
@@ -1276,9 +1294,10 @@ function choose(w,pool,mode){
   frame(talkHTML(en,he)+
    (mode==="listen"?`<div class="row"><button class="speak" id="hear" aria-label="להשמיע שוב">🔊</button><button class="speak slow" id="slow" aria-label="להשמיע לאט">🐢</button></div>`
     :`<div class="prompt-word ${pic?"":"phrase"}">${esc(w.en)}</div>`)+
-   `<div class="grid ${pic?"":"one"}">${opts.map((o,i)=>`<button class="opt ${pic?"":"text"}" data-i="${i}" ${pic?`aria-label="אפשרות ${i+1}"`:""}>${pic?o.e:esc(o.he)}</button>`).join("")}</div>`);
+   `<div class="grid ${pic?"":"one"}">${opts.map((o,i)=>`<button class="opt ${pic?"":"text"}" data-i="${i}" ${pic?`aria-label="אפשרות ${i+1}"`:""}>${pic?o.e:esc(o.he)}</button>`).join("")}</div>`+micHTML());
   wireTalk(en);
   if(mode==="listen"){$("#hear").onclick=()=>say(w.en);$("#slow").onclick=()=>say(w.en,{slow:true});say(w.en)}
+  setTimeout(()=>wireMic(opts.map((o,i)=>({text:o.en,pick:()=>app.querySelector(`.opt[data-i="${i}"]`).click()}))),0);
   app.querySelectorAll(".opt").forEach(b=>b.onclick=async()=>{
     const o=opts[+b.dataset.i];
     if(o.en===w.en){
@@ -1297,8 +1316,9 @@ function chooseReply(w,pool){
   let first=true;
   frame(talkHTML(w.q,"תבחרו את התשובה המתאימה לשאלה")+
    `<div class="row"><button class="speak" id="hear" aria-label="להשמיע את השאלה שוב">🔊</button></div>
-    <div class="grid one">${opts.map((o,i)=>`<button class="opt text en" data-i="${i}">${esc(o.en)}</button>`).join("")}</div>`);
+    <div class="grid one">${opts.map((o,i)=>`<button class="opt text en" data-i="${i}">${esc(o.en)}</button>`).join("")}</div>`+micHTML());
   wireTalk(w.q);
+  setTimeout(()=>wireMic(opts.map((o,i)=>({text:o.en,pick:()=>app.querySelector(`.opt[data-i="${i}"]`).click()}))),0);
   $("#hear").onclick=()=>say(w.q);say(w.q);
   app.querySelectorAll(".opt").forEach(b=>b.onclick=async()=>{
     const o=opts[+b.dataset.i];
@@ -1319,8 +1339,9 @@ function build(w){
    <div class="card" style="gap:6px"><div class="label">הפירוש</div><div class="word-he" style="font-size:20px;color:var(--ink)">${esc(w.he)}</div></div>
    <div class="slot" id="slot" aria-live="polite"></div>
    <div class="bank" id="bank">${bank.map((b,k)=>`<button class="tok" data-k="${k}">${esc(b.t)}</button>`).join("")}</div>
-   <div class="row"><button class="btn ghost" id="clear">ניקוי</button><button class="btn" id="check" disabled>בדיקה</button></div>`);
+   <div class="row"><button class="btn ghost" id="clear">ניקוי</button><button class="btn" id="check" disabled>בדיקה</button></div>${micHTML()}`);
   wireTalk(en);say(en);
+  setTimeout(()=>wireMic([{text:w.en,pick:()=>{picked=target.map(t=>bank.findIndex((b,k)=>b.t===t&&!picked.includes(k))).reduce((acc,_,i)=>{const k=bank.findIndex((b,kk)=>b.t===target[i]&&!acc.includes(kk));acc.push(k);return acc},[]);draw();$("#check").disabled=false;$("#check").click()}}]),0);
   const draw=()=>{
     $("#slot").innerHTML=picked.map((k,j)=>`<button class="tok" data-j="${j}">${esc(bank[k].t)}</button>`).join("");
     app.querySelectorAll("#bank .tok").forEach(b=>b.classList.toggle("used",picked.includes(+b.dataset.k)));
@@ -1362,8 +1383,9 @@ function readQ(R,q){
   const opts=shuffle(q.slice(1).map((t,i)=>({t,ok:i===0})));
   let first=true;
   frame(talkHTML(q[0],"שאלה על הטקסט. אפשר לחזור ולקרוא אותו.")+storyCard(R)+
-   `<div class="qtext">${esc(q[0])}</div><div class="grid one">${opts.map((o,i)=>`<button class="opt text en" data-i="${i}">${esc(cap(o.t))}</button>`).join("")}</div>`);
+   `<div class="qtext">${esc(q[0])}</div><div class="grid one">${opts.map((o,i)=>`<button class="opt text en" data-i="${i}">${esc(cap(o.t))}</button>`).join("")}</div>`+micHTML());
   wireTalk(q[0]);wireStory(R);say(q[0]);
+  setTimeout(()=>wireMic(opts.map((o,i)=>({text:o.t,pick:()=>app.querySelector(`.opt[data-i="${i}"]`).click()}))),0);
   app.querySelectorAll(".opt").forEach(b=>b.onclick=async()=>{
     const o=opts[+b.dataset.i];
     if(o.ok){b.classList.add("good");app.querySelectorAll(".opt").forEach(x=>x.disabled=true);if(first)LS.stars++;else miss(q[0]);await say(praise()[0]);await pause();next()}
@@ -1409,6 +1431,7 @@ function typeStep(w,dialog){
    <div class="field"><label for="typed" class="label">התשובה שלכם</label>
    <input id="typed" dir="ltr" lang="en" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type in English..."></div>
    <div class="heard" id="fb"></div>
+   ${micHTML()}
    <div class="row"><button class="btn ghost" id="hint">רמז</button><button class="btn" id="check">בדיקה</button><button class="link" id="skip" hidden>הראו לי את התשובה</button></div>`);
   wireTalk(en);if(dialog)say(w.q);
   const inp=$("#typed");
@@ -1430,6 +1453,7 @@ function typeStep(w,dialog){
     }
   };
   $("#check").onclick=check;inp.addEventListener("keydown",e=>{if(e.key==="Enter")check()});
+  wireMic([{text:w.en,pick:()=>{inp.value=w.en;check()}}]);
 }
 function miss(x){
   if(LS.place)return;
