@@ -126,7 +126,7 @@ const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random(
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 /* render */
 const F=(n,d)=>`<span class="fr"><span>${n}</span><span>${d}</span></span>`;
-const M=(...parts)=>`<span class="math">${parts.join(" ")}</span>`;
+const M=(...parts)=>`<span class="math">${parts.join(" ").replace(/([\u0590-\u05FF][\u0590-\u05FF״׳\-]*)/g,"<bdi>$1</bdi>")}</span>`;
 function show(r,mixed=true){ // rational -> html
   if(r.d===1)return M(r.n);
   if(mixed&&r.n>r.d){const w=Math.floor(r.n/r.d),k=r.n%r.d;return M(w,F(k,r.d))}
@@ -139,6 +139,20 @@ function chartSVG(cats,vals,step){
   for(let v=0;v<=top;v+=step){s+=`<line x1="${L}" x2="${W-6}" y1="${y(v)}" y2="${y(v)}" stroke="#BFE3D2" stroke-width="1"/><text x="${L-6}" y="${y(v)+4}" font-size="11" text-anchor="end" fill="#5B6B7A">${v}</text>`}
   cats.forEach((c,i)=>{const x=L+i*cw+cw*.18,w=cw*.64;s+=`<rect x="${x}" y="${y(vals[i])}" width="${w}" height="${y(0)-y(vals[i])}" rx="4" fill="#FF8A3D"/><text x="${x+w/2}" y="${H-12}" font-size="13" text-anchor="middle" fill="#1F2D3D">${c}</text>`});
   return s+`<line x1="${L}" x2="${L}" y1="${T}" y2="${y(0)}" stroke="#1F2D3D" stroke-width="1.5"/><line x1="${L}" x2="${W-6}" y1="${y(0)}" y2="${y(0)}" stroke="#1F2D3D" stroke-width="1.5"/></svg>`;
+}
+const UNITS=[["מ׳","ס״מ",100],["ס״מ","מ״מ",10],["ק״מ","מ׳",1000],["ק״ג","גרם",1000],["ליטר","מ״ל",1000]];
+function orderQ(){
+  for(let tries=0;tries<200;tries++){
+    const a=rnd(2,20),b=rnd(2,12),c=rnd(2,9),d=rnd(2,6);const f=rnd(0,5);let ex,val,steps;
+    if(f===0){ex=`${a} + ${b} × ${c}`;val=a+b*c;steps=`${a} + ${b*c} = ${val}`}
+    else if(f===1){ex=`(${a} + ${b}) × ${c}`;val=(a+b)*c;steps=`${a+b} × ${c} = ${val}`}
+    else if(f===2){const x=b*c;ex=`${a+x} − ${x} : ${c}`;val=a+x-b;steps=`${a+x} − ${b} = ${val}`}
+    else if(f===3){const x=c*d;ex=`${x} : ${d} + ${a} × ${2}`;val=c+a*2;steps=`${c} + ${a*2} = ${val}`}
+    else if(f===4){if(b<=c)continue;ex=`${a} × (${b} − ${c})`;val=a*(b-c);steps=`${a} × ${b-c} = ${val}`}
+    else{const x=b*d;ex=`${a*2+x} − ${x} : ${d} × 2`;val=a*2+x-b*2;steps=`${a*2+x} − ${b} × 2 = ${a*2+x} − ${b*2} = ${val}`}
+    if(val<0)continue;
+    return {prompt:`${M(ex+" = ?")}`,type:"num",ans:R(val),hint:[`יש סוגריים? פותרים אותם קודם.`,`אחר כך כפל וחילוק, ובסוף חיבור וחיסור.`],sol:M(`${ex} = ${steps}`)};
+  }
 }
 const txt=(r,mixed=true)=>r.d===1?String(r.n):(mixed&&r.n>r.d?`${Math.floor(r.n/r.d)} ${r.n%r.d}/${r.d}`:`${r.n}/${r.d}`);
 
@@ -361,6 +375,63 @@ const TOPICS=[
      return {prompt:`${title}: מה הערך של העמודה הגבוהה ביותר?`,vis:chartSVG(cats,vals,step),type:"num",ans:R(mx),hint:[`מצאו את העמודה הגבוהה ביותר.`,`בדקו מול הקווים בצד מה הגובה שלה.`],sol:`העמודה הגבוהה ביותר היא "${cats[vals.indexOf(mx)]}": ${mx}`};
    },
   ]},
+
+ {id:"units",title:"מידות עשרוניות",short:"המרת אורך, משקל ונפח",icon:"cm",
+  lesson:[
+   {h:"טבלת המידות",p:"1 מטר = 100 סנטימטר. 1 סנטימטר = 10 מילימטר. 1 קילומטר = 1000 מטר. 1 קילוגרם = 1000 גרם. 1 ליטר = 1000 מיליליטר.",ex:()=>`<p>${M("1 מ׳ = 100 ס״מ")}</p><p>${M("1 ק״מ = 1000 מ׳")}</p><p>${M("1 ק״ג = 1000 גרם")}</p><p>${M("1 ליטר = 1000 מ״ל")}</p>`},
+   {h:"ממידה גדולה לקטנה",p:"מיחידה גדולה לקטנה כופלים: המספר נהיה גדול יותר.",ex:()=>`<div class="big">${M("2.5 מ׳ = 2.5 × 100 = 250 ס״מ")}</div>`},
+   {h:"ממידה קטנה לגדולה",p:"מיחידה קטנה לגדולה מחלקים: המספר נהיה קטן יותר.",ex:()=>`<div class="big">${M("350 גרם = 350 : 1000 = 0.35 ק״ג")}</div>`},
+  ],
+  gen:[
+   ()=>{const [B,S,f]=pick(UNITS),x=rnd(11,95)/(f===10?10:pick([10,100]));
+     return {prompt:`${M(`${fmt(x)} ${B} = ? ${S}`)}`,type:"dec",ans:Math.round(x*f*1000)/1000,hint:[`${M(`1 ${B} = ${f} ${S}`)}`,`מגדולה לקטנה כופלים ב-${f}.`],sol:M(`${fmt(x)} × ${f} = ${fmt(x*f)} ${S}`)}},
+   ()=>{const [B,S,f]=pick(UNITS),x=rnd(5,999);
+     return {prompt:`${M(`${x} ${S} = ? ${B}`)}`,type:"dec",ans:x/f,hint:[`${M(`1 ${B} = ${f} ${S}`)}`,`מקטנה לגדולה מחלקים ב-${f}.`],sol:M(`${x} : ${f} = ${fmt(x/f)} ${B}`)}},
+   ()=>{const w=rnd(1,9),c=rnd(5,95);
+     return {prompt:`כתבו במטרים: ${M(`${w} מ׳ ו-${c} ס״מ`)}`,type:"dec",ans:w+c/100,hint:[`${c} ס״מ הם ${M(`${c} : 100`)} מטר.`,`מוסיפים ל-${w} מטרים.`],sol:M(`${w} + ${fmt(c/100)} = ${fmt(w+c/100)} מ׳`)}},
+   ()=>{const kg=rnd(1,4),g=pick([250,500,750,200,400,600,800]);
+     return {prompt:`בשקית ${M(`${kg} ק״ג`)} ועוד ${M(`${g} גרם`)} תפוחים. כמה קילוגרמים בסך הכול?`,type:"dec",ans:kg+g/1000,hint:[`${g} גרם הם ${M(`${g} : 1000`)} ק״ג.`],sol:M(`${kg} + ${fmt(g/1000)} = ${fmt(kg+g/1000)} ק״ג`)}},
+  ]},
+ {id:"scale",title:"קנה מידה",short:"מפות ותוכניות",icon:"1:100",
+  lesson:[
+   {h:"מה זה קנה מידה",p:"קנה מידה 1:1000 אומר: כל סנטימטר אחד במפה הוא 1000 סנטימטרים במציאות, כלומר 10 מטרים.",ex:()=>`<div class="big">${M("1 : 1000")}</div><p>${M("1 ס״מ במפה = 1000 ס״מ = 10 מ׳ במציאות")}</p>`},
+   {h:"מהמפה למציאות",p:"כופלים את המרחק במפה במספר של קנה המידה, ואז ממירים למטרים או לקילומטרים.",ex:()=>`<p>קנה מידה 1:500, במפה 6 ס״מ</p><div class="big">${M("6 × 500 = 3000 ס״מ = 30 מ׳")}</div>`},
+   {h:"מהמציאות למפה",p:"ממירים את המרחק האמיתי לסנטימטרים, ומחלקים במספר של קנה המידה.",ex:()=>`<p>קנה מידה 1:1000, במציאות 50 מ׳</p><div class="big">${M("5000 : 1000 = 5 ס״מ")}</div>`},
+  ],
+  gen:[
+   ()=>{const S=pick([100,200,500,1000,2000,5000]),m=rnd(2,12);const realM=m*S/100;
+     return {prompt:`קנה המידה של תוכנית הוא ${M(`1 : ${S}`)}. המרחק בתוכנית הוא ${M(`${m} ס״מ`)}. מה המרחק במציאות במטרים?`,type:"dec",ans:realM,hint:[`במציאות: ${M(`${m} × ${S}`)} סנטימטרים.`,`ממירים למטרים: מחלקים ב-100.`],sol:M(`${m} × ${S} = ${m*S} ס״מ = ${fmt(realM)} מ׳`)}},
+   ()=>{const S=pick([50000,100000,200000,25000]),m=rnd(2,10);const km=m*S/100000;
+     return {prompt:`במפה בקנה מידה ${M(`1 : ${S}`)} המרחק בין שתי ערים הוא ${M(`${m} ס״מ`)}. מה המרחק האמיתי בקילומטרים?`,type:"dec",ans:km,hint:[`${M(`${m} × ${S}`)} סנטימטרים במציאות.`,`ב-1 ק״מ יש 100,000 ס״מ.`],sol:M(`${m} × ${S} = ${m*S} ס״מ = ${fmt(km)} ק״מ`)}},
+   ()=>{const S=pick([100,200,500,1000]),map=rnd(2,12),real=map*S/100;
+     return {prompt:`קנה המידה ${M(`1 : ${S}`)}. אורך החדר במציאות ${M(`${fmt(real)} מ׳`)}. מה האורך בתוכנית בסנטימטרים?`,type:"dec",ans:map,hint:[`ממירים לסנטימטרים: ${M(`${fmt(real)} × 100 = ${fmt(real*100)}`)}`,`מחלקים ב-${S}.`],sol:M(`${fmt(real*100)} : ${S} = ${map} ס״מ`)}},
+   ()=>{const S=pick([100,200,500,1000,2000]),map=rnd(2,9),real=map*S/100;
+     return {prompt:`במפה ${M(`${map} ס״מ`)} מייצגים ${M(`${fmt(real)} מ׳`)} במציאות. מהו קנה המידה? השלימו: ${M("1 : ?")}`,type:"num",ans:R(S),prefix:"1 :",hint:[`ממירים את המציאות לסנטימטרים: ${M(`${fmt(real*100)} ס״מ`)}`,`בכמה פעמים המציאות גדולה מהמפה? ${M(`${fmt(real*100)} : ${map}`)}`],sol:M(`${fmt(real*100)} : ${map} = ${S}`)+`, ולכן ${M(`1 : ${S}`)}`}},
+  ]},
+ {id:"order",title:"סדר פעולות החשבון",short:"סוגריים, כפל וחילוק לפני חיבור",icon:"( )",
+  lesson:[
+   {h:"הסדר הנכון",p:"קודם פותרים מה שבסוגריים. אחר כך כפל וחילוק משמאל לימין. בסוף חיבור וחיסור משמאל לימין.",ex:()=>`<div class="big">${M("2 + 3 × 4 = 2 + 12 = 14")}</div>`},
+   {h:"סוגריים משנים הכול",p:"אם רוצים לחבר קודם, שמים סוגריים.",ex:()=>`<div class="big">${M("(2 + 3) × 4 = 5 × 4 = 20")}</div>`},
+   {h:"טיפ",p:"עוברים שלב-שלב, וכותבים את התרגיל מחדש אחרי כל פעולה.",ex:()=>`<div class="big">${M("20 − 12 : 4 × 2")}</div><p>${M("= 20 − 3 × 2 = 20 − 6 = 14")}</p>`},
+  ],
+  gen:[()=>orderQ()]},
+ {id:"words",title:"בעיות מילוליות",short:"כמה שלבים, כסף ומידות",icon:"?",
+  lesson:[
+   {h:"איך פותרים בעיה מילולית",p:"קוראים לאט, מסמנים מה ידוע ומה שואלים, מחליטים איזו פעולה מתאימה, ופותרים שלב-שלב.",ex:()=>`<p>3 מחברות ב-4.5 ₪ כל אחת, משלמים ב-20 ₪. כמה עודף?</p><p>${M("3 × 4.5 = 13.5")}</p><p>${M("20 − 13.5 = 6.5")} ₪</p>`},
+   {h:"שימו לב לשארית",p:"כשמחלקים אנשים לרכבים או לקבוצות, אם נשארת שארית צריך עוד אחד.",ex:()=>`<p>130 תלמידים, 40 מקומות באוטובוס</p><p>${M("130 : 40 = 3")} ושארית 10, ולכן צריך 4 אוטובוסים</p>`},
+  ],
+  gen:[
+   ()=>{const k=rnd(2,5),pr=rnd(15,65)/10,pay=pick([20,50,100].filter(x=>x>k*pr));const tot=Math.round(k*pr*10)/10;
+     return {prompt:`${pick(NAMES)} קנה/תה ${k} מחברות ב-${M(fmt(pr))} ₪ כל אחת ושילם/ה ב-${pay} ₪. כמה עודף קיבל/ה?`,type:"dec",ans:Math.round((pay-tot)*10)/10,hint:[`כמה עלו המחברות? ${M(`${k} × ${fmt(pr)}`)}`,`מחסירים מ-${pay}.`],sol:`${M(`${k} × ${fmt(pr)} = ${fmt(tot)}`)}, ${M(`${pay} − ${fmt(tot)} = ${fmt(pay-tot)}`)} ₪`}},
+   ()=>{const cap=pick([30,40,45,50]),n=cap*rnd(2,5)+rnd(1,cap-1);
+     return {prompt:`לטיול יוצאים ${n} תלמידים. בכל אוטובוס יש ${cap} מקומות. כמה אוטובוסים צריך להזמין?`,type:"num",ans:R(Math.ceil(n/cap)),hint:[`${M(`${n} : ${cap}`)}`,`אם יש שארית, צריך עוד אוטובוס.`],sol:`${M(`${n} : ${cap} = ${Math.floor(n/cap)}`)} ושארית ${n%cap}, ולכן ${Math.ceil(n/cap)} אוטובוסים`}},
+   ()=>{const kg=rnd(2,6),per=rnd(35,99)/10,tot=Math.round(kg*per*10)/10;
+     return {prompt:`${kg} ק״ג עגבניות עולים ${M(fmt(tot))} ₪. כמה עולה קילוגרם אחד?`,type:"dec",ans:Math.round(per*10)/10,hint:[`מחלקים את המחיר במספר הקילוגרמים: ${M(`${fmt(tot)} : ${kg}`)}`],sol:M(`${fmt(tot)} : ${kg} = ${fmt(per)}`)+` ₪`}},
+   ()=>{const a=rnd(12,60),t=rnd(2,4);
+     return {prompt:`ל${pick(NAMES)} יש ${a} ₪. לאחיו יש פי ${t} יותר. כמה כסף יש לשניהם יחד?`,type:"num",ans:R(a+a*t),hint:[`לאח: ${M(`${a} × ${t}`)}`,`מחברים את שני הסכומים.`],sol:`${M(`${a} × ${t} = ${a*t}`)}, ${M(`${a} + ${a*t} = ${a+a*t}`)} ₪`}},
+   ()=>{const L=rnd(2,6),cut=pick([25,40,50,20]);const n=Math.floor(L*100/cut);
+     return {prompt:`יש חבל באורך ${M(`${L} מ׳`)}. חותכים ממנו חתיכות של ${M(`${cut} ס״מ`)}. כמה חתיכות שלמות אפשר לחתוך?`,type:"num",ans:R(n),hint:[`ממירים את החבל לסנטימטרים: ${M(`${L} × 100 = ${L*100}`)}`,`מחלקים ב-${cut}.`],sol:M(`${L*100} : ${cut} = ${n}`)+` חתיכות`}},
+  ]},
 ];
 const topicById=id=>TOPICS.find(t=>t.id===id);
 function TOPICS_RATIO0(){return topicById("ratio").gen[0]()}
@@ -386,7 +457,7 @@ const STREAK=["שלוש ברצף! אתם על גל!","חמש ברצף! פשוט 
 function speak(html,force){
   if(!force&&S.voice===false)return;
   if(!("speechSynthesis" in window))return;
-  const d=document.createElement("div");d.innerHTML=html.replace(/<span class="fr"><span>(\d+)<\/span><span>(\d+)<\/span><\/span>/g," $1 חלקי $2 ").replace(/×/g," כפול ").replace(/ : /g," חלקי ").replace(/=/g," שווה ").replace(/−/g," פחות ").replace(/%/g," אחוז ").replace(/<br>/g,". ");
+  const d=document.createElement("div");d.innerHTML=html.replace(/<span class="fr"><span>(\d+)<\/span><span>(\d+)<\/span><\/span>/g," $1 חלקי $2 ").replace(/×/g," כפול ").replace(/ : /g," חלקי ").replace(/=/g," שווה ").replace(/−/g," פחות ").replace(/%/g," אחוז ").replace(/ס״מ/g,"סנטימטר").replace(/מ״מ/g,"מילימטר").replace(/ק״מ/g,"קילומטר").replace(/ק״ג/g,"קילוגרם").replace(/מ״ל/g,"מיליליטר").replace(/מ׳/g,"מטר").replace(/₪/g,"שקלים").replace(/<br>/g,". ");
   speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(d.textContent);u.lang="he-IL";if(HV)u.voice=HV;u.rate=.95;speechSynthesis.speak(u);
 }
 
@@ -421,7 +492,9 @@ function home(){
   <div class="label">עוד בחוברת השברים</div>
   <div class="topics">${["divide","ratio"].map(topicById).map(topicBtn).join("")}</div>
   <div class="label">חוברת: מספרים עשרוניים, אחוזים וחקר נתונים</div>
-  <div class="topics">${["fracdec","decops","percent","data"].map(topicById).map(topicBtn).join("")}</div>`;
+  <div class="topics">${["fracdec","decops","percent","data"].map(topicById).map(topicBtn).join("")}</div>
+  <div class="label">חוברת: מידות עשרוניות, קנה מידה ופעולות החשבון</div>
+  <div class="topics">${["units","scale","order","words"].map(topicById).map(topicBtn).join("")}</div>`;
   app.querySelectorAll(".topic").forEach(b=>b.onclick=()=>topicMenu(b.dataset.id));
   $("#test").onclick=startTest;$("#chg").onclick=onboarding;
   $("#hv").onclick=()=>{S.voice=S.voice===false;save();home();if(S.voice)speak("ההקראה הופעלה",true)};
@@ -445,7 +518,7 @@ function lesson(id,i){
   $("#back").onclick=()=>topicMenu(id);
   const lessonSpeech=()=>L.h+". "+L.p+". "+app.querySelector(".ex").innerHTML.replace(/<svg[\s\S]*?<\/svg>/g,"").replace(/<\/(p|div)>/g,". </$1>");
   $("#rd").onclick=()=>speak(lessonSpeech(),true);
-  setTimeout(()=>speak(lessonSpeech()),250);
+  setTimeout(()=>{if(app.querySelector(".ex"))speak(lessonSpeech())},250);
   if($("#prev"))$("#prev").onclick=()=>lesson(id,i-1);
   $("#next").onclick=()=>i<t.lesson.length-1?lesson(id,i+1):startPractice([id],10,false);
 }
@@ -470,7 +543,7 @@ function question(){
     if(q.type==="choicetxt")return `<div class="opts">${q.opts.map((o,k)=>`<button class="opt" data-k="${k}"><span class="math">${o}</span></button>`).join("")}</div>`;
     if(q.type==="ratio")return `<div class="ans" id="ans"><input class="box" id="b1" readonly inputmode="none" aria-label="מספר ראשון"><span class="big math">:</span><input class="box" id="b2" readonly inputmode="none" aria-label="מספר שני"></div>
       <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-n="${n}">${n}</button>`).join("")}<button class="fn" data-f="del">⌫ מחיקה</button><button data-n="0">0</button><button class="fn" data-f="next">הבא ⇣</button></div>`;
-    const boxes=(q.type==="num"||q.type==="dec")?`<input class="box whole wide" id="b0" readonly inputmode="none" aria-label="תשובה">${q.unit?`<span class="big math">${q.unit}</span>`:""}`:
+    const boxes=(q.type==="num"||q.type==="dec")?`${q.prefix?`<span class="big math">${q.prefix}</span>`:""}<input class="box whole wide" id="b0" readonly inputmode="none" aria-label="תשובה">${q.unit?`<span class="big math">${q.unit}</span>`:""}`:
       `${q.type==="mixed"?`<input class="box whole" id="b0" readonly inputmode="none" aria-label="שלם">`:""}<div class="stack"><input class="box" id="b1" readonly inputmode="none" aria-label="מונה"><span class="ln"></span><input class="box" id="b2" readonly inputmode="none" aria-label="מכנה"></div>`;
     return `<div class="ans" id="ans">${boxes}</div>
       <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-n="${n}">${n}</button>`).join("")}<button class="fn" data-f="del">⌫ מחיקה</button><button data-n="0">0</button>${q.type==="dec"?`<button data-n=".">.</button>`:`<button class="fn" data-f="next">${q.type==="num"?"":"הבא ⇣"}</button>`}</div>`;
@@ -535,7 +608,7 @@ function question(){
   if($("#b0")||$("#b1")){ids.forEach((id,k)=>{$("#"+id).onclick=()=>sel(k)});sel(0)}
   app.querySelectorAll(".pad button").forEach(b=>b.onclick=()=>{
     if(done)return;const el=$("#"+ids[cur]);
-    if(b.dataset.n!=null){if(b.dataset.n==="."&&el.value.includes("."))return;if(el.value.length<(q.type==="dec"?8:4))el.value+=(b.dataset.n==="."&&!el.value?"0.":b.dataset.n);$("#ans").classList.remove("bad")}
+    if(b.dataset.n!=null){if(b.dataset.n==="."&&el.value.includes("."))return;if(el.value.length<(q.type==="dec"?8:q.prefix?7:5))el.value+=(b.dataset.n==="."&&!el.value?"0.":b.dataset.n);$("#ans").classList.remove("bad")}
     else if(b.dataset.f==="del"){if(el.value)el.value=el.value.slice(0,-1);else if(cur>0){sel(cur-1)}}
     else if(b.dataset.f==="next"){sel((cur+1)%ids.length)}
   });
