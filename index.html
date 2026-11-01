@@ -98,6 +98,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 /* lesson */
 .lesson p{font-size:18px}
 .ex{background:#F2FAF6;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center}
+.ex .big{font-size:clamp(20px,6.5vw,30px)}
+.ex .math,.steps .math,.q .math{flex-wrap:wrap;justify-content:center;white-space:normal;row-gap:8px;max-width:100%}
+.card,.ex,.steps{min-width:0;max-width:100%}
 .score{font-family:var(--display);font-size:64px;font-weight:700;color:var(--good);text-align:center;line-height:1}
 .score.low{color:var(--bad)}
 .center{text-align:center}
@@ -236,8 +239,47 @@ const TOPICS=[
      return {prompt:`${nm} קונה ${k} חבילות קמח. כל חבילה שוקלת ${M(`${w}`,F(n,d))} ק״ג. כמה שוקלות כל החבילות?`,type:p.d===1?"num":"mixed",ans:p,
        hint:[`${M(`${k} × ${w}`,F(n,d))}`,`פרקו לשלם ולשבר, וחברו.`],sol:`${M(`${k} × ${w}`,F(n,d),"=")} ${show(p)} ק״ג`}},
   ]},
+
+ {id:"divide",book:"fractions",title:"חילוק שברים ומספרים מעורבים",short:"כמה פעמים נכנס, וכפל בהופכי",icon:"÷½",
+  lesson:[
+   {h:"חילוק = כמה פעמים נכנס",p:"3 חלקי חצי שואל: כמה חצאים יש ב-3? בכל שלם יש 2 חצאים, ולכן ב-3 שלמים יש 6.",ex:()=>`${piesSVG(3,2,6)}<div class="big">${M("3 :",F(1,2),"= 6")}</div>`},
+   {h:"שבר חלקי מספר שלם",p:"מחלקים לחלקים קטנים יותר: כופלים את המכנה במספר השלם.",ex:()=>`<div class="big">${M(F(3,4),": 3 =",F(3,12),"=",F(1,4))}</div><p>${M(F(3,4))} מחולק ל-3 חלקים שווים</p>`},
+   {h:"הכלל: כפל בהופכי",p:"כדי לחלק בשבר, כופלים בשבר ההופכי (מחליפים בין המונה למכנה).",ex:()=>`<div class="big">${M(F(2,3),":",F(4,5),"=",F(2,3),"×",F(5,4),"=",F(10,12),"=",F(5,6))}</div>`},
+   {h:"מספר מעורב בחילוק",p:"קודם הופכים את המספר המעורב לשבר מדומה, ואז כופלים בהופכי.",ex:()=>`<div class="big">${M("2",F(1,2),":",F(1,4),"=",F(5,2),"×",F(4,1),"=",F(20,2),"= 10")}</div>`},
+  ],
+  gen:[
+   ()=>{const k=rnd(2,6),d=pick([2,3,4,5]);
+     return {prompt:`${M(`${k} :`,F(1,d),"= ?")}`,type:"num",ans:R(k*d),hint:[`כמה פעמים ${M(F(1,d))} נכנס בשלם אחד? ${d} פעמים.`,`ובכמה שלמים? כופלים ${M(`${k} × ${d}`)}`],sol:`בכל שלם יש ${d} חלקים של ${M(F(1,d))}, ולכן ${M(`${k} × ${d} = ${k*d}`)}`}},
+   ()=>{const d=pick([2,3,4,5,6]),n=rnd(1,d-1),k=rnd(2,5);const p=R(n,d*k);
+     return {prompt:`${M(F(n,d),`: ${k} = ?`)}`,type:"frac",ans:p,hint:[`כשמחלקים שבר במספר שלם, כופלים את המכנה במספר: ${M(`${d} × ${k}`)}`,`המונה נשאר ${n}. צמצמו אם אפשר.`],sol:`${M(F(n,d),`: ${k} =`,F(n,d*k))}${p.n!==n?` = ${show(p,false)}`:""}`}},
+   ()=>{const b=pick([2,3,4,5,6]),a=rnd(1,b-1),d=pick([2,3,4,5,6,8]),c=rnd(1,d-1);const p=R(a*d,b*c);
+     return {prompt:`${M(F(a,b),":",F(c,d),"= ?")}`,type:p.d===1?"num":(p.n>p.d?"mixed":"frac"),ans:p,hint:[`כופלים בהופכי: ${M(F(a,b),"×",F(d,c))}`,`מונה כפול מונה, מכנה כפול מכנה, ואז מצמצמים.`],sol:`${M(F(a,b),"×",F(d,c),"=",F(a*d,b*c))} = ${show(p)}`}},
+   ()=>{const d=pick([2,4]),w=rnd(1,3),n=rnd(1,d-1),q=pick([2,4,8].filter(x=>x>=d));const p=R((w*d+n)*q,d);
+     return {prompt:`${M(`${w}`,F(n,d),":",F(1,q),"= ?")}`,type:p.d===1?"num":"mixed",ans:p,hint:[`הפכו את ${M(`${w}`,F(n,d))} לשבר מדומה: ${M(F(w*d+n,d))}`,`כופלים בהופכי של ${M(F(1,q))}, כלומר ב-${q}.`],sol:`${M(F(w*d+n,d),`× ${q} =`,F((w*d+n)*q,d))} = ${show(p)}`}},
+   ()=>{const q=pick([2,3,4,5]),k=rnd(2,6);
+     return {prompt:`יש ${k} ליטר מיץ. ממלאים כוסות של ${M(F(1,q))} ליטר. כמה כוסות אפשר למלא?`,type:"num",ans:R(k*q),hint:[`השאלה היא כמה פעמים ${M(F(1,q))} נכנס ב-${k}: ${M(`${k} :`,F(1,q))}`],sol:`${M(`${k} :`,F(1,q),`= ${k} × ${q} = ${k*q}`)} כוסות`}},
+  ]},
+ {id:"ratio",book:"fractions",title:"יחס",short:"השוואה בין כמויות",icon:"2:3",
+  lesson:[
+   {h:"מה זה יחס",p:"יחס משווה בין שתי כמויות. 2 כחולים על כל 3 אדומים: היחס בין כחולים לאדומים הוא 2:3.",ex:()=>`${dotsSVG(5,5,2)}<div class="big">${M("2 : 3")}</div>`},
+   {h:"צמצום יחס",p:"מחלקים את שני המספרים באותו מספר, כמו בשבר.",ex:()=>`<div class="big">${M("8 : 12 = 2 : 3")}</div><p>חילקנו את שניהם ב-4</p>`},
+   {h:"יחס וכמות כוללת",p:"מחברים את חלקי היחס כדי לדעת לכמה חלקים מחלקים. 2:3 זה 5 חלקים בסך הכול.",ex:()=>`<p>היחס בין בנים לבנות 2:3, ויש 30 תלמידים.</p><p>${M("30 : 5 = 6")} לכל חלק</p><p>בנים ${M("2 × 6 = 12")}, בנות ${M("3 × 6 = 18")}</p>`},
+   {h:"יחס ושבר",p:"אם היחס בין בנים לבנות הוא 2:3, הבנים הם 2 חלקים מתוך 5, כלומר שתי חמישיות מהכיתה.",ex:()=>`<div class="big">${M("2 : 3 →",F(2,5))}</div>`},
+  ],
+  gen:[
+   ()=>{const a=rnd(1,5),b=rnd(1,6);if(gcd(a,b)!==1||a===b)return TOPICS_RATIO0();const k=rnd(2,6);
+     return {prompt:`צמצמו את היחס: ${M(`${a*k} : ${b*k}`)}`,type:"ratio",ans:{a,b},hint:[`חפשו מספר שמחלק גם את ${a*k} וגם את ${b*k}.`,`נסו לחלק ב-${k}.`],sol:`מחלקים את שניהם ב-${k}: ${M(`${a*k} : ${b*k} = ${a} : ${b}`)}`}},
+   ()=>{const a=rnd(1,4),b=rnd(1,5),k=rnd(2,8);const T=(a+b)*k,nm=pick(NAMES);
+     return {prompt:`היחס בין בנים לבנות בכיתה הוא ${M(`${a} : ${b}`)}. בכיתה ${T} תלמידים. כמה בנות בכיתה?`,type:"num",ans:R(b*k),hint:[`כמה חלקים בסך הכול? ${M(`${a} + ${b} = ${a+b}`)}`,`כמה תלמידים בכל חלק? ${M(`${T} : ${a+b}`)}`,`הבנות הן ${b} חלקים.`],sol:`${M(`${T} : ${a+b} = ${k}`)}, בנות: ${M(`${b} × ${k} = ${b*k}`)}`}},
+   ()=>{const a=rnd(1,5),b=rnd(1,6),k=rnd(2,7);
+     return {prompt:`היחס בין עפרונות כחולים לאדומים הוא ${M(`${a} : ${b}`)}. יש ${a*k} עפרונות כחולים. כמה עפרונות אדומים יש?`,type:"num",ans:R(b*k),hint:[`בכמה הוכפל החלק הכחול? ${M(`${a*k} : ${a}`)}`,`מכפילים גם את החלק האדום באותו מספר.`],sol:`${M(`${a*k} : ${a} = ${k}`)}, אדומים: ${M(`${b} × ${k} = ${b*k}`)}`}},
+   ()=>{const a=rnd(1,4),b=rnd(1,5);
+     return {prompt:`היחס בין בנים לבנות הוא ${M(`${a} : ${b}`)}. איזה חלק מכל התלמידים הם בנים?`,type:"frac",ans:R(a,a+b),hint:[`כמה חלקים בסך הכול? ${M(`${a} + ${b}`)}`,`הבנים הם ${a} חלקים מתוכם.`],sol:`${a} חלקים מתוך ${a+b}: ${show(R(a,a+b),false)}`}},
+  ]},
 ];
 const topicById=id=>TOPICS.find(t=>t.id===id);
+function TOPICS_RATIO0(){return topicById("ratio").gen[0]()}
+const TEST_TOPICS=["meaning","division","multiply","wholemixed"];
 
 /* ============ state ============ */
 const KEY="yalla-math-v1";
@@ -285,11 +327,14 @@ function home(){
   ${talk(`${g}${nm()}! בואו נתכונן למבחן. אפשר ללמוד נושא, לתרגל, או לעשות מבחן לדוגמה.`)}
   <div class="card hero"><h3>מבחן לדוגמה</h3><p>12 שאלות מכל הנושאים, כמו במבחן אמיתי. בסוף מקבלים ציון ורואים מה לחזק.</p>
    ${last?`<p class="label">ציון אחרון: ${last.s}</p>`:""}<button class="btn wide" id="test">להתחיל מבחן</button></div>
-  <div class="label">הנושאים למבחן</div>
-  <div class="topics">${TOPICS.map(t=>{const m=mastery(t.id),p=prog(t.id);return `<button class="topic" data-id="${t.id}"><span class="e" aria-hidden="true"><span class="math">${t.icon}</span></span><span class="grow"><b>${t.title}</b><small>${t.short}${p.total?` · ${m}% הצלחה`:""}</small><div class="meter"><i style="width:${m}%"></i></div></span></button>`}).join("")}</div>`;
+  <div class="label">הנושאים למבחן הקרוב</div>
+  <div class="topics">${TOPICS.filter(t=>TEST_TOPICS.includes(t.id)).map(topicBtn).join("")}</div>
+  <div class="label">עוד בחוברת השברים</div>
+  <div class="topics">${TOPICS.filter(t=>!TEST_TOPICS.includes(t.id)).map(topicBtn).join("")}</div>`;
   app.querySelectorAll(".topic").forEach(b=>b.onclick=()=>topicMenu(b.dataset.id));
   $("#test").onclick=startTest;$("#chg").onclick=onboarding;
 }
+function topicBtn(t){{const m=mastery(t.id),p=prog(t.id);return `<button class="topic" data-id="${t.id}"><span class="e" aria-hidden="true"><span class="math">${t.icon}</span></span><span class="grow"><b>${t.title}</b><small>${t.short}${p.total?` · ${m}% הצלחה`:""}</small><div class="meter"><i style="width:${m}%"></i></div></span></button>`}}
 
 function topicMenu(id){
   const t=topicById(id);
@@ -319,7 +364,7 @@ function startPractice(topics,count,isTest){
   P={qs:isTest?shuffle(qs):qs,i:0,right:0,isTest,topics,log:[]};question();
 }
 function startTest(){
-  const qs=[];TOPICS.forEach(t=>{for(let k=0;k<3;k++)qs.push(makeQ(t.id))});
+  const qs=[];TEST_TOPICS.forEach(id=>{for(let k=0;k<3;k++)qs.push(makeQ(id))});
   P={qs:shuffle(qs),i:0,right:0,isTest:true,log:[]};question();
 }
 
@@ -329,6 +374,8 @@ function question(){
   const inputHTML=()=>{
     if(q.type==="choice")return `<div class="opts">${q.opts.map((o,k)=>`<button class="opt" data-k="${k}">${show(o,false)}</button>`).join("")}</div>`;
     if(q.type==="choicetxt")return `<div class="opts">${q.opts.map((o,k)=>`<button class="opt" data-k="${k}"><span class="math">${o}</span></button>`).join("")}</div>`;
+    if(q.type==="ratio")return `<div class="ans" id="ans"><input class="box" id="b1" readonly inputmode="none" aria-label="מספר ראשון"><span class="big math">:</span><input class="box" id="b2" readonly inputmode="none" aria-label="מספר שני"></div>
+      <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-n="${n}">${n}</button>`).join("")}<button class="fn" data-f="del">⌫ מחיקה</button><button data-n="0">0</button><button class="fn" data-f="next">הבא ⇣</button></div>`;
     const boxes=q.type==="num"?`<input class="box whole" id="b0" readonly inputmode="none" aria-label="תשובה">`:
       `${q.type==="mixed"?`<input class="box whole" id="b0" readonly inputmode="none" aria-label="שלם">`:""}<div class="stack"><input class="box" id="b1" readonly inputmode="none" aria-label="מונה"><span class="ln"></span><input class="box" id="b2" readonly inputmode="none" aria-label="מכנה"></div>`;
     return `<div class="ans" id="ans">${boxes}</div>
@@ -358,6 +405,7 @@ function question(){
     let ok,note="";
     if(q.type==="choicetxt")ok=val===q.ans;
     else if(val==null){fb.className="fb bad";fb.textContent="השלימו את כל התיבות.";return}
+    else if(q.type==="ratio")ok=val.ratioOk;
     else{ok=eq(val.r,q.ans);
       if(ok&&val.raw&&!q.noSimplifyNote&&(val.raw.n!==q.ans.n||val.raw.d!==q.ans.d)&&q.type!=="num"){
         if(val.raw.n>val.raw.d&&q.type==="mixed")note=`נכון! במספר מעורב זה ${txtHTML(q.ans)}.`;
@@ -393,6 +441,10 @@ function question(){
     else if(b.dataset.f==="next"){sel((cur+1)%ids.length)}
   });
   $("#check").onclick=()=>{
+    if(q.type==="ratio"){const a=$("#b1").value,b=$("#b2").value;if(a===""||b===""){judge(null);return}
+      if(+a*q.ans.b===+b*q.ans.a&&gcd(+a,+b)===1){judge({r:R(1),ratioOk:true})}
+      else if(+a*q.ans.b===+b*q.ans.a){fb.className="fb bad";fb.textContent="היחס נכון, אבל אפשר לצמצם עוד.";return}
+      else judge({r:R(0),ratioOk:false});return}
     if(q.type==="num"){const v=$("#b0").value;judge(v===""?null:{r:R(+v)});return}
     const w=q.type==="mixed"?$("#b0").value:"0",n=$("#b1").value,d=$("#b2").value;
     if(n===""&&q.type==="mixed"&&w!==""&&d===""){judge({r:R(+w),raw:R(+w)});return}

@@ -1,4 +1,6 @@
 RewriteEngine On
+RewriteCond %{HTTP_HOST} ^(www\.)?math\.myinspire\.co\.il$ [NC]
+RewriteRule ^ https://yallamath.myinspire.co.il%{REQUEST_URI} [L,R=301]
 RewriteCond %{HTTPS} off
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 <Files "sw.js">
@@ -8,4 +10,3 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
   Header set Cache-Control "no-cache"
 </Files>
 AddType application/manifest+json .webmanifest
-AddType application/json .json
