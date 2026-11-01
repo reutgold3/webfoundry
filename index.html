@@ -154,6 +154,17 @@ function orderQ(){
     return {prompt:`${M(ex+" = ?")}`,type:"num",ans:R(val),hint:[`יש סוגריים? פותרים אותם קודם.`,`אחר כך כפל וחילוק, ובסוף חיבור וחיסור.`],sol:M(`${ex} = ${steps}`)};
   }
 }
+const SV=(w,h,inner,label)=>`<svg viewBox="0 0 ${w} ${h}" width="${w}" role="img" aria-label="${label}" font-family="Rubik,system-ui,sans-serif">${inner}</svg>`;
+const T=(x,y,t,o="")=>`<text x="${x}" y="${y}" font-size="15" font-weight="600" text-anchor="middle" fill="#1F2D3D" ${o}>${t}</text>`;
+function triSVG(a,b,c){return SV(260,170,`<polygon points="30,150 230,150 ${a===90?30:110},30" fill="#FFF1E6" stroke="#1F2D3D" stroke-width="2.5"/>${a===90?`<rect x="30" y="134" width="16" height="16" fill="none" stroke="#1F2D3D" stroke-width="1.5"/>`:""}${T(a===90?58:58,140,a===90?"":a+"°")}${T(196,140,b+"°")}${T(a===90?48:110,a===90?62:60,c==="?"?"?":c+"°",'fill="#E06A1C"')}`,"משולש")}
+function lineSVG(a){const r=a*Math.PI/180,x=130+90*Math.cos(Math.PI-r),y=110-90*Math.sin(Math.PI-r);return SV(260,130,`<line x1="20" y1="110" x2="240" y2="110" stroke="#1F2D3D" stroke-width="2.5"/><line x1="130" y1="110" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#1F2D3D" stroke-width="2.5"/>${T(80,100,a+"°")}${T(180,100,"?",'fill="#E06A1C"')}`,"זוויות על קו ישר")}
+function shapeSVG(k,b,h,c){const W=260,H=150;let pts,lab="";
+  if(k==="par"){pts="70,30 230,30 190,120 30,120";lab=T(110,140,b)+`<line x1="70" y1="30" x2="70" y2="120" stroke="#159A8C" stroke-dasharray="5 4" stroke-width="2"/>`+T(88,82,h,'fill="#159A8C"')}
+  else if(k==="tri"){pts="30,120 230,120 100,30";lab=T(130,140,b)+`<line x1="100" y1="30" x2="100" y2="120" stroke="#159A8C" stroke-dasharray="5 4" stroke-width="2"/>`+T(116,82,h,'fill="#159A8C"')}
+  else{pts="30,120 230,120 175,30 85,30";lab=T(130,140,b)+T(130,22,c)+`<line x1="85" y1="30" x2="85" y2="120" stroke="#159A8C" stroke-dasharray="5 4" stroke-width="2"/>`+T(101,82,h,'fill="#159A8C"')}
+  return SV(W,H+4,`<polygon points="${pts}" fill="#FFF1E6" stroke="#1F2D3D" stroke-width="2.5"/>${lab}`,"צורה")}
+function circleSVG(r){return SV(180,180,`<circle cx="90" cy="90" r="75" fill="#FFF1E6" stroke="#1F2D3D" stroke-width="2.5"/><circle cx="90" cy="90" r="3.5" fill="#1F2D3D"/><line x1="90" y1="90" x2="165" y2="90" stroke="#E06A1C" stroke-width="2.5"/>${T(128,82,"r = "+r,'fill="#E06A1C"')}`,"מעגל")}
+function boxSVG(a,b,c){return SV(240,170,`<polygon points="40,60 160,60 200,30 80,30" fill="#FFE1CC" stroke="#1F2D3D" stroke-width="2"/><polygon points="160,60 200,30 200,120 160,150" fill="#FFD0AD" stroke="#1F2D3D" stroke-width="2"/><rect x="40" y="60" width="120" height="90" fill="#FFF1E6" stroke="#1F2D3D" stroke-width="2"/>${T(100,166,a)}${T(214,78,b)}${T(26,110,c)}`,"תיבה")}
 const txt=(r,mixed=true)=>r.d===1?String(r.n):(mixed&&r.n>r.d?`${Math.floor(r.n/r.d)} ${r.n%r.d}/${r.d}`:`${r.n}/${r.d}`);
 
 /* fraction pictures */
@@ -432,6 +443,62 @@ const TOPICS=[
    ()=>{const L=rnd(2,6),cut=pick([25,40,50,20]);const n=Math.floor(L*100/cut);
      return {prompt:`יש חבל באורך ${M(`${L} מ׳`)}. חותכים ממנו חתיכות של ${M(`${cut} ס״מ`)}. כמה חתיכות שלמות אפשר לחתוך?`,type:"num",ans:R(n),hint:[`ממירים את החבל לסנטימטרים: ${M(`${L} × 100 = ${L*100}`)}`,`מחלקים ב-${cut}.`],sol:M(`${L*100} : ${cut} = ${n}`)+` חתיכות`}},
   ]},
+
+ {id:"angles",title:"זוויות במשולש ובמרובע",short:"סכום הזוויות וזווית חסרה",icon:"∠",
+  lesson:[
+   {h:"סכום הזוויות במשולש",p:"בכל משולש סכום שלוש הזוויות הוא 180 מעלות.",ex:()=>`${triSVG(60,70,"?")}<div class="big">${M("180 − 60 − 70 = 50°")}</div>`},
+   {h:"סכום הזוויות במרובע",p:"בכל מרובע סכום ארבע הזוויות הוא 360 מעלות.",ex:()=>`<div class="big">${M("90 + 90 + 100 + ? = 360")}</div><p>${M("? = 360 − 280 = 80°")}</p>`},
+   {h:"זוויות על קו ישר",p:"שתי זוויות שנמצאות יחד על קו ישר משלימות זו את זו ל-180 מעלות.",ex:()=>`${lineSVG(130)}<div class="big">${M("180 − 130 = 50°")}</div>`},
+  ],
+  gen:[
+   ()=>{const a=rnd(30,100),b=rnd(20,150-a),c=180-a-b;
+     return {prompt:`במשולש שתי זוויות הן ${M(`${a}°`)} ו-${M(`${b}°`)}. מה גודל הזווית השלישית?`,vis:triSVG(a,b,"?"),type:"num",unit:"°",ans:R(c),hint:[`סכום הזוויות במשולש הוא 180.`,`${M(`180 − ${a} − ${b}`)}`],sol:M(`180 − ${a} − ${b} = ${c}°`)}},
+   ()=>{const a=rnd(20,70);
+     return {prompt:`במשולש ישר זווית אחת הזוויות החדות היא ${M(`${a}°`)}. מה גודל הזווית החדה השנייה?`,vis:triSVG(90,a,"?"),type:"num",unit:"°",ans:R(90-a),hint:[`במשולש ישר זווית יש זווית של 90.`,`${M(`180 − 90 − ${a}`)}`],sol:M(`180 − 90 − ${a} = ${90-a}°`)}},
+   ()=>{const a=rnd(60,120),b=rnd(60,120),c=rnd(60,120),d=360-a-b-c;if(d<30||d>170)return topicById("angles").gen[2]();
+     return {prompt:`במרובע שלוש זוויות הן ${M(`${a}°, ${b}°, ${c}°`)}. מה גודל הזווית הרביעית?`,type:"num",unit:"°",ans:R(d),hint:[`סכום הזוויות במרובע הוא 360.`,`${M(`360 − ${a} − ${b} − ${c}`)}`],sol:M(`360 − ${a+b+c} = ${d}°`)}},
+   ()=>{const a=rnd(25,155);
+     return {prompt:`שתי זוויות נמצאות על קו ישר. אחת מהן ${M(`${a}°`)}. מה גודל השנייה?`,vis:lineSVG(a),type:"num",unit:"°",ans:R(180-a),hint:[`זוויות על קו ישר משלימות ל-180.`],sol:M(`180 − ${a} = ${180-a}°`)}},
+   ()=>{const a=rnd(20,80);
+     return {prompt:`במשולש שווה שוקיים זווית הראש היא ${M(`${180-2*a}°`)}. מה גודל כל אחת מזוויות הבסיס?`,type:"num",unit:"°",ans:R(a),hint:[`זוויות הבסיס שוות זו לזו.`,`${M(`(180 − ${180-2*a}) : 2`)}`],sol:M(`(180 − ${180-2*a}) : 2 = ${2*a} : 2 = ${a}°`)}},
+  ]},
+ {id:"area",title:"שטח משולש, מקבילית וטרפז",short:"נוסחאות שטח",icon:"▱",
+  lesson:[
+   {h:"שטח מקבילית",p:"בסיס כפול גובה. הגובה הוא הקו הישר מהבסיס אל הצלע שמולו, בזווית ישרה.",ex:()=>`${shapeSVG("par",8,5)}<div class="big">${M("8 × 5 = 40 סמ״ר")}</div>`},
+   {h:"שטח משולש",p:"בסיס כפול גובה, חלקי 2. משולש הוא חצי ממקבילית.",ex:()=>`${shapeSVG("tri",8,5)}<div class="big">${M("8 × 5 : 2 = 20 סמ״ר")}</div>`},
+   {h:"שטח טרפז",p:"מחברים את שני הבסיסים, כופלים בגובה, ומחלקים ב-2.",ex:()=>`${shapeSVG("trap",10,4,6)}<div class="big">${M("(10 + 6) × 4 : 2 = 32 סמ״ר")}</div>`},
+  ],
+  gen:[
+   ()=>{const b=rnd(3,15),h=rnd(2,12);return {prompt:`מה שטח המקבילית? הבסיס ${M(`${b} ס״מ`)}, הגובה ${M(`${h} ס״מ`)}.`,vis:shapeSVG("par",b,h),type:"num",unit:"סמ״ר",ans:R(b*h),hint:[`שטח מקבילית = בסיס × גובה.`],sol:M(`${b} × ${h} = ${b*h} סמ״ר`)}},
+   ()=>{const b=rnd(2,16),h=rnd(2,12)*(b%2?2:1);return {prompt:`מה שטח המשולש? הבסיס ${M(`${b} ס״מ`)}, הגובה ${M(`${h} ס״מ`)}.`,vis:shapeSVG("tri",b,h),type:"num",unit:"סמ״ר",ans:R(b*h/2),hint:[`שטח משולש = בסיס × גובה : 2.`],sol:M(`${b} × ${h} : 2 = ${b*h/2} סמ״ר`)}},
+   ()=>{const a=rnd(6,16),c=rnd(2,a-2),h=rnd(2,10)*((a+c)%2?2:1);return {prompt:`מה שטח הטרפז? הבסיסים ${M(`${a} ס״מ`)} ו-${M(`${c} ס״מ`)}, הגובה ${M(`${h} ס״מ`)}.`,vis:shapeSVG("trap",a,h,c),type:"num",unit:"סמ״ר",ans:R((a+c)*h/2),hint:[`מחברים את הבסיסים: ${M(`${a} + ${c}`)}`,`כופלים בגובה ומחלקים ב-2.`],sol:M(`(${a} + ${c}) × ${h} : 2 = ${(a+c)*h/2} סמ״ר`)}},
+   ()=>{const b=rnd(3,12),h=rnd(2,10);return {prompt:`שטח משולש הוא ${M(`${b*h/2} סמ״ר`)} והבסיס שלו ${M(`${b} ס״מ`)}. מה הגובה?`,type:"dec",unit:"ס״מ",ans:h,hint:[`בסיס × גובה = שטח × 2 = ${M(`${b*h}`)}`,`מחלקים בבסיס.`],sol:M(`${b*h/2} × 2 : ${b} = ${h} ס״מ`)}},
+  ]},
+ {id:"circle",title:"מעגל",short:"רדיוס, קוטר, היקף ושטח",icon:"◯",
+  lesson:[
+   {h:"רדיוס וקוטר",p:"הרדיוס הוא המרחק מהמרכז לשפה. הקוטר עובר דרך המרכז, והוא פי 2 מהרדיוס.",ex:()=>`${circleSVG(5)}<div class="big">${M("קוטר = 2 × רדיוס")}</div>`},
+   {h:"היקף המעגל",p:"ההיקף הוא קוטר כפול פאי. משתמשים ב-3.14 בתור פאי.",ex:()=>`<div class="big">${M("היקף = 2 × r × 3.14")}</div><p>${M("r = 5: 2 × 5 × 3.14 = 31.4 ס״מ")}</p>`},
+   {h:"שטח העיגול",p:"השטח הוא רדיוס כפול רדיוס כפול פאי.",ex:()=>`<div class="big">${M("שטח = r × r × 3.14")}</div><p>${M("r = 5: 5 × 5 × 3.14 = 78.5 סמ״ר")}</p>`},
+  ],
+  gen:[
+   ()=>{const r=rnd(2,20);return Math.random()<.5?{prompt:`הרדיוס של מעגל הוא ${M(`${r} ס״מ`)}. מה הקוטר?`,vis:circleSVG(r),type:"num",unit:"ס״מ",ans:R(2*r),hint:[`הקוטר פי 2 מהרדיוס.`],sol:M(`2 × ${r} = ${2*r} ס״מ`)}:{prompt:`הקוטר של מעגל הוא ${M(`${2*r} ס״מ`)}. מה הרדיוס?`,type:"num",unit:"ס״מ",ans:R(r),hint:[`הרדיוס הוא חצי מהקוטר.`],sol:M(`${2*r} : 2 = ${r} ס״מ`)}},
+   ()=>{const r=rnd(1,10);const c=Math.round(2*r*3.14*100)/100;return {prompt:`מה היקף המעגל שהרדיוס שלו ${M(`${r} ס״מ`)}? (פאי = 3.14)`,vis:circleSVG(r),type:"dec",unit:"ס״מ",ans:c,hint:[`היקף = 2 × רדיוס × 3.14`,`${M(`2 × ${r} = ${2*r}`)}, ואז כופלים ב-3.14.`],sol:M(`2 × ${r} × 3.14 = ${fmt(c)} ס״מ`)}},
+   ()=>{const r=rnd(1,10);const a=Math.round(r*r*3.14*100)/100;return {prompt:`מה שטח העיגול שהרדיוס שלו ${M(`${r} ס״מ`)}? (פאי = 3.14)`,vis:circleSVG(r),type:"dec",unit:"סמ״ר",ans:a,hint:[`שטח = רדיוס × רדיוס × 3.14`,`${M(`${r} × ${r} = ${r*r}`)}, ואז כופלים ב-3.14.`],sol:M(`${r} × ${r} × 3.14 = ${fmt(a)} סמ״ר`)}},
+   ()=>{const d=rnd(1,10)*2;const c=Math.round(d*3.14*100)/100;return {prompt:`הקוטר של גלגל הוא ${M(`${d} ס״מ`)}. מה ההיקף שלו? (פאי = 3.14)`,type:"dec",unit:"ס״מ",ans:c,hint:[`היקף = קוטר × 3.14`],sol:M(`${d} × 3.14 = ${fmt(c)} ס״מ`)}},
+  ]},
+ {id:"volume",title:"נפח ושטח פנים של תיבה",short:"תיבה וקובייה",icon:"▣",
+  lesson:[
+   {h:"נפח תיבה",p:"אורך כפול רוחב כפול גובה. היחידה היא סמ״ק (סנטימטר מעוקב).",ex:()=>`${boxSVG(4,3,2)}<div class="big">${M("4 × 3 × 2 = 24 סמ״ק")}</div>`},
+   {h:"נפח קובייה",p:"בקובייה כל המקצועות שווים, ולכן הנפח הוא מקצוע כפול מקצוע כפול מקצוע.",ex:()=>`<div class="big">${M("3 × 3 × 3 = 27 סמ״ק")}</div>`},
+   {h:"שטח פנים של תיבה",p:"לתיבה 6 פאות: 3 זוגות של מלבנים שווים. מחשבים את שלושת השטחים, מחברים וכופלים ב-2.",ex:()=>`<p>${M("4 × 3 = 12, 4 × 2 = 8, 3 × 2 = 6")}</p><div class="big">${M("(12 + 8 + 6) × 2 = 52 סמ״ר")}</div>`},
+  ],
+  gen:[
+   ()=>{const a=rnd(2,12),b=rnd(2,10),c=rnd(2,8);return {prompt:`מה הנפח של תיבה שמידותיה ${M(`${a} × ${b} × ${c}`)} ס״מ?`,vis:boxSVG(a,b,c),type:"num",unit:"סמ״ק",ans:R(a*b*c),hint:[`נפח = אורך × רוחב × גובה.`],sol:M(`${a} × ${b} × ${c} = ${a*b*c} סמ״ק`)}},
+   ()=>{const a=rnd(2,10);return {prompt:`מה הנפח של קובייה שהמקצוע שלה ${M(`${a} ס״מ`)}?`,vis:boxSVG(a,a,a),type:"num",unit:"סמ״ק",ans:R(a*a*a),hint:[`${M(`${a} × ${a} × ${a}`)}`],sol:M(`${a} × ${a} × ${a} = ${a*a*a} סמ״ק`)}},
+   ()=>{const a=rnd(2,9),b=rnd(2,8),c=rnd(2,6);const S=2*(a*b+a*c+b*c);return {prompt:`מה שטח הפנים של תיבה שמידותיה ${M(`${a} × ${b} × ${c}`)} ס״מ?`,vis:boxSVG(a,b,c),type:"num",unit:"סמ״ר",ans:R(S),hint:[`שלוש פאות שונות: ${M(`${a} × ${b}, ${a} × ${c}, ${b} × ${c}`)}`,`מחברים וכופלים ב-2.`],sol:M(`(${a*b} + ${a*c} + ${b*c}) × 2 = ${S} סמ״ר`)}},
+   ()=>{const a=rnd(2,10),b=rnd(2,8),c=rnd(2,8);return {prompt:`נפח תיבה הוא ${M(`${a*b*c} סמ״ק`)}. האורך ${M(`${a} ס״מ`)} והרוחב ${M(`${b} ס״מ`)}. מה הגובה?`,type:"num",unit:"ס״מ",ans:R(c),hint:[`שטח הבסיס: ${M(`${a} × ${b} = ${a*b}`)}`,`מחלקים את הנפח בשטח הבסיס.`],sol:M(`${a*b*c} : ${a*b} = ${c} ס״מ`)}},
+   ()=>{const a=rnd(2,6);return {prompt:`כמה קוביות של ${M("1 סמ״ק")} נכנסות בקובייה שהמקצוע שלה ${M(`${a} ס״מ`)}?`,vis:boxSVG(a,a,a),type:"num",ans:R(a*a*a),hint:[`זה בדיוק הנפח: ${M(`${a} × ${a} × ${a}`)}`],sol:M(`${a} × ${a} × ${a} = ${a*a*a}`)}},
+  ]},
 ];
 const topicById=id=>TOPICS.find(t=>t.id===id);
 function TOPICS_RATIO0(){return topicById("ratio").gen[0]()}
@@ -457,7 +524,7 @@ const STREAK=["שלוש ברצף! אתם על גל!","חמש ברצף! פשוט 
 function speak(html,force){
   if(!force&&S.voice===false)return;
   if(!("speechSynthesis" in window))return;
-  const d=document.createElement("div");d.innerHTML=html.replace(/<span class="fr"><span>(\d+)<\/span><span>(\d+)<\/span><\/span>/g," $1 חלקי $2 ").replace(/×/g," כפול ").replace(/ : /g," חלקי ").replace(/=/g," שווה ").replace(/−/g," פחות ").replace(/%/g," אחוז ").replace(/ס״מ/g,"סנטימטר").replace(/מ״מ/g,"מילימטר").replace(/ק״מ/g,"קילומטר").replace(/ק״ג/g,"קילוגרם").replace(/מ״ל/g,"מיליליטר").replace(/מ׳/g,"מטר").replace(/₪/g,"שקלים").replace(/<br>/g,". ");
+  const d=document.createElement("div");d.innerHTML=html.replace(/<span class="fr"><span>(\d+)<\/span><span>(\d+)<\/span><\/span>/g," $1 חלקי $2 ").replace(/×/g," כפול ").replace(/ : /g," חלקי ").replace(/=/g," שווה ").replace(/−/g," פחות ").replace(/%/g," אחוז ").replace(/ס״מ/g,"סנטימטר").replace(/מ״מ/g,"מילימטר").replace(/ק״מ/g,"קילומטר").replace(/ק״ג/g,"קילוגרם").replace(/מ״ל/g,"מיליליטר").replace(/מ׳/g,"מטר").replace(/₪/g,"שקלים").replace(/סמ״ר/g,"סנטימטר רבוע").replace(/סמ״ק/g,"סנטימטר מעוקב").replace(/°/g," מעלות").replace(/<br>/g,". ");
   speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(d.textContent);u.lang="he-IL";if(HV)u.voice=HV;u.rate=.95;speechSynthesis.speak(u);
 }
 
@@ -494,7 +561,9 @@ function home(){
   <div class="label">חוברת: מספרים עשרוניים, אחוזים וחקר נתונים</div>
   <div class="topics">${["fracdec","decops","percent","data"].map(topicById).map(topicBtn).join("")}</div>
   <div class="label">חוברת: מידות עשרוניות, קנה מידה ופעולות החשבון</div>
-  <div class="topics">${["units","scale","order","words"].map(topicById).map(topicBtn).join("")}</div>`;
+  <div class="topics">${["units","scale","order","words"].map(topicById).map(topicBtn).join("")}</div>
+  <div class="label">חוברת: גאומטריה</div>
+  <div class="topics">${["angles","area","circle","volume"].map(topicById).map(topicBtn).join("")}</div>`;
   app.querySelectorAll(".topic").forEach(b=>b.onclick=()=>topicMenu(b.dataset.id));
   $("#test").onclick=startTest;$("#chg").onclick=onboarding;
   $("#hv").onclick=()=>{S.voice=S.voice===false;save();home();if(S.voice)speak("ההקראה הופעלה",true)};
