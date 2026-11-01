@@ -229,6 +229,11 @@ button.chip{cursor:pointer}
 .drow .dt b{display:block;direction:ltr;text-align:left;font-family:var(--display);font-size:18px;overflow-wrap:anywhere}
 .drow .dt span{color:var(--ink-soft);font-size:14px}
 .drow .tag{flex:none;font-size:12px;font-weight:700;border-radius:999px;padding:2px 8px;background:#FDECEF;color:#B73350}
+.chars.mini{width:100%;grid-template-columns:repeat(4,1fr);gap:8px}
+.chars.mini .char{padding:8px 4px}
+.chars.mini .char .e{font-size:32px}
+.chars.mini .char .n{font-size:14px}
+.welcome{min-height:0;padding-block:8px}
 /* Finish */
 .stars{font-size:52px;letter-spacing:6px;text-align:center}
 .center{text-align:center}
@@ -243,16 +248,16 @@ button.chip{cursor:pointer}
 <script>
 /* ===================== Content ===================== */
 const CHARS=[
- {id:"mimi",name:"Mimi",e:"🐱",pitch:1.45,rate:.85,kid:1},
- {id:"rex",name:"Rex",e:"🦖",pitch:.8,rate:.85,kid:1},
- {id:"bolt",name:"Bolt",e:"🤖",pitch:1.1,rate:.82,kid:1},
- {id:"luna",name:"Luna",e:"🦄",pitch:1.35,rate:.85,kid:1},
- {id:"foxy",name:"Foxy",e:"🦊",pitch:1.25,rate:.88,kid:1},
- {id:"pip",name:"Pip",e:"🐧",pitch:1.0,rate:.85,kid:1},
  {id:"lily",name:"Lily",e:"👧",pitch:1.4,rate:.88,kid:1},
  {id:"tom",name:"Tom",e:"👦",pitch:1.2,rate:.88,kid:1},
- {id:"zoe",name:"Zoe",e:"🦸‍♀️",pitch:1.2,rate:.9,kid:1},
+ {id:"zoe",name:"Zoe",e:"🦸‍♀️",pitch:1.25,rate:.9,kid:1},
+ {id:"rosa",name:"Rosa",e:"👸",pitch:1.4,rate:.86,kid:1},
+ {id:"nina",name:"Nina",e:"🧚",pitch:1.5,rate:.86,kid:1},
+ {id:"ella",name:"Ella",e:"🧜‍♀️",pitch:1.35,rate:.86,kid:1},
+ {id:"kai",name:"Kai",e:"🥷",pitch:1.1,rate:.9,kid:1},
+ {id:"ivy",name:"Ivy",e:"🕵️‍♀️",pitch:1.2,rate:.9,kid:1},
  {id:"merlin",name:"Merlin",e:"🧙",pitch:.8,rate:.85,kid:1},
+ {id:"bolt",name:"Bolt",e:"🤖",pitch:1.1,rate:.82,kid:1},
  {id:"emma",name:"Emma",e:"👩‍🏫",pitch:1.05,rate:.92},
  {id:"james",name:"James",e:"👨‍💼",pitch:.9,rate:.92},
  {id:"maya",name:"Maya",e:"👩‍💻",pitch:1.1,rate:.95},
@@ -436,6 +441,7 @@ const gradeHe=s=>s>=95?"מושלם!":s>=85?"מצוין":s>=70?"טוב מאוד":
 
 const dayStr=d=>{d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const yesterday=()=>{const d=new Date();d.setDate(d.getDate()-1);return dayStr(d)};
+if(S.char&&!CHARS.some(c=>c.id===S.char))S.char="lily";
 const doneToday=()=>S.lastDate===dayStr();
 const liveStreak=()=>(S.lastDate===dayStr()||S.lastDate===yesterday())?S.streak:0;
 const char=()=>CHARS.find(c=>c.id===S.char)||CHARS[0];
@@ -544,14 +550,23 @@ function welcome(){
   app.innerHTML=`
    <div class="welcome">
      <div class="wave" aria-hidden="true">👋</div>
-     <div class="avatar big">${char().e}${(SHOP.find(x=>x.id===S.wear)||{}).e?`<span class="acc">${SHOP.find(x=>x.id===S.wear).e}</span>`:""}</div>
+     <div class="avatar big" id="wav">${char().e}${(SHOP.find(x=>x.id===S.wear)||{}).e?`<span class="acc">${SHOP.find(x=>x.id===S.wear).e}</span>`:""}</div>
      <h1>שלום${n?`, ${esc(n)}`:""}!</h1>
      <p class="en hello">${gEn}${n?`, ${esc(n)}`:""}!</p>
      <p class="sub">${gHe}! ${esc(char().name)} מחכה לך.${doneToday()?" השיעור של היום כבר הושלם, אבל תמיד אפשר להמשיך.":` היום: ${esc(L.he)} ${L.e}`}</p>
      ${st?`<span class="chip">🔥 ${st} ${st===1?"יום":"ימים"} ברצף</span>`:""}
+     <div class="label">עם מי לומדים היום?</div>
+     <div class="chars mini">${(kidsCourse()?CHARS.filter(c=>c.kid).concat(CHARS.filter(c=>!c.kid)):CHARS.filter(c=>!c.kid).concat(CHARS.filter(c=>c.kid))).map(c=>`<button class="char" data-id="${c.id}" aria-pressed="${c.id===S.char}"><span class="e">${c.e}</span><span class="n">${c.name}</span></button>`).join("")}</div>
      <button class="btn wide" id="go">יאללה, מתחילים!</button>
      <button class="link" id="notme">זה לא אני? החלפת שם</button>
    </div>`;
+  app.querySelectorAll(".chars.mini .char").forEach(b=>b.onclick=()=>{
+    S.char=b.dataset.id;save();
+    app.querySelectorAll(".chars.mini .char").forEach(x=>x.setAttribute("aria-pressed",x===b));
+    const a=SHOP.find(x=>x.id===S.wear);$("#wav").innerHTML=char().e+(a?`<span class="acc">${a.e}</span>`:"");
+    $(".welcome .sub").textContent=`${gHe}! ${char().name} מחכה לך.`;
+    say(`Hi! I'm ${char().name}!`);
+  });
   $("#go").onclick=()=>{home();say(`${gEn}${n?", "+n:""}! I'm so happy to see you!`)};
   $("#notme").onclick=()=>pickChar(false);
 }
