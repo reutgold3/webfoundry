@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="he"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#E4F5EC"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icons/icon-192.png"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>
+<title>Yalla Math</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Rubik:wght@400;500;700&display=swap">
+<style>
+/* Layout: one narrow column like a workbook page; a coach bubble on top, the exercise card below, a fraction keypad at the bottom. Single bright theme by choice. */
+:root{
+  --bg:#E4F5EC;      /* page ground, mint */
+  --paper:#FFFFFF;
+  --ink:#1F2D3D;
+  --soft:#5B6B7A;
+  --accent:#FF8A3D;  /* orange: main buttons, shaded parts */
+  --accent-deep:#E06A1C;
+  --teal:#159A8C;    /* fraction lines, links */
+  --good:#2FB57C;
+  --bad:#E8506A;
+  --line:#BFE3D2;
+  --display:"Fredoka","Rubik",system-ui,sans-serif;
+  --body:"Rubik",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));-webkit-tap-highlight-color:transparent}
+.app{max-width:520px;margin:0 auto;padding-block:16px 32px;display:flex;flex-direction:column;gap:16px;min-height:100%}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.2;text-wrap:balance}
+h1{font-size:30px}h2{font-size:24px;font-weight:600}h3{font-size:19px;font-weight:600}
+p{margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:0 22px;border-radius:999px;font-family:var(--display);font-weight:600;font-size:20px;background:var(--accent);color:#fff;box-shadow:0 5px 0 var(--accent-deep)}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--accent-deep)}
+.btn.ghost{background:var(--paper);color:var(--ink);box-shadow:0 5px 0 var(--line)}
+.btn.wide{width:100%}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.link{color:var(--teal);text-decoration:underline;text-underline-offset:3px;font-weight:500;padding:8px}
+.top{display:flex;align-items:center;gap:12px}
+.grow{flex:1;min-width:0}
+.x{width:44px;height:44px;border-radius:50%;background:var(--paper);border:2px solid var(--line);font-size:20px;flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:5px 12px;font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.bar{height:14px;border-radius:999px;background:var(--paper);border:2px solid var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--good);border-radius:999px;transition:width .3s}
+.label{font-size:13px;font-weight:700;letter-spacing:.05em;color:var(--soft)}
+.card{background:var(--paper);border-radius:24px;padding:20px;box-shadow:0 5px 0 var(--line);display:flex;flex-direction:column;gap:14px}
+/* coach */
+.talk{display:flex;align-items:flex-end;gap:12px}
+.avatar{flex:none;width:76px;height:76px;border-radius:50%;background:var(--paper);display:grid;place-items:center;font-size:46px;border:3px solid var(--accent);box-shadow:0 4px 0 var(--line)}
+.bubble{flex:1;min-width:0;background:var(--paper);border-radius:20px 20px 6px 20px;padding:12px 16px;box-shadow:0 4px 0 var(--line);font-weight:500}
+/* math */
+.math{direction:ltr;unicode-bidi:isolate;display:inline-flex;align-items:center;gap:.35em;font-family:var(--display);font-weight:600;white-space:nowrap}
+.fr{display:inline-flex;flex-direction:column;align-items:center;line-height:1.05;vertical-align:middle;font-variant-numeric:tabular-nums}
+.fr>span:first-child{border-bottom:.09em solid currentColor;padding:0 .15em}
+.fr>span:last-child{padding:0 .15em}
+.q{font-size:22px;font-weight:500;line-height:1.6}
+.q .math{font-size:1.25em}
+.big{font-size:34px}
+.vis{display:flex;justify-content:center}
+.vis svg{max-width:100%;height:auto}
+/* answer input */
+.ans{display:flex;justify-content:center;align-items:center;gap:14px;direction:ltr}
+.ans .stack{display:flex;flex-direction:column;align-items:center;gap:6px}
+.ans .stack .ln{width:84px;height:4px;border-radius:2px;background:var(--ink)}
+.box{width:84px;height:62px;border-radius:14px;border:3px solid var(--line);background:#F6FBF8;font-family:var(--display);font-weight:600;font-size:30px;text-align:center;color:var(--ink)}
+.box.sel{border-color:var(--teal);background:#fff}
+.box.whole{height:72px}
+.ans.good .box{border-color:var(--good);background:#E8F8F0}
+.ans.bad .box{border-color:var(--bad);background:#FDECEF;animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;direction:ltr}
+.pad button{min-height:52px;border-radius:14px;background:var(--paper);box-shadow:0 4px 0 var(--line);font-family:var(--display);font-weight:600;font-size:24px}
+.pad button:active{transform:translateY(2px);box-shadow:0 2px 0 var(--line)}
+.pad .fn{font-size:16px;font-family:var(--body);font-weight:700;color:var(--teal)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{min-height:66px;border-radius:18px;background:var(--paper);box-shadow:0 4px 0 var(--line);border:3px solid transparent;font-size:22px;padding:8px}
+.opt.good{border-color:var(--good);background:#E8F8F0}
+.opt.bad{border-color:var(--bad);background:#FDECEF;animation:shake .3s}
+.fb{min-height:24px;font-weight:600}
+.fb.good{color:#1B8A5A}.fb.bad{color:#C23552}
+.steps{background:#FFF6EC;border-radius:16px;padding:12px 16px;display:flex;flex-direction:column;gap:6px;border:2px dashed #F6C79F}
+.steps .math{font-size:1.1em}
+/* home */
+.topics{display:flex;flex-direction:column;gap:12px}
+.topic{display:flex;align-items:center;gap:14px;background:var(--paper);border-radius:20px;padding:14px 16px;box-shadow:0 5px 0 var(--line);text-align:right;width:100%}
+.topic .e{flex:none;width:52px;height:52px;border-radius:16px;background:#FFF1E6;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:20px;color:var(--accent-deep)}
+.topic b{display:block;font-family:var(--display);font-size:19px;font-weight:600}
+.topic small{color:var(--soft);font-size:14px}
+.meter{height:8px;border-radius:999px;background:#EEF6F1;overflow:hidden;margin-top:6px}
+.meter>i{display:block;height:100%;background:var(--good)}
+.hero{background:#FFF1E6}
+.chars{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.char{background:var(--paper);border-radius:18px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;border:3px solid transparent;box-shadow:0 4px 0 var(--line)}
+.char .e{font-size:34px}.char .n{font-size:13px;font-weight:600}
+.char[aria-pressed=true]{border-color:var(--accent);background:#FFF1E6}
+.field input{width:100%;font:inherit;font-size:20px;padding:12px 14px;border-radius:14px;border:2px solid var(--line);background:#fff;color:var(--ink)}
+/* lesson */
+.lesson p{font-size:18px}
+.ex{background:#F2FAF6;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center}
+.score{font-family:var(--display);font-size:64px;font-weight:700;color:var(--good);text-align:center;line-height:1}
+.score.low{color:var(--bad)}
+.center{text-align:center}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.review{display:flex;flex-direction:column;gap:10px}
+.review .item{background:var(--paper);border-radius:16px;padding:12px 14px;box-shadow:0 3px 0 var(--line)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app" id="app" dir="rtl"></div>
+
+<script>
+/* ============ math helpers ============ */
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a||1};
+const R=(n,d=1)=>{const g=gcd(n,d);return {n:n/g*(d<0?-1:1),d:Math.abs(d)/g}};
+const mul=(a,b)=>R(a.n*b.n,a.d*b.d);
+const eq=(a,b)=>a.n*b.d===b.n*a.d;
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+/* render */
+const F=(n,d)=>`<span class="fr"><span>${n}</span><span>${d}</span></span>`;
+const M=(...parts)=>`<span class="math">${parts.join(" ")}</span>`;
+function show(r,mixed=true){ // rational -> html
+  if(r.d===1)return M(r.n);
+  if(mixed&&r.n>r.d){const w=Math.floor(r.n/r.d),k=r.n%r.d;return M(w,F(k,r.d))}
+  return M(F(r.n,r.d));
+}
+const txt=(r,mixed=true)=>r.d===1?String(r.n):(mixed&&r.n>r.d?`${Math.floor(r.n/r.d)} ${r.n%r.d}/${r.d}`:`${r.n}/${r.d}`);
+
+/* fraction pictures */
+function barSVG(n,d,w=300){
+  const h=56,cw=w/d;let s=`<svg viewBox="0 0 ${w+4} ${h+4}" width="${w+4}" role="img" aria-label="מלבן מחולק ל-${d} חלקים, ${n} צבועים">`;
+  for(let i=0;i<d;i++)s+=`<rect x="${2+i*cw}" y="2" width="${cw}" height="${h}" fill="${i<n?'#FF8A3D':'#FFFFFF'}" stroke="#1F2D3D" stroke-width="2.5"/>`;
+  return s+"</svg>";
+}
+function pieSVG(n,d,r=70){
+  const c=r+4;let s=`<svg viewBox="0 0 ${2*c} ${2*c}" width="${2*c}" role="img" aria-label="עיגול מחולק ל-${d} חלקים, ${n} צבועים">`;
+  if(d===1)return s+`<circle cx="${c}" cy="${c}" r="${r}" fill="${n?'#FF8A3D':'#fff'}" stroke="#1F2D3D" stroke-width="2.5"/></svg>`;
+  for(let i=0;i<d;i++){const a0=-Math.PI/2+i*2*Math.PI/d,a1=a0+2*Math.PI/d;
+    const x0=c+r*Math.cos(a0),y0=c+r*Math.sin(a0),x1=c+r*Math.cos(a1),y1=c+r*Math.sin(a1);
+    s+=`<path d="M${c},${c} L${x0.toFixed(1)},${y0.toFixed(1)} A${r},${r} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)} Z" fill="${i<n?'#FF8A3D':'#FFFFFF'}" stroke="#1F2D3D" stroke-width="2.5"/>`}
+  return s+"</svg>";
+}
+function piesSVG(count,d,shade){ // several pies, total shaded parts
+  let out="",left=shade;for(let k=0;k<count;k++){const s=Math.min(d,Math.max(0,left));out+=pieSVG(s,d,44);left-=d}
+  return `<div class="row">${out}</div>`;
+}
+function dotsSVG(total,cols,mark){
+  const rows=Math.ceil(total/cols),sz=30;let s=`<svg viewBox="0 0 ${cols*sz+4} ${rows*sz+4}" width="${cols*sz+4}" role="img" aria-label="${total} עיגולים">`;
+  for(let i=0;i<total;i++){const x=2+(i%cols)*sz+sz/2,y=2+Math.floor(i/cols)*sz+sz/2;s+=`<circle cx="${x}" cy="${y}" r="11" fill="${i<mark?'#FF8A3D':'#fff'}" stroke="#1F2D3D" stroke-width="2"/>`}
+  return s+"</svg>";
+}
+
+/* ============ topics & generators ============ */
+const NAMES=["נועה","דני","מאיה","עומר","ליה","יונתן","תמר","איתי"];
+const TOPICS=[
+ {id:"meaning",title:"משמעויות של השבר הפשוט",short:"חלק מהשלם וחלק מכמות",icon:"¾",
+  lesson:[
+   {h:"שבר הוא חלק מהשלם",p:"המכנה (למטה) אומר לכמה חלקים שווים חילקנו את השלם. המונה (למעלה) אומר כמה חלקים לקחנו.",ex:()=>`${barSVG(3,4,240)}<div class="big">${M(F(3,4))}</div><p>חילקנו ל-4 חלקים שווים וצבענו 3.</p>`},
+   {h:"שבר הוא חלק מכמות",p:"כדי למצוא חלק מכמות: מחלקים את הכמות במכנה, ואז כופלים במונה.",ex:()=>`${dotsSVG(12,6,9)}<p>${M(F(3,4))} מתוך 12</p><p>${M("12 : 4 = 3")} ואז ${M("3 × 3 = 9")}</p>`},
+   {h:"מוצאים את השלם לפי החלק",p:"אם יודעים כמה שווה חלק, מחלקים במונה כדי למצוא חלק אחד, ואז כופלים במכנה.",ex:()=>`<p>${M(F(2,5))} מהכמות הם 8. מהי הכמות?</p><p>${M("8 : 2 = 4")} (זה ${M(F(1,5))}), ואז ${M("4 × 5 = 20")}</p>`},
+  ],
+  gen:[
+   ()=>{const d=pick([2,3,4,5,6,8]),n=rnd(1,d-1),pie=Math.random()<.5;
+     return {prompt:"איזה חלק מהצורה צבוע?",vis:pie?pieSVG(n,d):barSVG(n,d),type:"frac",ans:R(n,d),
+       hint:[`ספרו לכמה חלקים שווים הצורה מחולקת: זה המכנה.`,`ספרו כמה חלקים צבועים: זה המונה.`],sol:`${n} חלקים צבועים מתוך ${d}: ${M(F(n,d))}`}},
+   ()=>{const d=pick([2,3,4,5,6,8,10]),n=rnd(1,d-1),k=rnd(2,9),T=d*k;
+     return {prompt:`כמה הם ${M(F(n,d))} מתוך ${T}?`,type:"num",ans:R(n*k),
+       hint:[`קודם מוצאים ${M(F(1,d))}: מחלקים ${M(`${T} : ${d}`)}`,`ואז כופלים במונה ${n}.`],sol:`${M(`${T} : ${d} = ${k}`)}, ואז ${M(`${k} × ${n} = ${n*k}`)}`}},
+   ()=>{const d=pick([3,4,5,6,8]),n=rnd(1,d-1),k=rnd(2,8),nm=pick(NAMES),T=d*k;
+     return {prompt:`ל${nm} יש ${T} מדבקות. ${nm} נתן/ה ${M(F(n,d))} מהן לחבר. כמה מדבקות נתן/ה?`,type:"num",ans:R(n*k),
+       hint:[`מחלקים את ${T} ל-${d} קבוצות שוות.`,`לוקחים ${n} קבוצות.`],sol:`${M(`${T} : ${d} = ${k}`)}, ${M(`${k} × ${n} = ${n*k}`)} מדבקות`}},
+   ()=>{const d=pick([3,4,5,6,8,10]),n=rnd(1,d-1),k=rnd(2,7),X=n*k;
+     return {prompt:`${M(F(n,d))} מהכמות הם ${X}. מהי הכמות כולה?`,type:"num",ans:R(d*k),
+       hint:[`${X} הם ${n} חלקים. כמה שווה חלק אחד? מחלקים ${M(`${X} : ${n}`)}`,`ואז כופלים במכנה ${d}.`],sol:`${M(`${X} : ${n} = ${k}`)} זה ${M(F(1,d))}, ו-${M(`${k} × ${d} = ${d*k}`)}`}},
+   ()=>{const d=pick([4,5,6,8]),n=rnd(1,d-1);const opts=shuffle([R(n,d),R(d-n,d),R(n,d+n),R(d,n>1?n:d+1)].filter((v,i,a)=>a.findIndex(x=>eq(x,v))===i)).slice(0,4);
+     return {prompt:"איזה חלק מהצורה <b>לא</b> צבוע?",vis:barSVG(n,d),type:"choice",opts,ans:R(d-n,d),
+       hint:[`סך הכול ${d} חלקים, ${n} צבועים.`,`כמה נשארו לבנים?`],sol:`${d} − ${n} = ${d-n} חלקים לבנים: ${M(F(d-n,d))}`}},
+  ]},
+ {id:"division",title:"השבר כמנת חילוק",short:"חילוק שנותן שבר",icon:"÷",
+  lesson:[
+   {h:"כל שבר הוא תרגיל חילוק",p:"הקו של השבר הוא סימן חילוק: המונה מחולק במכנה.",ex:()=>`<div class="big">${M(F(3,4),"= 3 : 4")}</div>`},
+   {h:"חלוקה שווה",p:"3 פיצות מחולקות שווה בשווה בין 4 ילדים. כל ילד מקבל 3 חלקי 4 של פיצה.",ex:()=>`${piesSVG(3,4,3)}<div class="big">${M("3 : 4 =",F(3,4))}</div>`},
+   {h:"כשהמונה גדול מהמכנה",p:"מחלקים, השלם הוא התוצאה, והשארית היא המונה של השבר.",ex:()=>`<div class="big">${M("7 : 3 =",F(7,3),"= 2",F(1,3))}</div><p>${M("7 : 3 = 2")} ונשארת שארית 1</p>`},
+  ],
+  gen:[
+   ()=>{const b=pick([2,3,4,5,6,7,8,9]),a=rnd(1,b-1);
+     return {prompt:`כתבו כשבר: ${M(`${a} : ${b}`)}`,type:"frac",ans:R(a,b),hint:[`המחולק (${a}) הולך למונה, המחלק (${b}) הולך למכנה.`],sol:M(`${a} : ${b} =`,F(a,b))}},
+   ()=>{const b=pick([2,3,4,5,6]),w=rnd(1,4),r=rnd(1,b-1),a=w*b+r;
+     return {prompt:`כתבו כמספר מעורב: ${M(`${a} : ${b}`)}`,type:"mixed",ans:R(a,b),hint:[`כמה פעמים ${b} נכנס ב-${a}? זה השלם.`,`מה השארית? היא המונה, והמכנה הוא ${b}.`],sol:`${M(`${a} : ${b} = ${w}`)} שארית ${r}, ולכן ${show(R(a,b))}`}},
+   ()=>{const b=pick([3,4,5,6,8]),a=rnd(1,b-1),nm=pick(NAMES);
+     return {prompt:`${a} עוגות מחולקות שווה בשווה בין ${b} ילדים. איזה חלק מעוגה מקבל כל ילד?`,vis:piesSVG(a,b,a*b),type:"frac",ans:R(a,b),hint:[`זה תרגיל חילוק: ${M(`${a} : ${b}`)}`,`חילוק כותבים כשבר: המחולק במונה.`],sol:`${M(`${a} : ${b} =`,F(a,b))} עוגה לכל ילד`}},
+   ()=>{const b=pick([3,4,5]),w=rnd(1,3),r=rnd(1,b-1),a=w*b+r;
+     return {prompt:`${a} פיצות מחולקות שווה בשווה בין ${b} חברים. כמה פיצות מקבל כל אחד?`,type:"mixed",ans:R(a,b),hint:[`מחלקים ${M(`${a} : ${b}`)}.`,`כל אחד מקבל ${w} פיצות שלמות, ומה עם השארית?`],sol:`${M(`${a} : ${b} =`)} ${show(R(a,b))} פיצות`}},
+   ()=>{const b=pick([3,4,5,6,7,8]),a=rnd(1,b-1);const opts=shuffle([`${a} : ${b}`,`${b} : ${a}`,`${a} × ${b}`,`${b} − ${a}`]);
+     return {prompt:`איזה תרגיל שווה לשבר ${M(F(a,b))}?`,type:"choicetxt",opts,ans:`${a} : ${b}`,hint:[`הקו של השבר אומר "לחלק".`,`מה מחלקים במה? המונה במכנה.`],sol:M(F(a,b),`= ${a} : ${b}`)}},
+  ]},
+ {id:"multiply",title:"כפל שברים",short:"שבר כפול שבר ושלם כפול שבר",icon:"×",
+  lesson:[
+   {h:"שבר כפול שבר",p:"כופלים מונה במונה ומכנה במכנה. בסוף מצמצמים אם אפשר.",ex:()=>`<div class="big">${M(F(2,3),"×",F(3,4),"=",F(6,12),"=",F(1,2))}</div>`},
+   {h:"שבר מתוך שבר",p:"המילה \"מתוך\" או \"של\" אומרת כפל: חצי מתוך שלושה רבעים הוא חצי כפול שלושה רבעים.",ex:()=>`<p>${M(F(1,2))} מתוך ${M(F(3,4))}</p><div class="big">${M(F(1,2),"×",F(3,4),"=",F(3,8))}</div>`},
+   {h:"שלם כפול שבר",p:"כופלים את השלם במונה, והמכנה נשאר. אם יוצא שבר גדול מ-1, הופכים למספר מעורב.",ex:()=>`<div class="big">${M("4 ×",F(2,3),"=",F(8,3),"= 2",F(2,3))}</div>`},
+   {h:"טיפ: צמצום לפני כפל",p:"אפשר לצמצם מונה של שבר אחד עם מכנה של השני לפני שכופלים. ככה המספרים קטנים יותר.",ex:()=>`<div class="big">${M(F(3,4),"×",F(2,9),"=",F(1,2),"×",F(1,3),"=",F(1,6))}</div>`},
+  ],
+  gen:[
+   ()=>{const d1=pick([2,3,4,5,6]),d2=pick([2,3,4,5,6,7,8]);const A={n:rnd(1,d1-1),d:d1},B={n:rnd(1,d2-1),d:d2};
+     const p=mul(A,B);return {prompt:`${M(F(A.n,A.d),"×",F(B.n,B.d),"= ?")}`,type:"frac",ans:p,hint:[`מונה כפול מונה: ${M(`${A.n} × ${B.n}`)}`,`מכנה כפול מכנה: ${M(`${A.d} × ${B.d}`)}`,`צמצמו אם אפשר.`],sol:`${M(F(A.n,A.d),"×",F(B.n,B.d),"=",F(A.n*B.n,A.d*B.d))}${(A.n*B.n!==p.n)?` = ${show(p,false)}`:""}`}},
+   ()=>{const k=rnd(2,9),d=pick([3,4,5,6,8]),n=rnd(1,d-1);const p=R(k*n,d);
+     return {prompt:`${M(`${k} ×`,F(n,d),"= ?")}`,type:p.d===1?"num":(p.n>p.d?"mixed":"frac"),ans:p,hint:[`כופלים את ${k} במונה: ${M(`${k} × ${n} = ${k*n}`)}. המכנה נשאר ${d}.`,`אם המונה גדול מהמכנה, הופכים למספר מעורב.`],sol:`${M(`${k} ×`,F(n,d),"=",F(k*n,d))} = ${show(p)}`}},
+   ()=>{const a=R(1,pick([2,3,4])),d=pick([3,4,5,6,8]),n=rnd(1,d-1);const p=mul(a,R(n,d));
+     return {prompt:`כמה זה ${M(F(a.n,a.d))} מתוך ${M(F(n,d))}?`,type:"frac",ans:p,hint:[`"מתוך" זה כפל: ${M(F(a.n,a.d),"×",F(n,d))}`,`מונה כפול מונה, מכנה כפול מכנה.`],sol:`${M(F(a.n,a.d),"×",F(n,d),"=",F(a.n*n,a.d*d))}${(a.n*n!==p.n)?` = ${show(p,false)}`:""}`}},
+   ()=>{const d=pick([4,5,8,10]),n=rnd(1,d-1),q=pick([2,3,4]),m=rnd(1,q-1);const p=mul(R(m,q),R(n,d));
+     return {prompt:`בבקבוק היו ${M(F(n,d))} ליטר מיץ. שתיתי ${M(F(m,q))} מהמיץ. כמה ליטר שתיתי?`,type:"frac",ans:p,hint:[`צריך למצוא ${M(F(m,q))} מתוך ${M(F(n,d))}.`,`כופלים: ${M(F(m,q),"×",F(n,d))}`],sol:`${M(F(m,q),"×",F(n,d),"=",F(m*n,q*d))}${(m*n!==p.n)?` = ${show(p,false)}`:""} ליטר`}},
+   ()=>{const d=pick([3,4,5,6]),n=rnd(1,d-1),k=rnd(2,6);const p=R(k*n,d),nm=pick(NAMES);
+     return {prompt:`${nm} רץ/ה כל יום ${M(F(n,d))} קילומטר. כמה קילומטרים ירוץ/תרוץ ב-${k} ימים?`,type:p.d===1?"num":(p.n>p.d?"mixed":"frac"),ans:p,hint:[`זה שלם כפול שבר: ${M(`${k} ×`,F(n,d))}`],sol:`${M(`${k} ×`,F(n,d),"=",F(k*n,d))} = ${show(p)} ק״מ`}},
+  ]},
+ {id:"wholemixed",title:"שלם כפול מספר מעורב",short:"כמו 3 כפול 2 ורבע",icon:"2½",
+  lesson:[
+   {h:"דרך 1: מפרקים",p:"כופלים את השלם בחלק השלם, כופלים את השלם בשבר, ומחברים.",ex:()=>`<div class="big">${M("3 × 2",F(1,4))}</div><p>${M("3 × 2 = 6")}</p><p>${M("3 ×",F(1,4),"=",F(3,4))}</p><p>${M("6 +",F(3,4),"= 6",F(3,4))}</p>`},
+   {h:"דרך 2: שבר מדומה",p:"הופכים את המספר המעורב לשבר (שלם כפול מכנה ועוד מונה), כופלים, ומחזירים למספר מעורב.",ex:()=>`<div class="big">${M("3 × 2",F(1,4),"= 3 ×",F(9,4),"=",F(27,4),"= 6",F(3,4))}</div>`},
+   {h:"שימו לב לשארית",p:"אם השבר שיוצא בכפל גדול מ-1, מעבירים שלמים לחלק השלם.",ex:()=>`<div class="big">${M("4 × 1",F(2,3))}</div><p>${M("4 × 1 = 4")}, ${M("4 ×",F(2,3),"=",F(8,3),"= 2",F(2,3))}</p><p>${M("4 + 2",F(2,3),"= 6",F(2,3))}</p>`},
+  ],
+  gen:[
+   ()=>{const k=rnd(2,6),w=rnd(1,4),d=pick([2,3,4,5,6,8]),n=rnd(1,d-1);const p=R(k*(w*d+n),d);
+     return {prompt:`${M(`${k} × ${w}`,F(n,d),"= ?")}`,type:p.d===1?"num":"mixed",ans:p,
+       hint:[`כופלים את השלמים: ${M(`${k} × ${w} = ${k*w}`)}`,`כופלים את השבר: ${M(`${k} ×`,F(n,d),"=",F(k*n,d))}`,`מחברים, ואם צריך מעבירים שלמים מהשבר.`],
+       sol:`${M(`${k} × ${w} = ${k*w}`)}, ${M(`${k} ×`,F(n,d),"=",F(k*n,d))} = ${show(R(k*n,d))}, ובסך הכול ${show(p)}`}},
+   ()=>{const k=rnd(2,5),w=rnd(1,3),d=pick([2,4]),n=rnd(1,d-1);const p=R(k*(w*d+n),d),nm=pick(NAMES);
+     return {prompt:`כל ילד מקבל ${M(`${w}`,F(n,d))} עוגיות. יש ${k} ילדים. כמה עוגיות צריך בסך הכול?`,type:p.d===1?"num":"mixed",ans:p,
+       hint:[`זה כפל: ${M(`${k} × ${w}`,F(n,d))}`,`פרקו: ${M(`${k} × ${w}`)} ועוד ${M(`${k} ×`,F(n,d))}`],sol:`${M(`${k} × ${w}`,F(n,d),"=")} ${show(p)} עוגיות`}},
+   ()=>{const k=rnd(2,6),w=rnd(1,3),d=pick([3,4,5,6]),n=rnd(1,d-1);
+     return {prompt:`הפכו לשבר מדומה: ${M(`${w}`,F(n,d))}`,type:"frac",ans:R(w*d+n,d),noSimplifyNote:true,hint:[`שלם כפול מכנה: ${M(`${w} × ${d} = ${w*d}`)}`,`ועוד המונה: ${M(`${w*d} + ${n}`)}. המכנה נשאר ${d}.`],sol:M(`${w}`,F(n,d),"=",F(w*d+n,d))}},
+   ()=>{const k=rnd(2,4),w=rnd(1,3),d=pick([3,4,5]),n=rnd(1,d-1);const p=R(k*(w*d+n),d),nm=pick(NAMES);
+     return {prompt:`${nm} קונה ${k} חבילות קמח. כל חבילה שוקלת ${M(`${w}`,F(n,d))} ק״ג. כמה שוקלות כל החבילות?`,type:p.d===1?"num":"mixed",ans:p,
+       hint:[`${M(`${k} × ${w}`,F(n,d))}`,`פרקו לשלם ולשבר, וחברו.`],sol:`${M(`${k} × ${w}`,F(n,d),"=")} ${show(p)} ק״ג`}},
+  ]},
+];
+const topicById=id=>TOPICS.find(t=>t.id===id);
+
+/* ============ state ============ */
+const KEY="yalla-math-v1";
+const COACHES=[{id:"maya",e:"👩‍🏫",n:"מאיה"},{id:"ben",e:"👨‍🏫",n:"בן"},{id:"lily",e:"👧",n:"לילי"},{id:"tom",e:"👦",n:"תום"},{id:"zoe",e:"🦸‍♀️",n:"זואי"},{id:"merlin",e:"🧙",n:"מרלין"},{id:"ivy",e:"🕵️‍♀️",n:"אייבי"},{id:"bolt",e:"🤖",n:"בולט"}];
+let S;try{S=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){S={}}
+S=Object.assign({name:"",coach:null,prog:{},tests:[],stars:0},S);
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const coach=()=>COACHES.find(c=>c.id===S.coach)||COACHES[0];
+const prog=id=>S.prog[id]||{right:0,total:0};
+const mastery=id=>{const p=prog(id);return p.total?Math.round(p.right/p.total*100):0};
+
+/* ============ voice (Hebrew, optional) ============ */
+let HV=null;
+function pickV(){if(!("speechSynthesis" in window))return;HV=speechSynthesis.getVoices().find(v=>/^he|^iw/i.test(v.lang))||null}
+if("speechSynthesis" in window){pickV();speechSynthesis.onvoiceschanged=pickV}
+function speak(html){
+  if(!("speechSynthesis" in window))return;
+  const d=document.createElement("div");d.innerHTML=html.replace(/<span class="fr"><span>(\d+)<\/span><span>(\d+)<\/span><\/span>/g," $1 חלקי $2 ").replace(/×/g," כפול ").replace(/ : /g," חלקי ").replace(/=/g," שווה ").replace(/−/g," פחות ");
+  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(d.textContent);u.lang="he-IL";if(HV)u.voice=HV;u.rate=.95;speechSynthesis.speak(u);
+}
+
+/* ============ ui helpers ============ */
+const $=s=>document.querySelector(s);
+const app=$("#app");
+const talk=(html)=>`<div class="talk"><div class="avatar" aria-hidden="true">${coach().e}</div><div class="bubble">${html}</div></div>`;
+const nm=()=>S.name?`, <bdi>${esc(S.name)}</bdi>`:"";
+
+function render(){S.coach?home():onboarding()}
+
+function onboarding(){
+  let picked=S.coach;
+  app.innerHTML=`<h1>ברוכים הבאים ל-Yalla Math!</h1><p>מתכוננים למבחן בשברים, כיתה ו׳. בחרו מורה שילווה אתכם:</p>
+  <div class="chars">${COACHES.map(c=>`<button class="char" data-id="${c.id}" aria-pressed="${c.id===picked}"><span class="e">${c.e}</span><span class="n">${c.n}</span></button>`).join("")}</div>
+  <div class="field"><label for="nm" class="label">איך קוראים לך?</label><input id="nm" maxlength="20" autocomplete="off" value="${esc(S.name)}"></div>
+  <button class="btn wide" id="go" ${picked?"":"disabled"}>יאללה, מתחילים!</button>`;
+  app.querySelectorAll(".char").forEach(b=>b.onclick=()=>{picked=b.dataset.id;app.querySelectorAll(".char").forEach(x=>x.setAttribute("aria-pressed",x===b));$("#go").disabled=false});
+  $("#go").onclick=()=>{S.coach=picked;S.name=$("#nm").value.trim();save();home()};
+}
+
+function home(){
+  const h=new Date().getHours(),g=h>=5&&h<12?"בוקר טוב":h<17?"צהריים טובים":h<22?"ערב טוב":"לילה טוב";
+  const last=S.tests[S.tests.length-1];
+  app.innerHTML=`
+  <div class="top"><div class="grow"><div class="label">Yalla Math · כיתה ו׳ · שברים</div></div><span class="chip">⭐ ${S.stars}</span><button class="x" id="chg" aria-label="החלפת מורה">${coach().e}</button></div>
+  ${talk(`${g}${nm()}! בואו נתכונן למבחן. אפשר ללמוד נושא, לתרגל, או לעשות מבחן לדוגמה.`)}
+  <div class="card hero"><h3>מבחן לדוגמה</h3><p>12 שאלות מכל הנושאים, כמו במבחן אמיתי. בסוף מקבלים ציון ורואים מה לחזק.</p>
+   ${last?`<p class="label">ציון אחרון: ${last.s}</p>`:""}<button class="btn wide" id="test">להתחיל מבחן</button></div>
+  <div class="label">הנושאים למבחן</div>
+  <div class="topics">${TOPICS.map(t=>{const m=mastery(t.id),p=prog(t.id);return `<button class="topic" data-id="${t.id}"><span class="e" aria-hidden="true"><span class="math">${t.icon}</span></span><span class="grow"><b>${t.title}</b><small>${t.short}${p.total?` · ${m}% הצלחה`:""}</small><div class="meter"><i style="width:${m}%"></i></div></span></button>`}).join("")}</div>`;
+  app.querySelectorAll(".topic").forEach(b=>b.onclick=()=>topicMenu(b.dataset.id));
+  $("#test").onclick=startTest;$("#chg").onclick=onboarding;
+}
+
+function topicMenu(id){
+  const t=topicById(id);
+  app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">${t.title}</h2></div>
+  ${talk(`מה עושים${nm()}? מומלץ להתחיל בהסבר, ואז לתרגל.`)}
+  <button class="btn wide" id="learn">📖 הסבר קצר</button>
+  <button class="btn wide" id="prac">✏️ תרגול (10 שאלות)</button>`;
+  $("#back").onclick=home;$("#learn").onclick=()=>lesson(id,0);$("#prac").onclick=()=>startPractice([id],10,false);
+}
+
+function lesson(id,i){
+  const t=topicById(id),L=t.lesson[i];
+  app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><div class="grow"><div class="bar"><i style="width:${(i+1)/t.lesson.length*100}%"></i></div></div><span class="chip">${i+1}/${t.lesson.length}</span></div>
+  <div class="card lesson"><h2>${L.h}</h2><p>${L.p}</p><div class="ex">${L.ex()}</div><button class="link" id="rd">🔊 הקראה</button></div>
+  <div class="row">${i>0?`<button class="btn ghost" id="prev">הקודם</button>`:""}<button class="btn" id="next">${i<t.lesson.length-1?"הבא":"לתרגול!"}</button></div>`;
+  $("#back").onclick=()=>topicMenu(id);
+  $("#rd").onclick=()=>speak(L.h+". "+L.p);
+  if($("#prev"))$("#prev").onclick=()=>lesson(id,i-1);
+  $("#next").onclick=()=>i<t.lesson.length-1?lesson(id,i+1):startPractice([id],10,false);
+}
+
+/* ============ practice / test engine ============ */
+let P=null;
+function makeQ(topicId){const t=topicById(topicId);const q=pick(t.gen)();q.topic=topicId;return q}
+function startPractice(topics,count,isTest){
+  const qs=[];for(let i=0;i<count;i++)qs.push(makeQ(topics[i%topics.length]));
+  P={qs:isTest?shuffle(qs):qs,i:0,right:0,isTest,topics,log:[]};question();
+}
+function startTest(){
+  const qs=[];TOPICS.forEach(t=>{for(let k=0;k<3;k++)qs.push(makeQ(t.id))});
+  P={qs:shuffle(qs),i:0,right:0,isTest:true,log:[]};question();
+}
+
+function question(){
+  const q=P.qs[P.i];let tries=0,hintN=0,done=false;
+  const total=P.qs.length;
+  const inputHTML=()=>{
+    if(q.type==="choice")return `<div class="opts">${q.opts.map((o,k)=>`<button class="opt" data-k="${k}">${show(o,false)}</button>`).join("")}</div>`;
+    if(q.type==="choicetxt")return `<div class="opts">${q.opts.map((o,k)=>`<button class="opt" data-k="${k}"><span class="math">${o}</span></button>`).join("")}</div>`;
+    const boxes=q.type==="num"?`<input class="box whole" id="b0" readonly inputmode="none" aria-label="תשובה">`:
+      `${q.type==="mixed"?`<input class="box whole" id="b0" readonly inputmode="none" aria-label="שלם">`:""}<div class="stack"><input class="box" id="b1" readonly inputmode="none" aria-label="מונה"><span class="ln"></span><input class="box" id="b2" readonly inputmode="none" aria-label="מכנה"></div>`;
+    return `<div class="ans" id="ans">${boxes}</div>
+      <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-n="${n}">${n}</button>`).join("")}<button class="fn" data-f="del">⌫ מחיקה</button><button data-n="0">0</button><button class="fn" data-f="next">${q.type==="num"?"":"הבא ⇣"}</button></div>`;
+  };
+  const prompt=q.type==="mixed"?`${q.prompt}<div class="label" style="margin-top:6px">כתבו כמספר מעורב: שלם, מונה ומכנה</div>`:q.prompt;
+  app.innerHTML=`<div class="top"><button class="x" id="quit" aria-label="יציאה">✕</button><div class="grow"><div class="bar"><i style="width:${P.i/total*100}%"></i></div></div><span class="chip">${P.isTest?"מבחן":"תרגול"} ${P.i+1}/${total}</span></div>
+  <div class="card"><div class="q">${prompt}</div>${q.vis?`<div class="vis">${q.vis}</div>`:""}<button class="link" id="rd" style="align-self:flex-start">🔊 הקראה</button></div>
+  ${inputHTML()}
+  <div class="fb" id="fb" aria-live="polite"></div>
+  <div id="help"></div>
+  <div class="row"><button class="btn ghost" id="hint" ${P.isTest?"hidden":""}>💡 רמז</button><button class="btn" id="check" ${q.type.startsWith("choice")?"hidden":""}>בדיקה</button></div>`;
+  $("#quit").onclick=home;$("#rd").onclick=()=>speak(q.prompt);
+  const fb=$("#fb"),help=$("#help");
+  const finish=(ok)=>{
+    done=true;if(ok)P.right++;
+    if(!P.isTest||true){const p=S.prog[q.topic]=S.prog[q.topic]||{right:0,total:0};p.total++;if(ok)p.right++}
+    if(ok)S.stars+=P.isTest?2:1;save();
+    P.log.push({q,ok});
+    $("#check").hidden=true;$("#hint").hidden=true;
+    const nx=document.createElement("button");nx.className="btn wide";nx.textContent=P.i<total-1?"לשאלה הבאה":"לסיכום";nx.onclick=()=>{P.i++;P.i<total?question():summary()};
+    help.after(nx);
+  };
+  const showSol=()=>{help.innerHTML=`<div class="steps"><b>הפתרון:</b><div>${q.sol}</div></div>`};
+  const judge=(val)=>{
+    if(done)return;
+    let ok,note="";
+    if(q.type==="choicetxt")ok=val===q.ans;
+    else if(val==null){fb.className="fb bad";fb.textContent="השלימו את כל התיבות.";return}
+    else{ok=eq(val.r,q.ans);
+      if(ok&&val.raw&&!q.noSimplifyNote&&(val.raw.n!==q.ans.n||val.raw.d!==q.ans.d)&&q.type!=="num"){
+        if(val.raw.n>val.raw.d&&q.type==="mixed")note=`נכון! במספר מעורב זה ${txtHTML(q.ans)}.`;
+        else note=`נכון! אפשר גם לצמצם: ${txtHTML(q.ans)}.`;
+      }}
+    if(ok){
+      fb.className="fb good";fb.innerHTML=note||pick(["מצוין!","כל הכבוד!","בדיוק!","יפה מאוד!"]);
+      const a=$("#ans");if(a)a.classList.add("good");
+      if(P.isTest||tries>0||hintN>0)finish(tries===0&&hintN===0||P.isTest);else finish(true);
+    }else{
+      tries++;const a=$("#ans");if(a){a.classList.remove("bad");void a.offsetWidth;a.classList.add("bad")}
+      if(P.isTest){fb.className="fb bad";fb.textContent="לא נכון.";showSol();finish(false);return}
+      fb.className="fb bad";fb.textContent=tries===1?"עוד לא. נסו שוב או לחצו על רמז.":"כמעט. הנה הפתרון המלא:";
+      if(tries>=2){showSol();finish(false)}
+    }
+  };
+  // choice
+  app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    if(done)return;const k=+b.dataset.k;
+    const ok=q.type==="choice"?eq(q.opts[k],q.ans):q.opts[k]===q.ans;
+    if(ok){b.classList.add("good")}else{b.classList.remove("bad");void b.offsetWidth;b.classList.add("bad")}
+    if(q.type==="choice")judge({r:q.opts[k]});else judge(q.opts[k]);
+  });
+  // keypad
+  const ids=q.type==="num"?["b0"]:q.type==="mixed"?["b0","b1","b2"]:["b1","b2"];
+  let cur=0;
+  const sel=i=>{cur=i;ids.forEach((id,k)=>{const el=$("#"+id);el&&el.classList.toggle("sel",k===i)})};
+  if($("#b0")||$("#b1")){ids.forEach((id,k)=>{$("#"+id).onclick=()=>sel(k)});sel(0)}
+  app.querySelectorAll(".pad button").forEach(b=>b.onclick=()=>{
+    if(done)return;const el=$("#"+ids[cur]);
+    if(b.dataset.n!=null){if(el.value.length<4)el.value+=b.dataset.n;$("#ans").classList.remove("bad")}
+    else if(b.dataset.f==="del"){if(el.value)el.value=el.value.slice(0,-1);else if(cur>0){sel(cur-1)}}
+    else if(b.dataset.f==="next"){sel((cur+1)%ids.length)}
+  });
+  $("#check").onclick=()=>{
+    if(q.type==="num"){const v=$("#b0").value;judge(v===""?null:{r:R(+v)});return}
+    const w=q.type==="mixed"?$("#b0").value:"0",n=$("#b1").value,d=$("#b2").value;
+    if(n===""&&q.type==="mixed"&&w!==""&&d===""){judge({r:R(+w),raw:R(+w)});return}
+    if(n===""||d===""||+d===0){judge(null);return}
+    const raw={n:(+w||0)*(+d)+(+n),d:+d};judge({r:R(raw.n,raw.d),raw});
+  };
+  $("#hint").onclick=()=>{
+    if(done)return;hintN=Math.min(q.hint.length,hintN+1);
+    help.innerHTML=`<div class="steps">${q.hint.slice(0,hintN).map((h,i)=>`<div>${i+1}. ${h}</div>`).join("")}</div>`;
+  };
+}
+function txtHTML(r){return show(r,true)}
+
+function summary(){
+  const total=P.qs.length,score=Math.round(P.right/total*100);
+  if(P.isTest){S.tests.push({d:new Date().toISOString().slice(0,10),s:score});save()}
+  const byTopic={};P.log.forEach(l=>{const b=byTopic[l.q.topic]=byTopic[l.q.topic]||{r:0,t:0};b.t++;if(l.ok)b.r++});
+  const weak=Object.entries(byTopic).filter(([,b])=>b.r/b.t<.7).map(([id])=>topicById(id).title);
+  const msg=score>=90?"מעולה! את/ה מוכן/ה למבחן!":score>=70?"יפה מאוד! עוד קצת תרגול ונגיע למושלם.":"צריך עוד תרגול. זה בסדר גמור, ככה לומדים!";
+  const wrong=P.log.filter(l=>!l.ok);
+  app.innerHTML=`${talk(msg)}
+  <div class="card center"><div class="label">${P.isTest?"ציון במבחן לדוגמה":"תוצאה בתרגול"}</div><div class="score ${score<70?"low":""}">${score}</div><p>${P.right} נכונות מתוך ${total}</p>
+  ${P.isTest?`<div class="review">${TOPICS.map(t=>{const b=byTopic[t.id];return b?`<div class="row" style="justify-content:space-between"><span>${t.title}</span><b>${b.r}/${b.t}</b></div>`:""}).join("")}</div>`:""}
+  ${weak.length?`<p><b>כדאי לחזק:</b> ${weak.join(", ")}</p>`:""}</div>
+  ${wrong.length?`<h3>השאלות שטעיתם בהן</h3><div class="review">${wrong.map(l=>`<div class="item"><div>${l.q.prompt}</div><div class="steps" style="margin-top:8px">${l.q.sol}</div></div>`).join("")}</div>`:""}
+  <button class="btn wide" id="again">${P.isTest?"מבחן חדש":"עוד 10 שאלות"}</button><button class="btn ghost wide" id="home">למסך הבית</button>`;
+  $("#again").onclick=()=>P.isTest?startTest():startPractice(P.topics,10,false);$("#home").onclick=home;
+  if("speechSynthesis" in window)speak(msg);
+}
+
+render();
+</script>
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));</script>
+</body></html>
