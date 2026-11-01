@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "il.co.myinspire.yallaenglish",
+      "sha256_cert_fingerprints": ["13:0E:79:62:A7:07:F3:2A:8D:57:46:07:F9:F6:CD:59:AD:BE:55:3A:F9:A1:18:AC:FC:E2:DF:2B:D8:56:11:A2"]
+    }
+  }
+]
