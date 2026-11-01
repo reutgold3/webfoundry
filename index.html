@@ -543,17 +543,17 @@ function render(){ if(!S.char||!S.course) pickCourse(true); else welcome(); }
 
 function welcome(){
   const h=new Date().getHours();
-  const [gEn,gHe]=h<12?["Good morning","בוקר טוב"]:h<17?["Good afternoon","צהריים טובים"]:["Good evening","ערב טוב"];
+  const [gEn,gHe,gIcon]=h>=5&&h<12?["Good morning","בוקר טוב","☀️"]:h>=12&&h<17?["Good afternoon","צהריים טובים","🌤️"]:h>=17&&h<22?["Good evening","ערב טוב","🌆"]:["Good evening","לילה טוב","🌙"];
   const n=S.name;
   const C=course(),done=doneIn(C),L=C.units[done%C.units.length];
   const st=liveStreak();
   app.innerHTML=`
    <div class="welcome">
-     <div class="wave" aria-hidden="true">👋</div>
+     <div class="wave" aria-hidden="true">${gIcon}</div>
      <div class="avatar big" id="wav">${char().e}${(SHOP.find(x=>x.id===S.wear)||{}).e?`<span class="acc">${SHOP.find(x=>x.id===S.wear).e}</span>`:""}</div>
-     <h1>שלום${n?`, ${esc(n)}`:""}!</h1>
+     <h1>${gHe}${n?`, ${esc(n)}`:""}!</h1>
      <p class="en hello">${gEn}${n?`, ${esc(n)}`:""}!</p>
-     <p class="sub">${gHe}! ${esc(char().name)} מחכה לך.${doneToday()?" השיעור של היום כבר הושלם, אבל תמיד אפשר להמשיך.":` היום: ${esc(L.he)} ${L.e}`}</p>
+     <p class="sub">${esc(char().name)} מחכה לך.${doneToday()?" השיעור של היום כבר הושלם, אבל תמיד אפשר להמשיך.":` היום: ${esc(L.he)} ${L.e}`}</p>
      ${st?`<span class="chip">🔥 ${st} ${st===1?"יום":"ימים"} ברצף</span>`:""}
      <div class="label">עם מי לומדים היום?</div>
      <div class="chars mini">${(kidsCourse()?CHARS.filter(c=>c.kid).concat(CHARS.filter(c=>!c.kid)):CHARS.filter(c=>!c.kid).concat(CHARS.filter(c=>c.kid))).map(c=>`<button class="char" data-id="${c.id}" aria-pressed="${c.id===S.char}"><span class="e">${c.e}</span><span class="n">${c.name}</span></button>`).join("")}</div>
@@ -564,7 +564,7 @@ function welcome(){
     S.char=b.dataset.id;save();
     app.querySelectorAll(".chars.mini .char").forEach(x=>x.setAttribute("aria-pressed",x===b));
     const a=SHOP.find(x=>x.id===S.wear);$("#wav").innerHTML=char().e+(a?`<span class="acc">${a.e}</span>`:"");
-    $(".welcome .sub").textContent=`${gHe}! ${char().name} מחכה לך.`;
+    $(".welcome .sub").textContent=`${char().name} מחכה לך.`;
     say(`Hi! I'm ${char().name}!`);
   });
   $("#go").onclick=()=>{home();say(`${gEn}${n?", "+n:""}! I'm so happy to see you!`)};
