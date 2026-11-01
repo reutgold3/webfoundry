@@ -234,6 +234,11 @@ button.chip{cursor:pointer}
 .chars.mini .char .e{font-size:32px}
 .chars.mini .char .n{font-size:14px}
 .welcome{min-height:0;padding-block:8px}
+.kidrow .course{padding:10px 12px;gap:10px}
+.kidrow .course .e{font-size:30px}
+.kidrow .course b{font-size:17px;text-wrap:balance}
+.kidrow .course>span:last-child{min-width:0}
+.kidrow .course span span{white-space:nowrap}
 /* Help language */
 .seg.langs{width:100%}
 [data-help="ru"] .bubble .he,[data-help="ru"] .word-he,[data-help="ru"] .story-he,[data-help="ru"] .dlg .a small,[data-help="ru"] .drow .dt span,[data-help="ru"] .target .he{direction:ltr;text-align:left}
@@ -615,9 +620,10 @@ const SHOP=[
 const balance=()=>Math.max(0,S.stars-(S.spent||0));
 function applyBg(){const b=SHOP.find(x=>x.id===S.bg)||SHOP.find(x=>x.id==="bg-sky");document.documentElement.style.setProperty("--sky",b.c)}
 function avatarHTML(){const a=SHOP.find(x=>x.id===S.wear);return `<div class="avatar" aria-hidden="true">${char().e}${a?`<span class="acc">${a.e}</span>`:""}</div>`}
+function isoName(h){const n=S.name&&esc(S.name);return n?h.split(n).join(`<bdi>${n}</bdi>`):h}
 function talkHTML(en,he){
   return `<div class="talk">${avatarHTML()}
-  <div class="bubble"><div class="line">${esc(en)}</div><div class="he" hidden>${esc(hl(he))}</div>
+  <div class="bubble"><div class="line">${esc(en)}</div><div class="he" hidden>${isoName(esc(hl(he)))}</div>
   <div class="tools"><button class="mini" data-act="again">🔊 <span>שוב</span></button><button class="mini" data-act="he">${HELP[S.help]?HELP[S.help].btn:"עברית"}</button></div></div></div>`;
 }
 function wireTalk(en){
@@ -639,7 +645,7 @@ function welcome(){
    <div class="welcome">
      <div class="wave" aria-hidden="true">${gIcon}</div>
      <div class="avatar big" id="wav">${char().e}${(SHOP.find(x=>x.id===S.wear)||{}).e?`<span class="acc">${SHOP.find(x=>x.id===S.wear).e}</span>`:""}</div>
-     <h1>${gHe}${n?`, ${esc(n)}`:""}!</h1>
+     <h1>${gHe}${n?`, <bdi>${esc(n)}</bdi>`:""}!</h1>
      <p class="en hello">${gEn}${n?`, ${esc(n)}`:""}!</p>
      <p class="sub">${esc(char().name)} מחכה לך.${doneToday()?" השיעור של היום כבר הושלם, אבל תמיד אפשר להמשיך.":` היום: ${esc(L.he)} ${L.e}`}</p>
      ${st?`<span class="chip">🔥 ${st} ${st===1?"יום":"ימים"} ברצף</span>`:""}
