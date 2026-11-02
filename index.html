@@ -92,6 +92,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 .meter{height:8px;border-radius:999px;background:#EEF6F1;overflow:hidden;margin-top:6px}
 .meter>i{display:block;height:100%;background:var(--good)}
 .hero{background:#FFF1E6}
+.hero.bagrut{background:#E6F3FF}
 .voicetip{background:#FFF6DA;border:2px dashed #F6C79F;gap:6px;font-size:15px}
 .chars{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .grades{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -2010,7 +2011,7 @@ const TEST_TOPICS=["meaning","division","multiply","wholemixed"];
 const KEY="yalla-math-v1";
 const COACHES=[{id:"maya",e:"👩‍🏫",n:"מאיה"},{id:"ben",e:"👨‍🏫",n:"בן"},{id:"lily",e:"👧",n:"לילי"},{id:"tom",e:"👦",n:"תום"},{id:"zoe",e:"🦸‍♀️",n:"זואי"},{id:"merlin",e:"🧙",n:"מרלין"},{id:"ivy",e:"🕵️‍♀️",n:"אייבי"},{id:"bolt",e:"🤖",n:"בולט"}];
 let S;try{S=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){S={}}
-S=Object.assign({name:"",coach:null,prog:{},tests:[],stars:0,voice:true,grade:"g6"},S);
+S=Object.assign({name:"",coach:null,prog:{},tests:[],stars:0,voice:true,grade:"g6",chap:{},bagrut:{}},S);
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const coach=()=>COACHES.find(c=>c.id===S.coach)||COACHES[0];
 const prog=id=>S.prog[id]||{right:0,total:0};
@@ -2067,23 +2068,25 @@ function home(){
   <div class="top"><div class="grow"><div class="label">Yalla Math</div></div><button class="chip" id="gr">${gradeName(S.grade)} ▾</button><span class="chip">⭐ ${S.stars}</span><button class="x" id="hv" aria-label="הקראה אוטומטית">${S.voice===false?"🔇":"🔊"}</button><button class="x" id="chg" aria-label="החלפת מורה">${coach().e}</button></div>
   ${talk(`${g}${nm()}! בואו נתכונן למבחן. אפשר ללמוד נושא, לתרגל, או לעשות מבחן לדוגמה.`)}
   ${S.voice!==false&&voicesReady&&!HV?`<div class="card voicetip"><b>🔊 אין בטלפון קול בעברית, ולכן ההקראה לא נשמעת.</b><p><b>באנדרואיד:</b> הגדרות ← חפשו "המרת טקסט לדיבור" ← מנוע של Google ← התקנת נתונים קוליים ← עברית.</p><p><b>באייפון:</b> הגדרות ← נגישות ← תוכן מוקרא ← קולות ← עברית.</p><p>אחרי ההתקנה סגרו ופתחו את האפליקציה מחדש.</p></div>`:""}
+  ${/^h/.test(S.grade)?`<div class="card hero bagrut"><h3>🎓 בגרות לדוגמה · ${gradeName(S.grade)}</h3><p>מבחן מלא בסגנון בגרות, מחולק לפרקים לפי נושאי הבחינה. מקבלים ציון, זמן ופירוט לפי פרק.</p>${(S.bagrut[S.grade]||[]).length?`<p class="label">ציון אחרון: ${S.bagrut[S.grade].slice(-1)[0].s}</p>`:""}<button class="btn wide" id="bag">להתחיל בגרות לדוגמה</button></div>`:""}
   <div class="card hero"><h3>מבחן לדוגמה</h3><p>12 שאלות ${S.grade==="g6"?"על נושאי המבחן הקרוב":"מכל הנושאים של "+gradeName(S.grade)}, כמו במבחן אמיתי. בסוף מקבלים ציון ורואים מה לחזק.</p>
    ${last?`<p class="label">ציון אחרון: ${last.s}</p>`:""}<button class="btn wide" id="test">להתחיל מבחן</button></div>
   ${[...new Set(TOPICS.filter(t=>t.grade===S.grade).map(t=>t.sec))].map(sec=>`<div class="label">${sec}</div><div class="topics">${TOPICS.filter(t=>t.grade===S.grade&&t.sec===sec).map(topicBtn).join("")}</div>`).join("")}`;
   app.querySelectorAll(".topic").forEach(b=>b.onclick=()=>topicMenu(b.dataset.id));
   $("#test").onclick=startTest;$("#chg").onclick=onboarding;
-  $("#gr").onclick=gradePicker;
+  $("#gr").onclick=gradePicker;if($("#bag"))$("#bag").onclick=startBagrut;
   $("#hv").onclick=()=>{S.voice=S.voice===false;save();home();if(S.voice)speak("ההקראה הופעלה",true)};
 }
-function topicBtn(t){{const m=mastery(t.id),p=prog(t.id);return `<button class="topic" data-id="${t.id}"><span class="e" aria-hidden="true"><span class="math">${t.icon}</span></span><span class="grow"><b>${t.title}</b><small>${t.short}${p.total?` · ${m}% הצלחה`:""}</small><div class="meter"><i style="width:${m}%"></i></div></span></button>`}}
+function topicBtn(t){{const m=mastery(t.id),p=prog(t.id);return `<button class="topic" data-id="${t.id}"><span class="e" aria-hidden="true"><span class="math">${t.icon}</span></span><span class="grow"><b>${t.title}${S.chap[t.id]>=80?" 🏅":""}</b><small>${t.short}${p.total?` · ${m}% הצלחה`:""}${S.chap[t.id]!=null?` · מבחן פרק: ${S.chap[t.id]}`:""}</small><div class="meter"><i style="width:${m}%"></i></div></span></button>`}}
 
 function topicMenu(id){
   const t=topicById(id);
   app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">${t.title}</h2></div>
   ${talk(`מה עושים${nm()}? מומלץ להתחיל בהסבר, ואז לתרגל.`)}
   <button class="btn wide" id="learn">📖 הסבר קצר</button>
-  <button class="btn wide" id="prac">✏️ תרגול (10 שאלות)</button>`;
-  $("#back").onclick=home;$("#learn").onclick=()=>lesson(id,0);$("#prac").onclick=()=>startPractice([id],10,false);
+  <button class="btn wide" id="prac">✏️ תרגול (10 שאלות)</button>
+  <button class="btn ghost wide" id="chap">📝 מבחן סוף פרק (8 שאלות)${S.chap[id]!=null?` · השיא: ${S.chap[id]}`:""}</button>`;
+  $("#back").onclick=home;$("#learn").onclick=()=>lesson(id,0);$("#prac").onclick=()=>startPractice([id],10,false);$("#chap").onclick=()=>startChapterTest(id);
 }
 
 function lesson(id,i){
@@ -2106,6 +2109,12 @@ function startPractice(topics,count,isTest){
   const qs=[];for(let i=0;i<count;i++)qs.push(makeQ(topics[i%topics.length]));
   P={qs:isTest?shuffle(qs):qs,i:0,right:0,isTest,topics,log:[]};question();
 }
+function startChapterTest(id){const qs=[];for(let i=0;i<8;i++)qs.push(makeQ(id));P={qs,i:0,right:0,isTest:true,chapter:id,log:[]};question()}
+function startBagrut(){
+  const ts=TOPICS.filter(t=>t.grade===S.grade);const qs=[];
+  ts.forEach(t=>{const n=ts.length>6?2:3;for(let k=0;k<n;k++)qs.push(makeQ(t.id))});
+  P={qs,i:0,right:0,isTest:true,bagrut:true,start:Date.now(),log:[]};question();
+}
 function startTest(){
   const qs=[];const ids=S.grade==="g6"?TEST_TOPICS:TOPICS.filter(t=>t.grade===S.grade).map(t=>t.id);const per=Math.max(1,Math.ceil(12/ids.length));shuffle(ids).forEach(id=>{for(let k=0;k<per;k++)if(qs.length<12)qs.push(makeQ(id))});
   P={qs:shuffle(qs),i:0,right:0,isTest:true,log:[]};question();
@@ -2125,7 +2134,8 @@ function question(){
       <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-n="${n}">${n}</button>`).join("")}<button class="fn" data-f="del">⌫ מחיקה</button><button data-n="0">0</button>${q.type==="dec"?`<button data-n=".">.</button>`:`<button class="fn" data-f="next">${q.type==="num"?"":"הבא ⇣"}</button>`}${q.neg?`<button class="fn" data-f="neg" style="grid-column:1/-1">± מינוס</button>`:""}</div>`;
   };
   const prompt=q.type==="mixed"?`${q.prompt}<div class="label" style="margin-top:6px">כתבו כמספר מעורב: שלם, מונה ומכנה</div>`:q.prompt;
-  app.innerHTML=`<div class="top"><button class="x" id="quit" aria-label="יציאה">✕</button><div class="grow"><div class="bar"><i style="width:${P.i/total*100}%"></i></div></div><span class="chip">${P.isTest?"מבחן":"תרגול"} ${P.i+1}/${total}</span><button class="x" id="vt" aria-label="הקראה אוטומטית">${S.voice===false?"🔇":"🔊"}</button></div>
+  app.innerHTML=`<div class="top"><button class="x" id="quit" aria-label="יציאה">✕</button><div class="grow"><div class="bar"><i style="width:${P.i/total*100}%"></i></div></div><span class="chip">${P.bagrut?"בגרות":P.chapter?"מבחן פרק":P.isTest?"מבחן":"תרגול"} ${P.i+1}/${total}</span><button class="x" id="vt" aria-label="הקראה אוטומטית">${S.voice===false?"🔇":"🔊"}</button></div>
+  ${P.bagrut&&(P.i===0||P.qs[P.i-1].topic!==q.topic)?`<div class="label">פרק ${["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ז׳","ח׳"][TOPICS.filter(t=>t.grade===S.grade).findIndex(t=>t.id===q.topic)]||""}: ${topicById(q.topic).title}</div>`:""}
   <div class="card"><div class="q">${prompt}</div>${q.vis?`<div class="vis">${q.vis}</div>`:""}<button class="link" id="rd" style="align-self:flex-start">🔊 הקראה</button></div>
   ${inputHTML()}
   <div class="fb" id="fb" aria-live="polite"></div>
@@ -2190,6 +2200,7 @@ function question(){
     else if(b.dataset.f==="neg"){el.value=el.value.startsWith("-")?el.value.slice(1):"-"+el.value}
   });
   $("#check").onclick=()=>{
+    if(q.type.startsWith("choice"))return;
     if(q.type==="ratio"){const a=$("#b1").value,b=$("#b2").value;if(a===""||b===""){judge(null);return}
       if(+a*q.ans.b===+b*q.ans.a&&gcd(+a,+b)===1){judge({r:R(1),ratioOk:true})}
       else if(+a*q.ans.b===+b*q.ans.a){fb.className="fb bad";fb.textContent="היחס נכון, אבל אפשר לצמצם עוד.";return}
@@ -2210,18 +2221,21 @@ function txtHTML(r){return show(r,true)}
 
 function summary(){
   const total=P.qs.length,score=Math.round(P.right/total*100);
-  if(P.isTest){S.tests.push({d:new Date().toISOString().slice(0,10),s:score});save()}
+  if(P.chapter){S.chap[P.chapter]=Math.max(S.chap[P.chapter]||0,score);save()}
+  else if(P.bagrut){(S.bagrut[S.grade]=S.bagrut[S.grade]||[]).push({d:new Date().toISOString().slice(0,10),s:score,min:Math.round((Date.now()-P.start)/60000)});save()}
+  else if(P.isTest){S.tests.push({d:new Date().toISOString().slice(0,10),s:score});save()}
   const byTopic={};P.log.forEach(l=>{const b=byTopic[l.q.topic]=byTopic[l.q.topic]||{r:0,t:0};b.t++;if(l.ok)b.r++});
   const weak=Object.entries(byTopic).filter(([,b])=>b.r/b.t<.7).map(([id])=>topicById(id).title);
   const msg=score>=90?`מעולה${S.name?" "+S.name:""}! אתם מוכנים למבחן! אני גאה בכם!`:score>=70?"יפה מאוד! עוד קצת תרגול ונגיע למושלם. אתם בדרך הנכונה!":"עבודה טובה שהתאמנתם! כל תרגול מקרב אתכם להצלחה. ננסה שוב?";
   const wrong=P.log.filter(l=>!l.ok);
   app.innerHTML=`${talk(msg)}
-  <div class="card center"><div class="label">${P.isTest?"ציון במבחן לדוגמה":"תוצאה בתרגול"}</div><div class="score ${score<70?"low":""}">${score}</div><p>${P.right} נכונות מתוך ${total}</p>
-  ${P.isTest?`<div class="review">${TOPICS.filter(t=>t.grade===S.grade).map(t=>{const b=byTopic[t.id];return b?`<div class="row" style="justify-content:space-between"><span>${t.title}</span><b>${b.r}/${b.t}</b></div>`:""}).join("")}</div>`:""}
+  <div class="card center"><div class="label">${P.bagrut?`ציון בבגרות לדוגמה · ${gradeName(S.grade)}`:P.chapter?`מבחן סוף פרק: ${topicById(P.chapter).title}`:P.isTest?"ציון במבחן לדוגמה":"תוצאה בתרגול"}</div><div class="score ${score<70?"low":""}">${score}</div><p>${P.right} נכונות מתוך ${total}${P.bagrut?` · ${Math.max(1,Math.round((Date.now()-P.start)/60000))} דקות`:""}</p>${P.chapter&&score>=80?`<p style="font-size:40px">🏅</p><p><b>הפרק הושלם בהצלחה!</b></p>`:""}
+  ${P.isTest&&!P.chapter?`<div class="review">${TOPICS.filter(t=>t.grade===S.grade).map(t=>{const b=byTopic[t.id];return b?`<div class="row" style="justify-content:space-between"><span>${t.title}</span><b>${b.r}/${b.t}</b></div>`:""}).join("")}</div>`:""}
   ${weak.length?`<p><b>כדאי לחזק:</b> ${weak.join(", ")}</p>`:""}</div>
   ${wrong.length?`<h3>השאלות שטעיתם בהן</h3><div class="review">${wrong.map(l=>`<div class="item"><div>${l.q.prompt}</div><div class="steps" style="margin-top:8px">${l.q.sol}</div></div>`).join("")}</div>`:""}
-  <button class="btn wide" id="again">${P.isTest?"מבחן חדש":"עוד 10 שאלות"}</button><button class="btn ghost wide" id="home">למסך הבית</button>`;
-  $("#again").onclick=()=>P.isTest?startTest():startPractice(P.topics,10,false);$("#home").onclick=home;
+  <button class="btn wide" id="again">${P.isTest?"מבחן חדש":"עוד 10 שאלות"}</button>${!P.isTest&&P.topics&&P.topics.length===1?`<button class="btn ghost wide" id="tochap">📝 למבחן סוף פרק</button>`:""}<button class="btn ghost wide" id="home">למסך הבית</button>`;
+  const PP=P;$("#again").onclick=()=>PP.chapter?startChapterTest(PP.chapter):PP.bagrut?startBagrut():PP.isTest?startTest():startPractice(PP.topics,10,false);$("#home").onclick=home;
+  if($("#tochap"))$("#tochap").onclick=()=>startChapterTest(PP.topics[0]);
   if("speechSynthesis" in window)speak(msg);
 }
 
