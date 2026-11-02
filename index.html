@@ -119,6 +119,15 @@ button.chip{cursor:pointer}
 .review{display:flex;flex-direction:column;gap:10px}
 .review .item{background:var(--paper);border-radius:16px;padding:12px 14px;box-shadow:0 3px 0 var(--line)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.backhome-bar{display:flex;align-items:center;gap:10px}
+.x.backhome{font-size:22px;font-weight:700}
+.prog-card{display:flex;flex-direction:column;gap:8px;align-items:stretch;text-align:right}
+.prog-card>*{width:100%}
+.prog-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:15px}
+.prog-row b{font-size:16px}
+.pbar{height:14px;border-radius:999px;background:rgba(0,0,0,.08);overflow:hidden}
+.pbar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#3DBE8B,#2D7FD3);transition:width .6s}
+.logo{width:36px;height:36px;flex:none}
 </style>
 
 <div class="app" id="app" dir="rtl"></div>
@@ -2038,10 +2047,28 @@ function speak(html,force){
 /* ============ ui helpers ============ */
 const $=s=>document.querySelector(s);
 const app=$("#app");
+
+/* ===== Back-to-home arrow on every inner screen ===== */
+(function(){
+  const go=()=>{try{speechSynthesis.cancel()}catch(e){};home();scrollTo(0,0)};
+  const fix=()=>{
+    if(!(S.coach))return;
+    if(app.querySelector("[data-home-screen]")||app.querySelector(".backhome"))return;
+    const top=app.querySelector(".top");
+    const quit=top&&top.querySelector("#quit");
+    if(quit){quit.textContent="→";quit.classList.add("backhome");quit.setAttribute("aria-label","חזרה לדף הבית");return}
+    const b=document.createElement("button");b.className="x backhome";b.type="button";b.textContent="→";b.setAttribute("aria-label","חזרה לדף הבית");b.title="חזרה לדף הבית";b.onclick=go;
+    if(top){const bk=top.querySelector("#back");if(bk){b.textContent="🏠";b.style.fontSize="18px"}top.insertBefore(b,top.firstChild);return}
+    const bar=document.createElement("div");bar.className="top backhome-bar";bar.appendChild(b);const t=document.createElement("span");t.className="label";t.textContent="דף הבית";bar.appendChild(t);
+    app.insertBefore(bar,app.firstChild);
+  };
+  new MutationObserver(fix).observe(app,{childList:true});
+})();
 const talk=(html)=>`<div class="talk"><div class="avatar" aria-hidden="true">${coach().e}</div><div class="bubble">${html}</div></div>`;
 const nm=()=>S.name?`, <bdi>${esc(S.name)}</bdi>`:"";
 
 function render(){S.coach?home():onboarding()}
+
 
 function onboarding(){
   let picked=S.coach;
@@ -2068,8 +2095,12 @@ function home(){
   const h=new Date().getHours(),g=h>=5&&h<12?"בוקר טוב":h<17?"צהריים טובים":h<22?"ערב טוב":"לילה טוב";
   const last=S.tests[S.tests.length-1];
   app.innerHTML=`
-  <div class="top"><div class="grow"><div class="label">Yalla Math</div></div><button class="chip" id="gr">${gradeName(S.grade)} ▾</button><span class="chip">⭐ ${S.stars}</span><button class="x" id="hv" aria-label="הקראה אוטומטית">${S.voice===false?"🔇":"🔊"}</button><button class="x" id="chg" aria-label="החלפת מורה">${coach().e}</button></div>
+  <i data-home-screen hidden></i><div class="top"><svg class="logo" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#2EAF7D"/><rect x="12" y="12" width="76" height="76" rx="15" fill="#fff"/><g stroke-linecap="round" stroke-width="7"><path d="M24 36h16M32 28v16" stroke="#FF8C42"/><path d="M60 36h16" stroke="#1D2B4F"/><path d="M26 58l12 12M38 58l-12 12" stroke="#2D7FD3"/><path d="M60 64h16" stroke="#E94E77"/></g><circle cx="68" cy="56" r="3.6" fill="#E94E77"/><circle cx="68" cy="72" r="3.6" fill="#E94E77"/></svg><div class="grow"><div class="label">Yalla Math</div></div><button class="chip" id="gr">${gradeName(S.grade)} ▾</button><span class="chip">⭐ ${S.stars}</span><button class="x" id="hv" aria-label="הקראה אוטומטית">${S.voice===false?"🔇":"🔊"}</button><button class="x" id="chg" aria-label="החלפת מורה">${coach().e}</button></div>
   ${talk(`${g}${nm()}! בואו נתכונן למבחן. אפשר ללמוד נושא, לתרגל, או לעשות מבחן לדוגמה.`)}
+  ${(()=>{const ts=TOPICS.filter(t=>t.grade===S.grade);if(!ts.length)return "";const ms=ts.map(t=>mastery(t.id)),avg=Math.round(ms.reduce((a,b)=>a+b,0)/ts.length),good=ms.filter(m=>m>=80).length,started=ts.filter(t=>prog(t.id).total).length,ch=ts.filter(t=>S.chap[t.id]>=80).length;
+    return `<div class="card prog-card" aria-label="התקדמות בכיתה"><div class="prog-row"><b>📈 ההתקדמות שלי · ${gradeName(S.grade)}</b><span>${avg}%</span></div>
+    <div class="pbar" role="progressbar" aria-valuenow="${avg}" aria-valuemin="0" aria-valuemax="100"><i style="width:${avg}%"></i></div>
+    <div class="prog-row"><span>✅ ${good}/${ts.length} נושאים בשליטה · התחלתם ${started}</span><span>🏅 ${ch}/${ts.length} מבחני פרק</span></div></div>`})()}
   ${S.voice!==false&&voicesReady&&!HV?`<div class="card voicetip"><b>🔊 אין בטלפון קול בעברית, ולכן ההקראה לא נשמעת.</b><p><b>באנדרואיד:</b> הגדרות ← חפשו "המרת טקסט לדיבור" ← מנוע של Google ← התקנת נתונים קוליים ← עברית.</p><p><b>באייפון:</b> הגדרות ← נגישות ← תוכן מוקרא ← קולות ← עברית.</p><p>אחרי ההתקנה סגרו ופתחו את האפליקציה מחדש.</p></div>`:""}
   ${/^h/.test(S.grade)?`<div class="card hero bagrut"><h3>🎓 בגרות לדוגמה · ${gradeName(S.grade)}</h3><p>מבחן מלא בסגנון בגרות, מחולק לפרקים לפי נושאי הבחינה. מקבלים ציון, זמן ופירוט לפי פרק.</p>${(S.bagrut[S.grade]||[]).length?`<p class="label">ציון אחרון: ${S.bagrut[S.grade].slice(-1)[0].s}</p>`:""}<button class="btn wide" id="bag">להתחיל בגרות לדוגמה</button></div>`:""}
   <div class="card hero"><h3>מבחן לדוגמה</h3><p>12 שאלות ${S.grade==="g6"?"על נושאי המבחן הקרוב":"מכל הנושאים של "+gradeName(S.grade)}, כמו במבחן אמיתי. בסוף מקבלים ציון ורואים מה לחזק.</p>
