@@ -83,6 +83,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 .fb.good{color:#1B8A5A}.fb.bad{color:#C23552}
 .steps{background:#FFF6EC;border-radius:16px;padding:12px 16px;display:flex;flex-direction:column;gap:6px;border:2px dashed #F6C79F}
 .steps .math{font-size:1.1em}
+.explain .st{display:flex;gap:10px;align-items:flex-start;text-align:right}
+.explain .num{flex:none;width:26px;height:26px;border-radius:50%;background:#F6C79F;color:#5A3200;display:grid;place-items:center;font-weight:700;font-size:14px}
+.explain .sol .num{background:#2E9E6A;color:#fff}
 /* home */
 .topics{display:flex;flex-direction:column;gap:12px}
 .topic{display:flex;align-items:center;gap:14px;background:var(--paper);border-radius:20px;padding:14px 16px;box-shadow:0 5px 0 var(--line);text-align:right;width:100%}
@@ -2140,7 +2143,7 @@ function question(){
   ${inputHTML()}
   <div class="fb" id="fb" aria-live="polite"></div>
   <div id="help"></div>
-  <div class="row"><button class="btn ghost" id="hint" ${P.isTest?"hidden":""}>💡 רמז</button><button class="btn" id="check" ${q.type.startsWith("choice")?"hidden":""}>בדיקה</button></div>`;
+  <div class="row"><button class="btn ghost" id="hint" ${P.isTest?"hidden":""}>💡 רמז</button><button class="btn ghost" id="how" ${P.isTest?"hidden":""}>📖 איך פותרים?</button><button class="btn" id="check" ${q.type.startsWith("choice")?"hidden":""}>בדיקה</button></div>`;
   $("#quit").onclick=()=>{try{speechSynthesis.cancel()}catch(e){}home()};$("#rd").onclick=()=>speak(q.prompt,true);
   $("#vt").onclick=()=>{S.voice=S.voice===false;save();$("#vt").textContent=S.voice?"🔊":"🔇";if(S.voice)speak(q.prompt);else try{speechSynthesis.cancel()}catch(e){}};
   setTimeout(()=>speak(q.prompt),200);
@@ -2150,11 +2153,12 @@ function question(){
     if(!P.isTest||true){const p=S.prog[q.topic]=S.prog[q.topic]||{right:0,total:0};p.total++;if(ok)p.right++}
     if(ok)S.stars+=P.isTest?2:1;save();
     P.log.push({q,ok});
-    $("#check").hidden=true;$("#hint").hidden=true;
+    $("#check").hidden=true;$("#hint").hidden=true;$("#how").hidden=true;
+    if(!help.querySelector(".explain")){const ex=document.createElement("button");ex.className="btn ghost wide";ex.textContent="📖 הסבר: איך פותרים את התרגיל";ex.onclick=()=>{help.innerHTML=explainHTML(q);ex.remove();speak(explainSpeech(q))};help.after(ex)}
     const nx=document.createElement("button");nx.className="btn wide";nx.textContent=P.i<total-1?"לשאלה הבאה":"לסיכום";nx.onclick=()=>{P.i++;P.i<total?question():summary()};
     help.after(nx);
   };
-  const showSol=()=>{help.innerHTML=`<div class="steps"><b>הפתרון:</b><div>${q.sol}</div></div>`;if(!P.isTest)setTimeout(()=>speak("הפתרון: "+q.sol),1800)};
+  const showSol=()=>{help.innerHTML=explainHTML(q);if(!P.isTest)setTimeout(()=>speak(explainSpeech(q)),1800)};
   const judge=(val)=>{
     if(done)return;
     let ok,note="";
@@ -2212,12 +2216,21 @@ function question(){
     if(n===""||d===""||+d===0){judge(null);return}
     const raw={n:(+w||0)*(+d)+(+n),d:+d};judge({r:R(raw.n,raw.d),raw});
   };
+  $("#how").onclick=()=>{
+    if(done)return;hintN=Math.max(hintN,(q.hint||[]).length||1);
+    help.innerHTML=explainHTML(q)+`<div class="label" style="margin-top:6px">עכשיו נסו לכתוב את התשובה בעצמכם 💪</div>`;speak(explainSpeech(q)+". עכשיו נסו לכתוב את התשובה בעצמכם.");
+  };
   $("#hint").onclick=()=>{
     if(done)return;hintN=Math.min(q.hint.length,hintN+1);
     help.innerHTML=`<div class="steps">${q.hint.slice(0,hintN).map((h,i)=>`<div>${i+1}. ${h}</div>`).join("")}</div>`;speak(q.hint[hintN-1]);
   };
 }
 function txtHTML(r){return show(r,true)}
+function explainHTML(q){
+  const h=(q.hint||[]);
+  return `<div class="steps explain"><b>📖 איך פותרים, שלב אחרי שלב:</b>${h.map((x,i)=>`<div class="st"><span class="num">${i+1}</span><div>${x}</div></div>`).join("")}<div class="st sol"><span class="num">✓</span><div><b>הפתרון המלא:</b> ${q.sol}</div></div></div>`;
+}
+function explainSpeech(q){return "איך פותרים. "+(q.hint||[]).map((x,i)=>"שלב "+(i+1)+": "+x).join(". ")+". הפתרון המלא: "+q.sol}
 
 function summary(){
   const total=P.qs.length,score=Math.round(P.right/total*100);
@@ -2232,7 +2245,7 @@ function summary(){
   <div class="card center"><div class="label">${P.bagrut?`ציון בבגרות לדוגמה · ${gradeName(S.grade)}`:P.chapter?`מבחן סוף פרק: ${topicById(P.chapter).title}`:P.isTest?"ציון במבחן לדוגמה":"תוצאה בתרגול"}</div><div class="score ${score<70?"low":""}">${score}</div><p>${P.right} נכונות מתוך ${total}${P.bagrut?` · ${Math.max(1,Math.round((Date.now()-P.start)/60000))} דקות`:""}</p>${P.chapter&&score>=80?`<p style="font-size:40px">🏅</p><p><b>הפרק הושלם בהצלחה!</b></p>`:""}
   ${P.isTest&&!P.chapter?`<div class="review">${TOPICS.filter(t=>t.grade===S.grade).map(t=>{const b=byTopic[t.id];return b?`<div class="row" style="justify-content:space-between"><span>${t.title}</span><b>${b.r}/${b.t}</b></div>`:""}).join("")}</div>`:""}
   ${weak.length?`<p><b>כדאי לחזק:</b> ${weak.join(", ")}</p>`:""}</div>
-  ${wrong.length?`<h3>השאלות שטעיתם בהן</h3><div class="review">${wrong.map(l=>`<div class="item"><div>${l.q.prompt}</div><div class="steps" style="margin-top:8px">${l.q.sol}</div></div>`).join("")}</div>`:""}
+  ${wrong.length?`<h3>השאלות שטעיתם בהן</h3><div class="review">${wrong.map(l=>`<div class="item"><div>${l.q.prompt}</div><div style="margin-top:8px">${explainHTML(l.q)}</div></div>`).join("")}</div>`:""}
   <button class="btn wide" id="again">${P.isTest?"מבחן חדש":"עוד 10 שאלות"}</button>${!P.isTest&&P.topics&&P.topics.length===1?`<button class="btn ghost wide" id="tochap">📝 למבחן סוף פרק</button>`:""}<button class="btn ghost wide" id="home">למסך הבית</button>`;
   const PP=P;$("#again").onclick=()=>PP.chapter?startChapterTest(PP.chapter):PP.bagrut?startBagrut():PP.isTest?startTest():startPractice(PP.topics,10,false);$("#home").onclick=home;
   if($("#tochap"))$("#tochap").onclick=()=>startChapterTest(PP.topics[0]);
