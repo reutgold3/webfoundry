@@ -242,6 +242,14 @@ button.chip{cursor:pointer}
 .kidrow .course>span:last-child{min-width:0}
 .kidrow .course span span{white-space:nowrap}
 .hero.bagrut{background:#E6F3FF}
+.backhome-bar{display:flex;align-items:center;gap:10px}
+.x.backhome{font-size:22px;font-weight:700}
+.prog-card{display:flex;flex-direction:column;gap:8px;align-items:stretch;text-align:right}
+.prog-card>*{width:100%}
+.prog-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:15px}
+.prog-row b{font-size:16px}
+.pbar{height:14px;border-radius:999px;background:rgba(0,0,0,.08);overflow:hidden}
+.pbar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#3DBE8B,#2D7FD3);transition:width .6s}
 .chat-card{background:#FFF0F6}
 .topic-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .tpc{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;border-radius:18px;background:var(--paper,#fff);border:2px solid var(--line);font-weight:600;font-size:15px;min-height:84px}
@@ -781,10 +789,15 @@ function home(){
   const avg=avgScore(C),best=bestScore(C),tests=(S.tests&&S.tests[C.id])||[];
   const canTest=Math.min(done,C.units.length)>=2;
   app.innerHTML=`
-   <div class="top"><div class="grow"><div class="label">Yalla English · ${esc(C.he)}</div></div>
+   <i data-home-screen hidden></i><div class="top"><div class="grow"><div class="label">Yalla English · ${esc(C.he)}</div></div>
      <span class="chip" title="ימים ברצף">🔥 ${liveStreak()}</span><button class="chip" id="shop" title="חנות הפרסים">⭐ ${balance()} · חנות</button>
      <button class="x" id="settings" aria-label="הגדרות">⚙️</button></div>
    ${talkHTML(en,he)}
+   ${(()=>{const N=C.units.length,inRound=cycle>0?done%N:Math.min(done,N),pct=Math.round((cycle>0&&inRound===0?N:inRound)/N*100);
+     const ut=Object.values(((S.unitTests||{})[C.id])||{}).filter(x=>x>=80).length;
+     return `<div class="card prog-card" aria-label="התקדמות במסלול"><div class="prog-row"><b>📈 ההתקדמות שלי</b><span>${pct}%</span></div>
+     <div class="pbar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
+     <div class="prog-row"><span>${cycle>0?`🏆 סיימתם את המסלול${cycle>1?` ${cycle} פעמים`:""}! סבב חזרה: ${inRound}/${N}`:`${inRound} מתוך ${N} שיעורים`}</span><span>📝 ${ut}/${N} מבחני פרק</span></div></div>`})()}
    <div class="hero">
      ${today&&!retry?`<h2>השיעור של היום הושלם ✓</h2><p>רוצים עוד? אפשר להמשיך לנושא הבא עכשיו, בלי לחכות למחר.</p>
        <div class="today-topic"><span class="big" aria-hidden="true">${L.e}</span><div><div class="label">הנושא הבא</div><h2>${esc(L.he)} · <span class="en">${esc(cap(L.en))}</span></h2></div></div>
@@ -1231,6 +1244,24 @@ function chatEnd(){
   wireTalk(msg);say(msg);$("#again").onclick=chatTopics;$("#hm").onclick=home;
   if(c.fixes.length){S.mist=S.mist||{};}
 }
+
+
+/* ===== Back-to-home arrow on every inner screen ===== */
+(function(){
+  const go=()=>{stopVoice();if(typeof CH!=="undefined"&&CH){try{chatSend.rec&&chatSend.rec.stop()}catch(e){}CH=null};home();scrollTo(0,0)};
+  const fix=()=>{
+    if(!(S.char&&S.course))return;
+    if(app.querySelector("[data-home-screen]")||app.querySelector(".backhome"))return;
+    const top=app.querySelector(".top");
+    const quit=top&&top.querySelector("#quit");
+    if(quit){quit.textContent="→";quit.classList.add("backhome");quit.setAttribute("aria-label","חזרה לדף הבית");return}
+    const b=document.createElement("button");b.className="x backhome";b.type="button";b.textContent="→";b.setAttribute("aria-label","חזרה לדף הבית");b.title="חזרה לדף הבית";b.onclick=go;
+    if(top){const bk=top.querySelector("#back");if(bk){b.textContent="🏠";b.style.fontSize="18px"}top.insertBefore(b,top.firstChild);return}
+    const bar=document.createElement("div");bar.className="top backhome-bar";bar.appendChild(b);const t=document.createElement("span");t.className="label";t.textContent="דף הבית";bar.appendChild(t);
+    app.insertBefore(bar,app.firstChild);
+  };
+  new MutationObserver(fix).observe(app,{childList:true});
+})();
 
 /* ===================== Tests ===================== */
 function startTest(){
