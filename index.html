@@ -92,6 +92,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 .meter{height:8px;border-radius:999px;background:#EEF6F1;overflow:hidden;margin-top:6px}
 .meter>i{display:block;height:100%;background:var(--good)}
 .hero{background:#FFF1E6}
+.voicetip{background:#FFF6DA;border:2px dashed #F6C79F;gap:6px;font-size:15px}
 .chars{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .grades{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .gbtn{min-height:48px;border-radius:14px;background:var(--paper);box-shadow:0 4px 0 var(--line);border:3px solid transparent;font-weight:600}
@@ -2017,7 +2018,8 @@ const mastery=id=>{const p=prog(id);return p.total?Math.round(p.right/p.total*10
 
 /* ============ voice (Hebrew, optional) ============ */
 let HV=null;
-function pickV(){if(!("speechSynthesis" in window))return;HV=speechSynthesis.getVoices().find(v=>/^he|^iw/i.test(v.lang))||null}
+let voicesReady=false;
+function pickV(){if(!("speechSynthesis" in window))return;const all=speechSynthesis.getVoices();if(all.length)voicesReady=true;HV=all.find(v=>/^he|^iw/i.test(v.lang))||null}
 if("speechSynthesis" in window){pickV();speechSynthesis.onvoiceschanged=pickV}
 const GOOD=["כל הכבוד!","מעולה!","איזה יופי!","בדיוק ככה!","וואו, נהדר!","אלופים!","ממשיכים ככה!","תשובה מושלמת!"];
 const TRY=["לא נורא, טעויות עוזרות ללמוד.","כמעט! עוד ניסיון קטן.","אתם בכיוון, אפשר להיעזר ברמז.","לא מוותרים! נסו שוב."];
@@ -2064,6 +2066,7 @@ function home(){
   app.innerHTML=`
   <div class="top"><div class="grow"><div class="label">Yalla Math</div></div><button class="chip" id="gr">${gradeName(S.grade)} ▾</button><span class="chip">⭐ ${S.stars}</span><button class="x" id="hv" aria-label="הקראה אוטומטית">${S.voice===false?"🔇":"🔊"}</button><button class="x" id="chg" aria-label="החלפת מורה">${coach().e}</button></div>
   ${talk(`${g}${nm()}! בואו נתכונן למבחן. אפשר ללמוד נושא, לתרגל, או לעשות מבחן לדוגמה.`)}
+  ${S.voice!==false&&voicesReady&&!HV?`<div class="card voicetip"><b>🔊 אין בטלפון קול בעברית, ולכן ההקראה לא נשמעת.</b><p><b>באנדרואיד:</b> הגדרות ← חפשו "המרת טקסט לדיבור" ← מנוע של Google ← התקנת נתונים קוליים ← עברית.</p><p><b>באייפון:</b> הגדרות ← נגישות ← תוכן מוקרא ← קולות ← עברית.</p><p>אחרי ההתקנה סגרו ופתחו את האפליקציה מחדש.</p></div>`:""}
   <div class="card hero"><h3>מבחן לדוגמה</h3><p>12 שאלות ${S.grade==="g6"?"על נושאי המבחן הקרוב":"מכל הנושאים של "+gradeName(S.grade)}, כמו במבחן אמיתי. בסוף מקבלים ציון ורואים מה לחזק.</p>
    ${last?`<p class="label">ציון אחרון: ${last.s}</p>`:""}<button class="btn wide" id="test">להתחיל מבחן</button></div>
   ${[...new Set(TOPICS.filter(t=>t.grade===S.grade).map(t=>t.sec))].map(sec=>`<div class="label">${sec}</div><div class="topics">${TOPICS.filter(t=>t.grade===S.grade&&t.sec===sec).map(topicBtn).join("")}</div>`).join("")}`;
