@@ -241,6 +241,9 @@ button.chip{cursor:pointer}
 .kidrow .course b{font-size:17px;text-wrap:balance}
 .kidrow .course>span:last-child{min-width:0}
 .kidrow .course span span{white-space:nowrap}
+.hero.bagrut{background:#E6F3FF}
+.chiprow{display:flex;flex-wrap:wrap;gap:8px}
+.uchip{min-height:40px;padding:6px 12px;border-radius:999px;background:var(--sky);font-size:15px;font-weight:500;border:2px solid var(--line)}
 /* Help language */
 .seg.langs{width:100%}
 [data-help="ru"] .bubble .he,[data-help="ru"] .word-he,[data-help="ru"] .story-he,[data-help="ru"] .dlg .a small,[data-help="ru"] .drow .dt span,[data-help="ru"] .target .he{direction:ltr;text-align:left}
@@ -519,6 +522,11 @@ const HL=[
  [/^מצאו את הזוגות: תמונה ומילה באנגלית\.$/,"Найди пары: картинка и английское слово.","ابحث عن الأزواج: صورة وكلمة بالإنجليزية."],
  [/^מצאו את הזוגות: עברית ואנגלית\.$/,"Найди пары: перевод и английский.","ابحث عن الأزواج: الترجمة والإنجليزية."],
  [/^בואו נשחק עם המילים שלמדתם!$/,"Давай поиграем со словами, которые ты выучил(а)!","لنلعب بالكلمات التي تعلمتها!"],
+ [/^מבחן סוף פרק: (.+)\. בהצלחה, (.+)!$/,"Тест в конце главы: «$1». Удачи, $2!","اختبار نهاية الفصل: «$1». بالتوفيق يا $2!"],
+ [/^זו בגרות לדוגמה\. קחו את הזמן ותנסו כמה שיותר, (.+)!$/,"Это пробный экзамен Багрут. Не торопись и старайся, $1!","هذا امتحان بجروت تجريبي. خذ وقتك وابذل قصارى جهدك يا $1!"],
+ [/^פרק א׳: הבנת הנקרא\. קראו כל קטע וענו על השאלות\.$/,"Часть А: понимание прочитанного. Прочитай каждый текст и ответь на вопросы.","الجزء أ: فهم المقروء. اقرأ كل نص وأجب عن الأسئلة."],
+ [/^פרק ב׳: אוצר מילים\. בחרו את הפירוש הנכון\.$/,"Часть Б: словарный запас. Выбери правильное значение.","الجزء ب: المفردات. اختر المعنى الصحيح."],
+ [/^פרק ג׳: כתיבה\. כתבו את המשפטים באנגלית\.$/,"Часть В: письмо. Напиши предложения по-английски.","الجزء ج: الكتابة. اكتب الجمل بالإنجليزية."],
  [/^מצאתי את הרמה שלכם!$/,"Я определил(а) твой уровень!","وجدت مستواك!"],
 ];
 function hl(he){
@@ -763,6 +771,8 @@ function home(){
    </div>
    <div class="hero games-card"><div class="today-topic"><span class="big" aria-hidden="true">🎮</span><div><h3>משחקים</h3><p>זיכרון, מרוץ נגד השעון ותפיסת מילים. מרוויחים כוכבים!</p></div></div>
      <div class="row"><button class="btn wide" id="games">לשחק</button><button class="btn ghost wide" id="dict">📖 המילון שלי</button></div></div>
+   ${/^h1[012]$/.test(C.id)?`<div class="hero bagrut"><div><h3>🎓 בגרות לדוגמה באנגלית · ${esc(C.he)}</h3><p>מבחן מלא בסגנון בגרות: פרק א׳ הבנת הנקרא (שני קטעים), פרק ב׳ אוצר מילים, פרק ג׳ כתיבה.</p>${((S.bagrut||{})[C.id]||[]).length?`<p class="label">ציון אחרון: ${S.bagrut[C.id].slice(-1)[0].s}</p>`:""}</div><button class="btn wide" id="bag">להתחיל בגרות לדוגמה</button></div>`:""}
+   ${Math.min(done,C.units.length)>0?`<div class="hero chaps"><h3>📝 מבחני סוף פרק</h3><p>בחרו פרק שסיימתם:</p><div class="chiprow">${C.units.slice(0,cycle>0?C.units.length:Math.min(done,C.units.length)).map((u,i)=>{const sc=((S.unitTests||{})[C.id]||{})[i];return `<button class="uchip" data-u="${i}">${u.e} ${esc(u.he)}${sc!=null?` · ${sc}${sc>=80?" 🏅":""}`:""}</button>`}).join("")}</div></div>`:""}
    <div class="hero test">
      <div><h3>מבחן על מה שלמדתם</h3><p>${canTest?`${Math.min(done,C.units.length)} נושאים, 10 שאלות: האזנה, קריאה, כתיבה והבנת טקסט.`:"המבחן ייפתח אחרי שתסיימו 2 שיעורים במסלול."}</p></div>
      <button class="btn ${canTest?"":"ghost"} wide" id="test" ${canTest?"":"disabled"}>להתחיל מבחן</button>
@@ -777,6 +787,8 @@ function home(){
   $("#course").onclick=()=>pickCourse(false);
   $("#settings").onclick=settings;$("#shop").onclick=shop;$("#games").onclick=games;$("#dict").onclick=dictionary;
   if(canTest)$("#test").onclick=startTest;
+  if($("#bag"))$("#bag").onclick=startBagrut;
+  app.querySelectorAll(".uchip").forEach(b=>b.onclick=()=>startUnitTest(+b.dataset.u));
 }
 
 /* ===================== Settings: lesson time, length, reminder ===================== */
@@ -1108,25 +1120,56 @@ function startTest(){
   LS={test:true,idx:-1,L:{en:"test",he:"מבחן",items:[]},pic:false,steps,i:0,stars:0};
   step();
 }
+function startUnitTest(idx){
+  const C=course(),L=C.units[idx],pic=isPicUnit(L),steps=[{t:"unit-intro",L}];
+  if(L.dialog){
+    pickN(L.items,4).forEach(w=>steps.push({t:"reply",w,pool:L.items}));
+    pickN(L.items,2).forEach(w=>steps.push({t:"type",w,dialog:true}));
+    pickN(L.items,2).forEach(w=>steps.push({t:"answer",w}));
+  }else{
+    const qs=[];
+    pickN(L.items,3).forEach(w=>qs.push({t:"listen",w,pool:L.items}));
+    pickN(L.items,3).forEach(w=>qs.push({t:"read",w,pool:L.items}));
+    pickN(L.items,2).forEach(w=>qs.push({t:pic?(w.en.includes(" ")?"build":"spell"):"type",w}));
+    steps.push(...shuffle(qs));
+    const R=(READ[C.id]||[])[idx];if(R){steps.push({t:"story",R});R[2].forEach(q=>steps.push({t:"rq",R,q}))}
+  }
+  LS={test:true,unitTest:idx,idx:-1,L:{en:"test",he:"מבחן",items:[]},pic:false,steps,i:0,stars:0};step();
+}
+function startBagrut(){
+  const C=course(),reads=(READ[C.id]||[]).filter(Boolean),items=C.units.filter(u=>!u.dialog).flatMap(u=>u.items);
+  const steps=[{t:"bag-intro"},{t:"sec-intro",n:"א׳",en:"Part A: Reading comprehension. Read each text and answer the questions.",he:"פרק א׳: הבנת הנקרא. קראו כל קטע וענו על השאלות."}];
+  pickN(reads,2).forEach(R=>{steps.push({t:"story",R});R[2].forEach(q=>steps.push({t:"rq",R,q}))});
+  steps.push({t:"sec-intro",n:"ב׳",en:"Part B: Vocabulary. Choose the correct meaning.",he:"פרק ב׳: אוצר מילים. בחרו את הפירוש הנכון."});
+  pickN(items,6).forEach(w=>steps.push({t:"read",w,pool:items}));
+  steps.push({t:"sec-intro",n:"ג׳",en:"Part C: Writing. Write the sentences in English.",he:"פרק ג׳: כתיבה. כתבו את המשפטים באנגלית."});
+  pickN(items,3).forEach(w=>steps.push({t:"type",w}));
+  LS={test:true,bagrut:true,start:Date.now(),idx:-1,L:{en:"test",he:"מבחן",items:[]},pic:false,steps,i:0,stars:0};step();
+}
 function testFinish(){
   const C=course();
   const max=LS.steps.filter(s=>["say","answer","listen","read","reply","build","spell","type","rq"].includes(s.t)).length;
   const score=Math.round(Math.min(1,LS.stars/max)*100);
-  S.tests=S.tests||{};(S.tests[C.id]=S.tests[C.id]||[]).push({d:dayStr(),s:score});
+  if(LS.unitTest!=null){S.unitTests=S.unitTests||{};const u=S.unitTests[C.id]=S.unitTests[C.id]||{};u[LS.unitTest]=Math.max(u[LS.unitTest]||0,score)}
+  else if(LS.bagrut){S.bagrut=S.bagrut||{};(S.bagrut[C.id]=S.bagrut[C.id]||[]).push({d:dayStr(),s:score,min:Math.round((Date.now()-LS.start)/60000)})}
+  else{S.tests=S.tests||{};(S.tests[C.id]=S.tests[C.id]||[]).push({d:dayStr(),s:score})}
   S.stars+=LS.stars;save();
   const passed=score>=PASS;
   const en=passed?`Test finished! Your score is ${score}. Well done, ${nm()}!`:`Test finished. Your score is ${score}. Let's practice more and try again!`;
   const he=passed?`המבחן הסתיים! הציון שלכם ${score}. כל הכבוד, ${nm()}!`:`המבחן הסתיים. הציון שלכם ${score}. בואו נתרגל עוד וננסה שוב!`;
   const missed=(LS.missed||[]).slice(0,8);
-  const hist=S.tests[C.id].slice(-5);
+  const hist=LS.unitTest!=null?[]:LS.bagrut?S.bagrut[C.id].slice(-5):S.tests[C.id].slice(-5);
+  const T=LS;
   app.innerHTML=talkHTML(en,he)+`
-   <div class="hero center"><div class="label">ציון במבחן</div>
+   <div class="hero center"><div class="label">${T.bagrut?`ציון בבגרות לדוגמה · ${esc(C.he)}`:T.unitTest!=null?`מבחן סוף פרק: ${esc(C.units[T.unitTest].he)}`:"ציון במבחן"}</div>
    <div class="score ${passed?"":"low"}"><b>${score}</b><span>${gradeHe(score)}</span></div>
    ${missed.length?`<div class="missed"><div class="label">כדאי לחזור על</div>${missed.map(m=>`<span class="en">${esc(m)}</span>`).join("")}</div>`:""}
+   ${T.unitTest!=null&&score>=80?`<p style="font-size:40px">🏅</p><p><b>הפרק הושלם בהצלחה!</b></p>`:""}
+   ${T.bagrut?`<p>זמן: ${Math.max(1,Math.round((Date.now()-T.start)/60000))} דקות</p>`:""}
    ${hist.length>1?`<div class="label">המבחנים האחרונים</div><div class="row">${hist.map(h=>`<span class="chip">${h.s}</span>`).join("")}</div>`:""}</div>
    ${passed?`<button class="btn wide" id="home">חזרה למסך הבית</button>`:`<button class="btn wide" id="again">מבחן חוזר</button><button class="link" id="home">חזרה למסך הבית</button>`}`;
   wireTalk(en);say(en);$("#home").onclick=home;
-  if($("#again"))$("#again").onclick=startTest;
+  if($("#again"))$("#again").onclick=()=>T.unitTest!=null?startUnitTest(T.unitTest):T.bagrut?startBagrut():startTest();
 }
 
 /* ===================== Lesson engine ===================== */
@@ -1204,6 +1247,9 @@ function step(){
   case"review-intro":return intro("Let's remember things from before!","בואו ניזכר במה שלמדנו בפעמים קודמות!");
   case"talk-intro":return intro("Your turn! I ask a question, and you answer.","תורכם! אני שואל/ת שאלה, ואתם עונים.");
   case"reply-intro":return intro("Listen to my question and choose the best answer.","תקשיבו לשאלה ובחרו את התשובה המתאימה.");
+  case"unit-intro":return intro(`End of chapter test: ${s.L.en}. Good luck, ${nm()}!`,`מבחן סוף פרק: ${s.L.he}. בהצלחה, ${nm()}!`,"להתחיל");
+  case"bag-intro":return intro(`This is a practice Bagrut exam. Take your time and do your best, ${nm()}!`,`זו בגרות לדוגמה. קחו את הזמן ותנסו כמה שיותר, ${nm()}!`,"להתחיל");
+  case"sec-intro":return intro(s.en,s.he,"המשך");
   case"test-intro":return intro(`Test time, ${nm()}! Do your best. Good luck!`,`זמן מבחן, ${nm()}! תנסו כמה שיותר. בהצלחה!`,"להתחיל");
   case"write-intro":return intro(LS.pic?"Now let's write! Spell the words.":"Now let's write in English!",LS.pic?"עכשיו נכתוב! אייתו את המילים.":"עכשיו נכתוב באנגלית!");
   case"story":return story(s.R);
@@ -1500,10 +1546,12 @@ function finish(){
    <div class="score ${passed?"":"low"}"><b>${score}</b><span>${gradeHe(score)}</span></div>
    ${passed?`<p>🔥 ${S.streak} ${S.streak===1?"יום":"ימים"} ברצף</p>`:`<p><b>הציון נמוך מ-${PASS}, ולכן צריך לתרגל את השיעור שוב לפני שעוברים לנושא הבא.</b></p>`}
    ${missed.length?`<div class="missed"><div class="label">כדאי לחזור על</div>${missed.map(m=>`<span class="en">${esc(m)}</span>`).join("")}</div>`:""}</div>
+   ${passed&&!LS.isRepeat?`<button class="btn ghost wide" id="utest">📝 מבחן סוף פרק</button>`:""}
    ${passed?`<button class="btn wide" id="more">להמשיך לשיעור הבא</button><button class="btn ghost wide" id="home">סיימתי להיום</button>`:`<button class="btn wide" id="again">תרגול חוזר עכשיו</button><button class="link" id="home">אתרגל מאוחר יותר</button>`}`;
   wireTalk(en);say(en);$("#home").onclick=home;
   if($("#again"))$("#again").onclick=()=>startLesson(LS.idx,LS.isRepeat);
   if($("#more"))$("#more").onclick=()=>startLesson(doneIn(C)%C.units.length);
+  const UI=LS.idx;if($("#utest"))$("#utest").onclick=()=>startUnitTest(UI);
   if(passed&&!matchMedia("(prefers-reduced-motion: reduce)").matches){
     const c=document.createElement("div");c.className="confetti";
     const cols=["#FFC83D","#2FB57C","#E8506A","#2D7FD3"];
