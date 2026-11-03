@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1B2140"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icons/icon-192.png"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>
+<title>Yalla Theory</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Rubik:wght@400;500;700&display=swap">
+<style>
+/* Yalla Theory: dark-indigo dashboard ground with bright cards; traffic colors (green/amber/red) carry meaning (right / timer / wrong). */
+:root{
+  --bg:#EEF0FF;--paper:#fff;--ink:#16203A;--soft:#5B6584;--line:#D5DAF5;
+  --accent:#5B4BFF;--accent-deep:#3E30D6;--good:#22B573;--bad:#E8455A;--amber:#FFB020;
+  --display:"Fredoka","Rubik",system-ui,sans-serif;--body:"Rubik",system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:light}
+*,*::before,*::after{box-sizing:border-box}[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));-webkit-tap-highlight-color:transparent}
+.app{max-width:560px;margin:0 auto;padding-block:16px 36px;display:flex;flex-direction:column;gap:14px;min-height:100%}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.2}h1{font-size:30px}h2{font-size:23px;font-weight:600}h3{font-size:19px;font-weight:600}p{margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:0 22px;border-radius:999px;font-family:var(--display);font-weight:600;font-size:19px;background:var(--accent);color:#fff;box-shadow:0 5px 0 var(--accent-deep)}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--accent-deep)}
+.btn.ghost{background:var(--paper);color:var(--ink);box-shadow:0 5px 0 var(--line)}
+.btn.wide{width:100%}.btn[disabled]{opacity:.5;pointer-events:none}
+.link{color:var(--accent);text-decoration:underline;text-underline-offset:3px;font-weight:500;padding:8px}
+.top{display:flex;align-items:center;gap:10px}.grow{flex:1;min-width:0}
+.x{width:46px;height:46px;border-radius:50%;background:var(--paper);box-shadow:0 3px 0 var(--line);font-size:20px;display:grid;place-items:center;flex:none}
+.chip{background:var(--paper);border-radius:999px;padding:6px 12px;font-weight:600;box-shadow:0 3px 0 var(--line);font-size:15px;white-space:nowrap}
+.card{background:var(--paper);border-radius:22px;padding:16px 18px;box-shadow:0 5px 0 var(--line);display:flex;flex-direction:column;gap:10px}
+.hero{background:linear-gradient(135deg,#1B2140,#3B32A8);color:#fff;box-shadow:0 5px 0 #11162E}
+.hero .label{color:#C9CCF5}.hero .btn{background:#fff;color:var(--ink);box-shadow:0 5px 0 #8E89E8}
+.label{font-size:14px;color:var(--soft);font-weight:500}.center{text-align:center}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}
+.brand{display:flex;align-items:center;gap:10px}.brand svg{width:42px;height:42px;flex:none}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{background:var(--paper);border-radius:18px;padding:14px;box-shadow:0 4px 0 var(--line);display:flex;flex-direction:column;gap:6px;text-align:start;min-height:110px}
+.tile .e{font-size:30px}.tile b{font-family:var(--display);font-size:18px}
+.meter{height:10px;border-radius:999px;background:#E6E9FA;overflow:hidden}.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--good),#4CC9F0);border-radius:999px}
+.hero .meter{background:rgba(255,255,255,.2)}
+.gauge{display:flex;align-items:center;gap:14px}.gauge svg{width:110px;height:70px;flex:none}
+.big{font-family:var(--display);font-size:34px;font-weight:700}
+.lic{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.lic button,.lang button{background:var(--paper);border-radius:16px;padding:12px 6px;box-shadow:0 4px 0 var(--line);border:3px solid transparent;display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:600}
+.lic button span{font-size:30px}.lic button small{font-weight:400;color:var(--soft);font-size:13px}
+.lic button[aria-pressed=true],.lang button[aria-pressed=true]{border-color:var(--accent);background:#F1EFFF}
+.lang{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:6px}.field input{border-radius:14px;border:2px solid var(--line);padding:12px;font:inherit;font-size:18px}
+.bar{height:10px;border-radius:999px;background:#E6E9FA;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.qcard .qtext{font-size:20px;font-weight:500;line-height:1.45}
+.qimg{max-width:100%;max-height:260px;object-fit:contain;border-radius:14px;align-self:center;background:#fff;cursor:zoom-in}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;gap:10px;align-items:flex-start;text-align:start;background:var(--paper);border-radius:16px;padding:12px 14px;box-shadow:0 4px 0 var(--line);border:3px solid transparent;font-size:17px;line-height:1.4}
+.opt .k{flex:none;width:28px;height:28px;border-radius:50%;background:#EEF0FF;display:grid;place-items:center;font-weight:700;font-size:14px}
+.opt.sel{border-color:var(--accent)}.opt.good{border-color:var(--good);background:#E8F8F0}.opt.bad{border-color:var(--bad);background:#FDECEE}
+.opt[disabled]{cursor:default}
+.fb{font-weight:600;min-height:24px}.fb.good{color:var(--good)}.fb.bad{color:var(--bad)}
+.timer{font-variant-numeric:tabular-nums}.timer.low{color:var(--bad)}
+.qnav{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px}
+.qnav button{aspect-ratio:1;border-radius:8px;background:#E6E9FA;font-size:12px;font-weight:600}
+.qnav button.ans{background:#C9C3FF}.qnav button.cur{outline:2px solid var(--accent)}.qnav button.flag{background:var(--amber)}
+.qnav button.ok{background:#BFEBD6}.qnav button.no{background:#F7C4CB}
+.result{font-size:56px;text-align:center}
+.attr{font-size:12px;color:var(--soft);text-align:center;line-height:1.5}
+.zoom{position:fixed;inset:0;background:rgba(10,12,30,.92);display:grid;place-items:center;z-index:20;padding:12px}.zoom img{max-width:100%;max-height:100%;background:#fff;border-radius:10px}
+.fam-code .code{font-size:34px;font-weight:800;letter-spacing:6px;text-align:center}
+.fam-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.fam-row .m{font-size:24px}.fam-row .e{font-size:26px}
+.fam-app{font-size:15px;line-height:1.5;padding:4px 0}.chk{display:flex;gap:8px;align-items:center;margin:8px 0}
+.backhome-bar{display:flex;align-items:center;gap:10px}.x.backhome{font-size:22px;font-weight:700}
+html[dir=ltr] .opt,html[dir=ltr] .tile{text-align:left}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<div class="app" id="app"></div>
+<script>
+/* ================= data ================= */
+const QDATA=null; // {lang:[...]} inlined for preview; site loads data/q_<lang>.json
+const LICS=[["B","🚗","רכב פרטי","سيارة خاصة","Private car","Легковой"],["A","🏍️","אופנוע","دراجة نارية","Motorcycle","Мотоцикл"],["1","🚜","טרקטור","جرار","Tractor","Трактор"],["C1","🚐","משאית קלה","شاحنة خفيفة","Light truck","Лёгкий грузовик"],["C","🚚","משאית כבדה","شاحنة ثقيلة","Heavy truck","Тяжёлый грузовик"],["D","🚌","אוטובוס","حافلة","Bus","Автобус"]];
+const LICBIT={B:1,A:2,"1":4,C1:8,C:16,D:32};
+const TOPICS=[["laws","⚖️"],["signs","🛑"],["safety","🦺"],["vehicle","🔧"]];
+const LANGS=[["he","עברית","he-IL","rtl"],["ar","العربية","ar","rtl"],["en","English","en-US","ltr"],["ru","Русский","ru-RU","ltr"]];
+const IMG="https://www.gov.il/BlobFolder/generalpage/";
+/* ================= UI strings ================= */
+const T={
+ welcome:["ברוכים הבאים ל-Yalla Theory!","مرحبًا بك في Yalla Theory!","Welcome to Yalla Theory!","Добро пожаловать в Yalla Theory!"],
+ tagline:["כל מאגר השאלות הרשמי של מבחן התאוריה, תרגול חכם ומבחנים לדוגמה.","كل بنك الأسئلة الرسمي لامتحان النظرية، تدريب ذكي وامتحانات تجريبية.","The full official theory question bank, smart practice and mock exams.","Весь официальный банк вопросов теории, умная тренировка и пробные экзамены."],
+ lang:["שפת השאלות","لغة الأسئلة","Question language","Язык вопросов"],
+ name:["איך קוראים לך?","ما اسمك؟","What's your name?","Как тебя зовут?"],
+ lic:["לאיזה רישיון את/ה מתכונן/ת?","لأي رخصة تستعد؟","Which license are you preparing for?","К какой категории прав ты готовишься?"],
+ start:["יאללה, מתחילים!","يلا نبدأ!","Let's go!","Поехали!"],
+ hi:["היי","مرحبًا","Hi","Привет"],
+ ready:["מוכנות למבחן","الجاهزية للامتحان","Exam readiness","Готовность к экзамену"],
+ readyTip:["לפי 3 המבחנים האחרונים וכמה שאלות כבר עניתם נכון","حسب آخر 3 امتحانات وعدد الأسئلة التي أجبت عنها بشكل صحيح","Based on your last 3 exams and how many questions you got right","По последним 3 экзаменам и количеству верных ответов"],
+ mastered:["שאלות שעניתם נכון","أسئلة أجبت عنها بشكل صحيح","Questions you got right","Вопросы с верным ответом"],
+ exam:["מבחן לדוגמה","امتحان تجريبي","Mock exam","Пробный экзамен"],
+ examSub:["30 שאלות · 40 דקות · עוברים עם 26 נכונות, כמו במבחן האמיתי","30 سؤالاً · 40 دقيقة · النجاح بـ 26 إجابة صحيحة، مثل الامتحان الحقيقي","30 questions · 40 minutes · pass with 26 correct, like the real test","30 вопросов · 40 минут · сдача от 26 верных, как на настоящем экзамене"],
+ startExam:["להתחיל מבחן","ابدأ الامتحان","Start exam","Начать экзамен"],
+ smart:["תרגול חכם","تدريب ذكي","Smart practice","Умная тренировка"],
+ smartSub:["20 שאלות: טעויות שלכם ושאלות שעוד לא ראיתם","20 سؤالاً: أخطاؤك وأسئلة لم ترها بعد","20 questions: your mistakes and new ones","20 вопросов: ваши ошибки и новые вопросы"],
+ mist:["הטעויות שלי","أخطائي","My mistakes","Мои ошибки"],
+ mistSub:["שאלות שטעיתם בהן","أسئلة أخطأت فيها","Questions you got wrong","Вопросы с ошибками"],
+ signsT:["תמרורים","إشارات المرور","Road signs","Дорожные знаки"],
+ topics:["תרגול לפי נושא","تدريب حسب الموضوع","Practice by topic","Тренировка по темам"],
+ laws:["חוקי התנועה","قوانين السير","Traffic laws","Правила движения"],signs:["תמרורים","إشارات المرور","Road signs","Дорожные знаки"],safety:["בטיחות","الأمان","Safety","Безопасность"],vehicle:["הכרת הרכב","معرفة المركبة","Vehicle knowledge","Устройство автомобиля"],
+ q:["שאלה","سؤال","Question","Вопрос"],of:["מתוך","من","of","из"],
+ right:["נכון! 👏","صحيح! 👏","Correct! 👏","Верно! 👏"],wrong:["לא נכון. התשובה הנכונה מסומנת בירוק.","خطأ. الإجابة الصحيحة باللون الأخضر.","Not quite. The correct answer is in green.","Неверно. Правильный ответ отмечен зелёным."],
+ next:["לשאלה הבאה","السؤال التالي","Next question","Следующий вопрос"],finish:["לסיכום","إلى الملخص","See results","К итогам"],
+ prev:["הקודמת","السابق","Previous","Назад"],nextQ:["הבאה","التالي","Next","Далее"],flag:["סימון","تعليم","Flag","Отметить"],submit:["הגשת המבחן","تسليم الامتحان","Submit exam","Сдать экзамен"],
+ confirmSubmit:["יש שאלות שלא עניתם עליהן. להגיש בכל זאת?","هناك أسئلة لم تجب عنها. هل تريد التسليم؟","Some questions are unanswered. Submit anyway?","Есть вопросы без ответа. Сдать всё равно?"],
+ passed:["עברתם! 🎉","نجحت! 🎉","You passed! 🎉","Сдано! 🎉"],failed:["עוד קצת תרגול 💪","تحتاج إلى تدريب أكثر 💪","A bit more practice 💪","Ещё немного практики 💪"],
+ score:["ציון","النتيجة","Score","Результат"],time:["זמן","الوقت","Time","Время"],min:["דקות","دقائق","min","мин"],
+ review:["סקירת התשובות","مراجعة الإجابات","Review answers","Разбор ответов"],onlyWrong:["רק הטעויות","الأخطاء فقط","Mistakes only","Только ошибки"],
+ again:["שוב","مرة أخرى","Again","Ещё раз"],home:["למסך הבית","إلى الصفحة الرئيسية","Home","На главную"],
+ history:["המבחנים האחרונים","آخر الامتحانات","Recent exams","Последние экзамены"],
+ empty:["אין כאן שאלות כרגע 🎉","لا توجد أسئلة هنا الآن 🎉","No questions here right now 🎉","Здесь пока нет вопросов 🎉"],
+ settings:["הגדרות","الإعدادات","Settings","Настройки"],voice:["הקראה אוטומטית","قراءة تلقائية","Read aloud automatically","Автоматическое чтение"],
+ read:["🔊 הקראה","🔊 قراءة","🔊 Read","🔊 Озвучить"],save:["שמירה","حفظ","Save","Сохранить"],
+ daily:["יעד יומי","الهدف اليومي","Daily goal","Цель дня"],streak:["ימים ברצף","أيام متتالية","day streak","дней подряд"],
+ timeUp:["הזמן נגמר!","انتهى الوقت!","Time's up!","Время вышло!"],
+ unofficial:["","","","Неофициальный перевод официальных вопросов. В случае сомнения сверяйтесь с ивритом."],
+ heHint:["","","","Показать на иврите"],
+ attr:["שאלות: משרד התחבורה והבטיחות בדרכים, data.gov.il, רישיון CC-BY. האפליקציה אינה של משרד התחבורה.","الأسئلة: وزارة المواصلات والأمان على الطرق، data.gov.il، رخصة CC-BY. التطبيق ليس تابعًا للوزارة.","Questions: Ministry of Transport and Road Safety, data.gov.il, CC-BY license. This app is not operated by the Ministry.","Вопросы: Министерство транспорта и безопасности дорожного движения, data.gov.il, лицензия CC-BY. Приложение не принадлежит министерству."],
+ loading:["טוען את מאגר השאלות…","جارٍ تحميل بنك الأسئلة…","Loading the question bank…","Загружаем банк вопросов…"],
+ loadErr:["לא הצלחתי לטעון את השאלות. בדקו את האינטרנט ונסו שוב.","تعذّر تحميل الأسئلة. تحقق من الإنترنت وحاول مرة أخرى.","Couldn't load the questions. Check your connection and try again.","Не удалось загрузить вопросы. Проверьте интернет и попробуйте снова."],
+ change:["שינוי רישיון / שפה","تغيير الرخصة / اللغة","Change license / language","Сменить категорию / язык"],
+ family:["👨‍👩‍👧 משפחה: תחרות ומסך הורים","👨‍👩‍👧 العائلة: منافسة وشاشة الأهل","👨‍👩‍👧 Family: competition & parent view","👨‍👩‍👧 Семья: соревнование и экран родителей"],
+ inBank:["שאלות במאגר לרישיון","سؤالاً في البنك للرخصة","questions in the bank for license","вопросов в банке для категории"],
+ examLeft:["נותרו","متبقٍ","left","осталось"],
+ practice:["תרגול","تدريب","Practice","Тренировка"],
+ goodMsg:["ממשיכים ככה!","استمر هكذا!","Keep it up!","Так держать!"],
+};
+const li=()=>Math.max(0,LANGS.findIndex(l=>l[0]===S.lang));
+const t=k=>{const v=T[k];if(!v)return k;return v[li()]||v[2]||v[0]};
+/* ================= state ================= */
+const KEY="yalla-theory-v1";
+let S;try{S=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){S={}}
+S=Object.assign({name:"",lang:null,lic:null,res:{},exams:[],voice:false,stars:0,days:{},streak:0,lastDay:null},S);
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const $=s=>document.querySelector(s);const app=$("#app");
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const today=()=>new Date().toDateString();
+function applyDir(){const L=LANGS[li()];document.documentElement.lang=L[0];document.documentElement.dir=L[3];app.dir=L[3]}
+/* ================= question bank ================= */
+let Q=[],QHE=null,LOADED=null;
+async function loadLang(lang){
+  if(LOADED===lang)return true;
+  const get=async l=>{if(QDATA&&QDATA[l])return QDATA[l];const r=await fetch("data/q_"+l+".json");if(!r.ok)throw 0;return r.json()};
+  try{
+    const raw=await get(lang==="ru"?"he":lang);
+    if(lang==="ru"){const ru=await get("ru");const m=new Map(ru.map(x=>[x.id,x]));QHE=raw;Q=raw.map(q=>{const r=m.get(q[0]);return r?[q[0],q[1],q[2],q[3],r.q,r.o,q[6]]:q})}
+    else Q=raw;
+    LOADED=lang;return true}catch(e){return false}
+}
+const qid=q=>q[0];
+const licQs=()=>Q.filter(q=>q[2]&LICBIT[S.lic]);
+const rs=id=>S.res[id]||null; // {c:correct count,w:wrong count,last:1/0}
+function record(q,ok){const r=S.res[q[0]]=S.res[q[0]]||{c:0,w:0,last:0};ok?r.c++:r.w++;r.last=ok?1:0;
+  const d=today();S.days[d]=(S.days[d]||0)+1;if(ok)S.stars++;
+  if(S.lastDay!==d){const y=new Date();y.setDate(y.getDate()-1);S.streak=S.lastDay===y.toDateString()?S.streak+1:1;S.lastDay=d}
+  for(const k of Object.keys(S.days))if(new Date(k)<new Date(Date.now()-20*864e5))delete S.days[k];save()}
+function mastered(){return licQs().filter(q=>{const r=rs(q[0]);return r&&r.last===1}).length}
+function readiness(){
+  const L=licQs().length||1,cov=mastered()/L;const ex=S.exams.filter(e=>e.lic===S.lic).slice(-3);
+  const exS=ex.length?ex.reduce((a,e)=>a+e.s,0)/ex.length/30:0;
+  return Math.round(Math.min(1,ex.length?0.55*exS+0.45*cov:cov*0.8)*100);
+}
+/* ================= speech ================= */
+let VO=null;function pickV(){if(!("speechSynthesis" in window))return;const L=LANGS[li()][2].slice(0,2);const v=speechSynthesis.getVoices().filter(x=>x.lang.toLowerCase().startsWith(L==="he"?"he":L)||(L==="he"&&/^iw/i.test(x.lang)));VO=v.find(x=>/google|natural|neural/i.test(x.name))||v[0]||null}
+if("speechSynthesis" in window){pickV();speechSynthesis.onvoiceschanged=pickV}
+function speak(txt){if(!("speechSynthesis" in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang=LANGS[li()][2];if(VO)u.voice=VO;u.rate=.95;speechSynthesis.speak(u)}catch(e){}}
+const stopVoice=()=>{try{speechSynthesis.cancel()}catch(e){}};
+/* ================= onboarding ================= */
+function onboarding(){
+  stopVoice();let lang=S.lang||"he",lic=S.lic||"B";
+  const draw=()=>{S.lang=lang;applyDir();
+  app.innerHTML=`<div class="brand">${LOGO}<h1>Yalla Theory</h1></div>
+   <div class="card hero"><h2>${t("welcome")}</h2><p>${t("tagline")}</p></div>
+   <div class="card"><h3>${t("lang")}</h3><div class="lang">${LANGS.map(l=>`<button data-l="${l[0]}" aria-pressed="${l[0]===lang}" lang="${l[0]}">${l[1]}</button>`).join("")}</div>${lang==="ru"?`<p class="label">${t("unofficial")}</p>`:""}</div>
+   <div class="card"><div class="field"><label for="nm"><h3>${t("name")}</h3></label><input id="nm" maxlength="20" value="${esc(S.name)}" autocomplete="given-name"></div></div>
+   <div class="card"><h3>${t("lic")}</h3><div class="lic">${LICS.map(L=>`<button data-c="${L[0]}" aria-pressed="${L[0]===lic}"><span aria-hidden="true">${L[1]}</span>${L[0]==="1"?"1":L[0]}<small>${L[2+li()]}</small></button>`).join("")}</div></div>
+   <button class="btn wide" id="go">${t("start")}</button><p class="attr">${t("attr")}</p>`;
+  app.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{S.name=$("#nm").value.trim();lang=b.dataset.l;draw()});
+  app.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{lic=b.dataset.c;app.querySelectorAll("[data-c]").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+  $("#go").onclick=async()=>{S.name=$("#nm").value.trim();S.lang=lang;S.lic=lic;save();pickV();await ensure();home()};
+  };draw();
+}
+async function ensure(){
+  if(LOADED===S.lang)return true;
+  app.innerHTML=`<div class="card center"><div class="label">${t("loading")}</div></div>`;
+  const ok=await loadLang(S.lang);
+  if(!ok){app.innerHTML=`<div class="card center"><p>${t("loadErr")}</p><button class="btn" id="rt">↻</button></div>`;$("#rt").onclick=async()=>{if(await ensure())home()};return false}
+  return true;
+}
+/* ================= home ================= */
+const LOGO=`<svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#111827"/><stop offset="1" stop-color="#3730A3"/></linearGradient><linearGradient id="arc" x1="0" x2="1"><stop offset="0" stop-color="#3CDC78"/><stop offset=".6" stop-color="#C9A040"/><stop offset="1" stop-color="#FF4040"/></linearGradient></defs><rect width="100" height="100" rx="22" fill="url(#lg)"/><path d="M20 62 A32 32 0 0 1 80 62" fill="none" stroke="url(#arc)" stroke-width="8" stroke-linecap="round"/><line x1="50" y1="62" x2="72" y2="40" stroke="#FF4664" stroke-width="5" stroke-linecap="round"/><circle cx="50" cy="62" r="6" fill="#fff"/><rect x="34" y="76" width="32" height="12" rx="6" fill="#2ECC71"/><path d="M44 82l4 3 8-6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>`;
+function gaugeSVG(p){const a=Math.PI*(1-p/100),x=50+38*Math.cos(a),y=55-38*Math.sin(a);const col=p>=80?"#22B573":p>=55?"#FFB020":"#E8455A";
+  return `<svg viewBox="0 0 100 62" aria-hidden="true"><path d="M12 55 A38 38 0 0 1 88 55" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="9" stroke-linecap="round"/><path d="M12 55 A38 38 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}" fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round"/><line x1="50" y1="55" x2="${(50+30*Math.cos(a)).toFixed(1)}" y2="${(55-30*Math.sin(a)).toFixed(1)}" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><circle cx="50" cy="55" r="4.5" fill="#fff"/></svg>`}
+async function home(){
+  stopVoice();if(!S.lang||!S.lic)return onboarding();applyDir();if(!(await ensure()))return;
+  const all=licQs(),m=mastered(),pct=Math.round(m/(all.length||1)*100),rd=readiness(),L=LICS.find(x=>x[0]===S.lic);
+  const wrong=all.filter(q=>{const r=rs(q[0]);return r&&r.last===0}).length;
+  const tdN=S.days[today()]||0,ex=S.exams.filter(e=>e.lic===S.lic);
+  const topicCount=k=>{const qs=all.filter(q=>TOPICS[q[1]][0]===k);return [qs.filter(q=>{const r=rs(q[0]);return r&&r.last===1}).length,qs.length]};
+  app.innerHTML=`<i data-home-screen hidden></i>
+   <div class="top"><div class="brand grow">${LOGO}<div><b style="font-family:var(--display);font-size:20px">Yalla Theory</b><div class="label">${L[1]} ${L[2+li()]} · ${L[0]}</div></div></div>
+     <span class="chip">🔥 ${S.streak||0}</span><span class="chip">⭐ ${S.stars}</span><button class="x" id="set" aria-label="${t("settings")}">⚙️</button></div>
+   <div class="card hero"><div class="gauge">${gaugeSVG(rd)}<div><div class="label">${t("ready")}</div><div class="big">${rd}%</div><div class="label">${t("readyTip")}</div></div></div>
+     <div class="label">${t("mastered")}: ${m}/${all.length} (${pct}%)</div><div class="meter"><i style="width:${pct}%"></i></div>
+     <div class="label">${t("daily")}: ${Math.min(tdN,20)}/20 ${tdN>=20?"✅":""}</div><div class="meter"><i style="width:${Math.min(100,tdN/20*100)}%"></i></div></div>
+   <div class="card"><h3>📝 ${t("exam")}</h3><p class="label">${t("examSub")}</p>${ex.length?`<div class="label">${t("history")}: ${ex.slice(-5).map(e=>`<b style="color:${e.s>=26?"var(--good)":"var(--bad)"}">${e.s}/30</b>`).join(" · ")}</div>`:""}<button class="btn wide" id="ex">${t("startExam")}</button></div>
+   <div class="grid2">
+     <button class="tile" id="sm"><span class="e">🎯</span><b>${t("smart")}</b><span class="label">${t("smartSub")}</span></button>
+     <button class="tile" id="mi"><span class="e">❌</span><b>${t("mist")} (${wrong})</b><span class="label">${t("mistSub")}</span></button>
+   </div>
+   <h3>${t("topics")}</h3>
+   <div class="grid2">${TOPICS.map(([k,e])=>{const [a,b]=topicCount(k);return b?`<button class="tile" data-t="${k}"><span class="e">${e}</span><b>${t(k)}</b><span class="label">${a}/${b}</span><div class="meter"><i style="width:${Math.round(a/b*100)}%"></i></div></button>`:""}).join("")}</div>
+   <button class="btn ghost wide" id="fam">${t("family")}</button>
+   <p class="attr">${all.length} ${t("inBank")} ${L[0]}${S.lang==="ru"?" · "+t("unofficial"):""}<br>${t("attr")}</p>`;
+  $("#set").onclick=settings;$("#ex").onclick=startExam;$("#sm").onclick=startSmart;$("#mi").onclick=()=>startPractice(all.filter(q=>{const r=rs(q[0]);return r&&r.last===0}),t("mist"));
+  app.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>startPractice(shuffle(all.filter(q=>TOPICS[q[1]][0]===b.dataset.t)).sort((x,y)=>((rs(x[0])||{last:-1}).last===1)-((rs(y[0])||{last:-1}).last===1)),t(b.dataset.t)));
+  $("#fam").onclick=famScreen;famSync();
+}
+function settings(){
+  app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="←">→</button><h2 class="grow">${t("settings")}</h2></div>
+   <div class="card"><label class="chk"><input type="checkbox" id="vo" ${S.voice?"checked":""}> ${t("voice")}</label></div>
+   <button class="btn ghost wide" id="ch">${t("change")}</button>`;
+  $("#back").onclick=home;$("#vo").onchange=e=>{S.voice=e.target.checked;save()};$("#ch").onclick=onboarding;
+}
+/* ================= practice ================= */
+let P=null;
+function startSmart(){
+  const all=licQs();const wrong=shuffle(all.filter(q=>{const r=rs(q[0]);return r&&r.last===0})),unseen=shuffle(all.filter(q=>!rs(q[0]))),old=shuffle(all.filter(q=>{const r=rs(q[0]);return r&&r.last===1}));
+  const w=wrong.slice(0,8);const pick=[...w,...unseen.slice(0,20-w.length)];while(pick.length<20&&old.length)pick.push(old.pop());
+  startPractice(shuffle(pick),t("smart"));
+}
+function startPractice(qs,title){
+  if(!qs.length){app.innerHTML=`<div class="top"><button class="x" id="back">→</button><h2 class="grow">${esc(title)}</h2></div><div class="card center"><p>${t("empty")}</p></div>`;$("#back").onclick=home;return}
+  P={qs:qs.slice(0,30),i:0,right:0,title,mode:"practice"};pq();
+}
+function optOrder(q){return shuffle([0,1,2,3])}
+function qHTML(q){const img=q[3]?`<img class="qimg" src="${IMG+q[3]}" alt="" loading="lazy">`:"";return `<div class="qtext">${esc(q[4])}</div>${img}`}
+function zoomWire(){const im=app.querySelector(".qimg");if(im)im.onclick=()=>{const z=document.createElement("div");z.className="zoom";z.innerHTML=`<img src="${im.src}" alt="">`;z.onclick=()=>z.remove();document.body.appendChild(z)}}
+function pq(){
+  const q=P.qs[P.i],ord=optOrder(q),total=P.qs.length;let done=false;
+  app.innerHTML=`<div class="top"><button class="x" id="quit" aria-label="←">→</button><div class="grow"><div class="bar"><i style="width:${P.i/total*100}%"></i></div></div><span class="chip">${P.i+1}/${total}</span></div>
+   <div class="label">${esc(P.title)}</div>
+   <div class="card qcard">${qHTML(q)}<button class="link" id="rd" style="align-self:flex-start">${t("read")}</button>${S.lang==="ru"&&QHE?`<details><summary class="label">${t("heHint")}</summary><div dir="rtl" lang="he">${esc((QHE.find(x=>x[0]===q[0])||[])[4]||"")}</div></details>`:""}</div>
+   <div class="opts">${ord.map((o,k)=>`<button class="opt" data-o="${o}"><span class="k">${(li()===0?"אבגד":li()===1?"أبجد":"ABCD")[k]}</span><span>${esc(q[5][o])}</span></button>`).join("")}</div>
+   <div class="fb" id="fb" aria-live="polite"></div><div id="nx"></div>`;
+  $("#quit").onclick=home;zoomWire();
+  const sayQ=()=>speak(q[4]+". "+ord.map((o,k)=>(k+1)+". "+q[5][o]).join(". "));$("#rd").onclick=sayQ;if(S.voice)sayQ();
+  app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    if(done)return;done=true;const o=+b.dataset.o,ok=o===q[6];record(q,ok);if(ok)P.right++;
+    app.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(+x.dataset.o===q[6])x.classList.add("good")});if(!ok)b.classList.add("bad");
+    const fb=$("#fb");fb.className="fb "+(ok?"good":"bad");fb.textContent=ok?t("right"):t("wrong");
+    if(S.voice)speak(ok?t("right").replace(/[^\p{L}\p{N} !.,]/gu,""):q[5][q[6]]);
+    const nb=document.createElement("button");nb.className="btn wide";nb.textContent=P.i<total-1?t("next"):t("finish");
+    nb.onclick=()=>{P.i++;P.i<total?pq():practiceDone()};$("#nx").appendChild(nb);nb.focus();
+  });
+}
+function practiceDone(){
+  const total=P.qs.length,pct=Math.round(P.right/total*100);
+  app.innerHTML=`<div class="card center"><div class="result">${pct>=87?"🏆":pct>=70?"👏":"💪"}</div><h2>${P.right}/${total}</h2><p>${t("goodMsg")}</p></div>
+   <button class="btn wide" id="ag">${t("again")}</button><button class="btn ghost wide" id="hm">${t("home")}</button>`;
+  $("#ag").onclick=()=>startPractice(shuffle(P.qs),P.title);$("#hm").onclick=home;famSync(true);
+}
+/* ================= exam ================= */
+let E=null,TIMER=null;
+function startExam(){
+  const all=licQs();const by=k=>shuffle(all.filter(q=>TOPICS[q[1]][0]===k));
+  // mix roughly like the real exam: mostly laws, then signs, safety, vehicle
+  const plan={laws:13,signs:7,safety:7,vehicle:3};let qs=[];
+  for(const [k,n] of Object.entries(plan))qs.push(...by(k).slice(0,n));
+  const rest=shuffle(all.filter(q=>!qs.includes(q)));while(qs.length<30&&rest.length)qs.push(rest.pop());
+  E={qs:shuffle(qs).slice(0,30).map(q=>({q,ord:optOrder(q),a:null,flag:false})),i:0,start:Date.now(),end:Date.now()+40*60000};
+  clearInterval(TIMER);TIMER=setInterval(tick,1000);eq();
+}
+function tick(){if(!E)return clearInterval(TIMER);const left=Math.max(0,E.end-Date.now());const el=$("#tm");if(el){const m=Math.floor(left/60000),s=Math.floor(left%60000/1000);el.textContent=`⏱ ${m}:${String(s).padStart(2,"0")}`;el.classList.toggle("low",left<5*60000)}if(!left){alertTimeUp()}}
+function alertTimeUp(){clearInterval(TIMER);const f=$("#fb");if(f)f.textContent=t("timeUp");setTimeout(examDone,600)}
+function eq(){
+  const it=E.qs[E.i],q=it.q;
+  app.innerHTML=`<div class="top"><button class="x" id="quit" aria-label="←">→</button><b class="grow">${t("exam")}</b><span class="chip timer" id="tm">⏱</span></div>
+   <div class="qnav">${E.qs.map((x,k)=>`<button data-k="${k}" class="${x.a!=null?"ans":""} ${x.flag?"flag":""} ${k===E.i?"cur":""}" aria-label="${t("q")} ${k+1}">${k+1}</button>`).join("")}</div>
+   <div class="card qcard"><div class="label">${t("q")} ${E.i+1} ${t("of")} 30</div>${qHTML(q)}<button class="link" id="rd" style="align-self:flex-start">${t("read")}</button></div>
+   <div class="opts">${it.ord.map((o,k)=>`<button class="opt ${it.a===o?"sel":""}" data-o="${o}"><span class="k">${k+1}</span><span>${esc(q[5][o])}</span></button>`).join("")}</div>
+   <div class="fb" id="fb"></div>
+   <div class="row"><button class="btn ghost" id="pv" ${E.i===0?"disabled":""}>${t("prev")}</button><button class="btn ghost" id="fl">🚩 ${t("flag")}</button><button class="btn ghost" id="nq" ${E.i===29?"disabled":""}>${t("nextQ")}</button></div>
+   <button class="btn wide" id="sb">${t("submit")}</button>`;
+  tick();zoomWire();
+  $("#quit").onclick=()=>{clearInterval(TIMER);E=null;home()};
+  $("#rd").onclick=()=>speak(q[4]+". "+it.ord.map((o,k)=>(k+1)+". "+q[5][o]).join(". "));
+  app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{it.a=+b.dataset.o;app.querySelectorAll(".opt").forEach(x=>x.classList.toggle("sel",x===b));const n=app.querySelector(`.qnav [data-k="${E.i}"]`);if(n)n.classList.add("ans");if(E.i<29)setTimeout(()=>{E.i++;eq()},350)});
+  app.querySelectorAll(".qnav button").forEach(b=>b.onclick=()=>{E.i=+b.dataset.k;eq()});
+  $("#pv").onclick=()=>{E.i--;eq()};$("#nq").onclick=()=>{E.i++;eq()};$("#fl").onclick=()=>{it.flag=!it.flag;eq()};
+  $("#sb").onclick=()=>{if(E.qs.some(x=>x.a==null)&&!confirmSubmit())return;examDone()};
+}
+function confirmSubmit(){const f=$("#fb");if(f.dataset.c){return true}f.dataset.c=1;f.className="fb bad";f.textContent=t("confirmSubmit")+" ↓";return false}
+function examDone(){
+  if(!E)return;clearInterval(TIMER);const ex=E;E=null;
+  let s=0;ex.qs.forEach(x=>{const ok=x.a===x.q[6];if(ok)s++;if(x.a!=null)record(x.q,ok);else record(x.q,false)});
+  const mins=Math.max(1,Math.round((Date.now()-ex.start)/60000)),pass=s>=26;
+  S.exams.push({d:new Date().toISOString().slice(0,10),s,lic:S.lic,min:mins});S.exams=S.exams.slice(-40);save();famSync(true);
+  const show=only=>{
+    app.innerHTML=`<div class="card center ${pass?"":""}"><div class="result">${pass?"🎉":"💪"}</div><h2>${pass?t("passed"):t("failed")}</h2><div class="big" style="color:${pass?"var(--good)":"var(--bad)"}">${s}/30</div><div class="label">${t("time")}: ${mins} ${t("min")}</div></div>
+     <div class="row"><button class="btn" id="ag">${t("again")}</button><button class="btn ghost" id="hm">${t("home")}</button></div>
+     <div class="top"><h3 class="grow">${t("review")}</h3><label class="chk"><input type="checkbox" id="ow" ${only?"checked":""}> ${t("onlyWrong")}</label></div>
+     ${ex.qs.map((x,k)=>({x,k})).filter(({x})=>!only||x.a!==x.q[6]).map(({x,k})=>`<div class="card"><div class="label">${t("q")} ${k+1} ${x.a===x.q[6]?"✅":"❌"}</div>${qHTML(x.q)}
+       <div class="opts">${x.ord.map(o=>`<div class="opt ${o===x.q[6]?"good":o===x.a?"bad":""}"><span>${esc(x.q[5][o])}</span></div>`).join("")}</div></div>`).join("")}`;
+    $("#ag").onclick=startExam;$("#hm").onclick=home;$("#ow").onchange=e=>show(e.target.checked);
+    app.querySelectorAll(".qimg").forEach(im=>im.onclick=()=>{const z=document.createElement("div");z.className="zoom";z.innerHTML=`<img src="${im.src}" alt="">`;z.onclick=()=>z.remove();document.body.appendChild(z)});
+  };show(false);scrollTo(0,0);
+}
+const FAM_APP="theory";
+function famStats(){const all=licQs(),ex=S.exams.filter(e=>e.lic===S.lic),n=S.days[today()]||0;return {license:S.lic,mastered:mastered(),total:all.length,exam:ex.length?ex[ex.length-1].s:"",stars:S.stars,todayN:n,today:n>=20?1:0,ready:readiness()}}
+const famEmoji=()=>(LICS.find(x=>x[0]===S.lic)||["","🚗"])[1],famHome=()=>home();
+/* ===================== Family: shared parent view + competition ===================== */
+const FAM_API=/myinspire\.co\.il$/.test(location.hostname)?"/api/family.php":"https://"+(FAM_APP==="math"?"yallamath":FAM_APP==="theory"?"yallatheory":"yallaenglish")+".myinspire.co.il/api/family.php";
+async function famCall(b){try{const r=await fetch(FAM_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});return await r.json()}catch(e){return {error:"net"}}}
+function famDay(d){d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function famWeek(){
+  S.starHist=S.starHist||{};const t=famDay();if(S.starHist[t]==null)S.starHist[t]=S.stars;
+  const old=new Date();old.setDate(old.getDate()-7);const cut=famDay(old);
+  for(const k of Object.keys(S.starHist))if(k<famDay(new Date(Date.now()-15*864e5)))delete S.starHist[k];
+  const keys=Object.keys(S.starHist).filter(k=>k>=cut).sort();const base=keys.length?S.starHist[keys[0]]:S.stars;
+  return Math.max(0,S.stars-base);
+}
+let famLast=0;
+async function famSync(force){
+  if(!S.fam||!S.fam.code)return null;if(!force&&Date.now()-famLast<60000)return null;famLast=Date.now();
+  const st=Object.assign({week:famWeek()},famStats());save();
+  return famCall({action:"sync",code:S.fam.code,id:S.fam.id,app:FAM_APP,role:S.fam.role,name:(S.name||"").slice(0,20)||"ללא שם",e:famEmoji(),stats:st});
+}
+function famMedal(i){return ["🥇","🥈","🥉"][i]||"⭐"}
+async function famScreen(){
+  if(!S.fam||!S.fam.code)return famJoin();
+  app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">👨‍👩‍👧 המשפחה שלנו</h2></div><div class="card center"><div class="label">טוען…</div></div>`;
+  $("#back").onclick=famHome;
+  const d=await famSync(true)||await famCall({action:"get",code:S.fam.code});
+  if(!d||d.error){app.querySelector(".card").innerHTML=`<p>${d&&d.error==="nofamily"?"קוד המשפחה לא נמצא.":"לא הצלחתי להתחבר. בדקו את האינטרנט ונסו שוב."}</p><button class="btn ghost" id="lv">יציאה מהמשפחה</button>`;$("#lv").onclick=()=>{delete S.fam;save();famJoin()};return}
+  const kids={};
+  for(const m of d.members){if(m.role==="parent")continue;const k=(m.name||"").trim().toLowerCase();const K=kids[k]=kids[k]||{name:m.name,e:m.e,apps:{},week:0,today:0,t:0};K.apps[m.app]=m.stats||{};K.week+=+(m.stats&&m.stats.week)||0;K.today=K.today||+(m.stats&&m.stats.today)||0;K.t=Math.max(K.t,m.t||0);if(m.e)K.e=m.e}
+  const list=Object.values(kids).sort((a,b)=>b.week-a.week);
+  const ago=t=>{const m=Math.round((Date.now()/1000-t)/60);return m<2?"עכשיו":m<60?`לפני ${m} דקות`:m<1440?`לפני ${Math.round(m/60)} שעות`:`לפני ${Math.round(m/1440)} ימים`};
+  const en=s=>s?`<div class="fam-app">📘 <b>אנגלית:</b> ${esc(s.course||"")} · ${s.lessons||0} שיעורים${s.avg!=null&&s.avg!==""?` · ממוצע ${s.avg}`:""}${s.streak?` · 🔥 ${s.streak} ימים ברצף`:""}${s.test!=null&&s.test!==""?` · מבחן אחרון ${s.test}`:""}</div>`:"";
+  const ma=s=>s?`<div class="fam-app">🔢 <b>מתמטיקה:</b> ${esc(s.grade||"")} · ${s.mastered||0}/${s.topics||0} נושאים בשליטה · הצלחה ${s.avg||0}%${s.test!=null&&s.test!==""?` · מבחן אחרון ${s.test}`:""}${s.todayN?` · היום ${s.todayN} שאלות`:""}</div>`:"";
+  const th=s=>s?`<div class="fam-app">🚦 <b>תאוריה:</b> רישיון ${esc(s.license||"")} · ${s.mastered||0}/${s.total||0} שאלות נכונות${s.exam!=null&&s.exam!==""?` · מבחן אחרון ${s.exam}/30`:""}${s.todayN?` · היום ${s.todayN} שאלות`:""}</div>`:"";
+  app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">👨‍👩‍👧 ${esc(d.family||"המשפחה שלנו")}</h2><button class="x" id="rf" aria-label="רענון">🔄</button></div>
+   <div class="card fam-code"><div class="label">קוד המשפחה</div><div class="code" dir="ltr">${S.fam.code}</div><button class="btn ghost" id="sh">📤 שיתוף הקוד</button></div>
+   <div class="card"><h3>🏆 תחרות השבוע</h3><p class="label">כוכבים שנאספו ב-7 הימים האחרונים, בשתי האפליקציות יחד</p>
+   ${list.length?list.map((k,i)=>`<div class="fam-row"><span class="m">${famMedal(i)}</span><span class="e">${k.e||"🙂"}</span><b class="grow">${esc(k.name)}</b><span>⭐ ${k.week}</span><span title="אתגר יומי">${k.today?"✅":"⏳"}</span></div>`).join(""):`<p>עוד אין ילדים במשפחה. הכניסו את הקוד באפליקציה של כל ילד.</p>`}
+   <p class="label">✅ = עשו היום את האתגר היומי: שיעור יומי באנגלית, 10 שאלות במתמטיקה או 20 שאלות תאוריה</p></div>
+   ${list.map(k=>`<div class="card fam-kid"><div class="fam-row"><span class="e">${k.e||"🙂"}</span><b class="grow">${esc(k.name)}</b><span class="label">${ago(k.t)}</span></div>${en(k.apps.english)}${ma(k.apps.math)}${th(k.apps.theory)}</div>`).join("")}
+   <button class="link" id="lv">יציאה מהמשפחה במכשיר הזה</button>`;
+  $("#back").onclick=famHome;$("#rf").onclick=famScreen;
+  $("#sh").onclick=async()=>{const t=`הצטרפו למשפחה שלנו ב-Yalla! קוד המשפחה: ${S.fam.code}`;try{if(navigator.share)await navigator.share({text:t});else{await navigator.clipboard.writeText(S.fam.code);$("#sh").textContent="✅ הקוד הועתק"}}catch(e){}};
+  $("#lv").onclick=async()=>{await famCall({action:"leave",code:S.fam.code,id:S.fam.id});delete S.fam;save();famHome()};
+}
+function famJoin(){
+  app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">👨‍👩‍👧 משפחה</h2></div>
+   <div class="card"><h3>מה זה?</h3><p>מחברים את כל הילדים לקוד משפחה אחד. ההורים רואים את ההתקדמות של כולם במסך אחד, באנגלית, במתמטיקה ובתאוריה, ויש תחרות כוכבים שבועית ואתגר יומי.</p><p class="label">נשמרים רק שם פרטי ונתוני למידה (כוכבים, שיעורים, ציונים).</p></div>
+   <div class="card"><h3>הורה? צרו משפחה</h3><div class="field"><label class="label" for="fn">שם המשפחה (לא חובה)</label><input id="fn" maxlength="30" placeholder="למשל: משפחת כהן"></div><button class="btn wide" id="cr">יצירת קוד משפחה</button></div>
+   <div class="card"><h3>יש לכם קוד? הצטרפו</h3><div class="field"><label class="label" for="fc">קוד המשפחה</label><input id="fc" maxlength="8" dir="ltr" autocapitalize="characters" placeholder="ABCD2345" style="text-align:center;letter-spacing:3px;font-size:22px"></div>
+   <label class="chk"><input type="checkbox" id="fp"> אני הורה (לא להציג אותי בתחרות)</label><button class="btn wide" id="jn">הצטרפות</button><div class="label" id="fe"></div></div>`;
+  $("#back").onclick=famHome;
+  const id=()=>(S.fam&&S.fam.id)||Array.from(crypto.getRandomValues(new Uint8Array(8)),b=>b.toString(16).padStart(2,"0")).join("");
+  $("#cr").onclick=async()=>{const d=await famCall({action:"create",family:$("#fn").value.trim()});if(!d.code){$("#cr").textContent="לא הצלחתי, נסו שוב";return}S.fam={code:d.code,id:id(),role:"parent"};save();famScreen()};
+  $("#jn").onclick=async()=>{const c=$("#fc").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");if(c.length!==8){$("#fe").textContent="הקוד צריך להיות 8 תווים";return}
+    S.fam={code:c,id:id(),role:$("#fp").checked?"parent":"kid"};const d=await famSync(true);if(!d||d.error){$("#fe").textContent=d&&d.error==="nofamily"?"הקוד לא נמצא. בדקו שהקלדתם נכון.":"לא הצלחתי להתחבר. נסו שוב.";delete S.fam;save();return}save();famScreen()};
+}
+
+/* ================= back navigation ================= */
+(function(){
+  const go=()=>{stopVoice();clearInterval(TIMER);E=null;home();scrollTo(0,0)};
+  const fix=()=>{
+    const atHome=!!app.querySelector("[data-home-screen]");
+    try{if(atHome){if(!history.state||!history.state.home)history.replaceState({home:1},"")}else if(!history.state||!history.state.inner)history.pushState({inner:1},"")}catch(e){}
+    const ar=document.documentElement.dir==="ltr"?"←":"→";app.querySelectorAll(".top .x#quit,.top .x#back").forEach(b=>{if(b.textContent.trim()==="→"||b.textContent.trim()==="←")b.textContent=ar});
+  };
+  addEventListener("popstate",()=>{if(S.lang&&S.lic&&!app.querySelector("[data-home-screen]"))go()});
+  new MutationObserver(fix).observe(app,{childList:true});
+})();
+home();
+</script>
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));</script>
+</body></html>
