@@ -387,7 +387,7 @@ const FAM_APP="theory";
 function famStats(){const all=licQs(),ex=S.exams.filter(e=>e.lic===S.lic),n=S.days[today()]||0;return {license:S.lic,mastered:mastered(),total:all.length,exam:ex.length?ex[ex.length-1].s:"",stars:S.stars,todayN:n,today:n>=20?1:0,ready:readiness()}}
 const famEmoji=()=>(LICS.find(x=>x[0]===S.lic)||["","🚗"])[1],famHome=()=>home();
 /* ===================== Family: shared parent view + competition ===================== */
-const FAM_API=/myinspire\.co\.il$/.test(location.hostname)?"/api/family.php":"https://"+(FAM_APP==="math"?"yallamath":FAM_APP==="theory"?"yallatheory":"yallaenglish")+".myinspire.co.il/api/family.php";
+const FAM_API=/myinspire\.co\.il$/.test(location.hostname)?"/api/family.php":"https://"+(FAM_APP==="math"?"yallamath":FAM_APP==="theory"?"yallatheory":FAM_APP==="psy"?"yallapsy":"yallaenglish")+".myinspire.co.il/api/family.php";
 async function famCall(b){try{const r=await fetch(FAM_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});return await r.json()}catch(e){return {error:"net"}}}
 function famDay(d){d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function famWeek(){
@@ -416,13 +416,14 @@ async function famScreen(){
   const ago=t=>{const m=Math.round((Date.now()/1000-t)/60);return m<2?"עכשיו":m<60?`לפני ${m} דקות`:m<1440?`לפני ${Math.round(m/60)} שעות`:`לפני ${Math.round(m/1440)} ימים`};
   const en=s=>s?`<div class="fam-app">📘 <b>אנגלית:</b> ${esc(s.course||"")} · ${s.lessons||0} שיעורים${s.avg!=null&&s.avg!==""?` · ממוצע ${s.avg}`:""}${s.streak?` · 🔥 ${s.streak} ימים ברצף`:""}${s.test!=null&&s.test!==""?` · מבחן אחרון ${s.test}`:""}</div>`:"";
   const ma=s=>s?`<div class="fam-app">🔢 <b>מתמטיקה:</b> ${esc(s.grade||"")} · ${s.mastered||0}/${s.topics||0} נושאים בשליטה · הצלחה ${s.avg||0}%${s.test!=null&&s.test!==""?` · מבחן אחרון ${s.test}`:""}${s.todayN?` · היום ${s.todayN} שאלות`:""}</div>`:"";
+  const ps=s=>s?`<div class="fam-app">🎓 <b>פסיכומטרי:</b> ${s.est?`ציון משוער ${s.est} · `:""}מילולי ${s.v||0}% · כמותי ${s.q||0}% · אנגלית ${s.e||0}%${s.todayN?` · היום ${s.todayN} שאלות`:""}</div>`:"";
   const th=s=>s?`<div class="fam-app">🚦 <b>תאוריה:</b> רישיון ${esc(s.license||"")} · ${s.mastered||0}/${s.total||0} שאלות נכונות${s.exam!=null&&s.exam!==""?` · מבחן אחרון ${s.exam}/30`:""}${s.todayN?` · היום ${s.todayN} שאלות`:""}</div>`:"";
   app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">👨‍👩‍👧 ${esc(d.family||"המשפחה שלנו")}</h2><button class="x" id="rf" aria-label="רענון">🔄</button></div>
    <div class="card fam-code"><div class="label">קוד המשפחה</div><div class="code" dir="ltr">${S.fam.code}</div><button class="btn ghost" id="sh">📤 שיתוף הקוד</button></div>
    <div class="card"><h3>🏆 תחרות השבוע</h3><p class="label">כוכבים שנאספו ב-7 הימים האחרונים, בשתי האפליקציות יחד</p>
    ${list.length?list.map((k,i)=>`<div class="fam-row"><span class="m">${famMedal(i)}</span><span class="e">${k.e||"🙂"}</span><b class="grow">${esc(k.name)}</b><span>⭐ ${k.week}</span><span title="אתגר יומי">${k.today?"✅":"⏳"}</span></div>`).join(""):`<p>עוד אין ילדים במשפחה. הכניסו את הקוד באפליקציה של כל ילד.</p>`}
    <p class="label">✅ = עשו היום את האתגר היומי: שיעור יומי באנגלית, 10 שאלות במתמטיקה או 20 שאלות תאוריה</p></div>
-   ${list.map(k=>`<div class="card fam-kid"><div class="fam-row"><span class="e">${k.e||"🙂"}</span><b class="grow">${esc(k.name)}</b><span class="label">${ago(k.t)}</span></div>${en(k.apps.english)}${ma(k.apps.math)}${th(k.apps.theory)}</div>`).join("")}
+   ${list.map(k=>`<div class="card fam-kid"><div class="fam-row"><span class="e">${k.e||"🙂"}</span><b class="grow">${esc(k.name)}</b><span class="label">${ago(k.t)}</span></div>${en(k.apps.english)}${ma(k.apps.math)}${th(k.apps.theory)}${ps(k.apps.psy)}</div>`).join("")}
    <button class="link" id="lv">יציאה מהמשפחה במכשיר הזה</button>`;
   $("#back").onclick=famHome;$("#rf").onclick=famScreen;
   $("#sh").onclick=async()=>{const t=`הצטרפו למשפחה שלנו ב-Yalla! קוד המשפחה: ${S.fam.code}`;try{if(navigator.share)await navigator.share({text:t});else{await navigator.clipboard.writeText(S.fam.code);$("#sh").textContent="✅ הקוד הועתק"}}catch(e){}};
