@@ -129,6 +129,20 @@ button.chip{cursor:pointer}
 .pbar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#3DBE8B,#2D7FD3);transition:width .6s}
 .logo{width:36px;height:36px;flex:none}
 .opt [dir=rtl] .math{display:inline;gap:0;margin:0 .15em}
+.hero.smart{background:#EEF6FF}
+.sheet{background:#fff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;color:#111}
+.shead{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;border-bottom:2px solid #333;padding-bottom:6px}
+.wq{display:flex;gap:8px;break-inside:avoid;page-break-inside:avoid;border-bottom:1px dashed #ccc;padding-bottom:10px}
+.wn{font-weight:700;min-width:24px}.wb{display:flex;flex-direction:column;gap:6px;flex:1}
+.wopts{display:flex;flex-wrap:wrap;gap:6px 20px}.wline{color:#555;margin-top:6px}.wsol{color:#333;font-size:.95em}
+.sheet .vis svg{max-width:240px;height:auto}
+.pbreak{break-before:page;page-break-before:always;height:1px}
+@media print{body{background:#fff!important}.noprint,.backhome,.backhome-bar{display:none!important}.app{padding:0!important;max-width:none!important}.sheet{box-shadow:none;padding:0}}
+.tutor-card{background:#FFF4E5}.tutor-in{display:flex;flex-direction:column;gap:10px}.tutor-in textarea{width:100%;border-radius:14px;border:2px solid #CDE3D6;padding:10px;font:inherit}#tp{max-width:100%;border-radius:12px}.tutor-ans div{line-height:1.6}
+.tm{font-weight:600;white-space:nowrap}
+.fam-code .code{font-size:34px;font-weight:800;letter-spacing:6px;text-align:center}
+.fam-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #DDEEE4}.fam-row .m{font-size:24px}.fam-row .e{font-size:26px}
+.fam-app{font-size:15px;line-height:1.5;padding:4px 0}.chk{display:flex;gap:8px;align-items:center;margin:8px 0}.field{display:flex;flex-direction:column;gap:4px;margin:8px 0}.field input{border-radius:12px;border:2px solid #CDE3D6;padding:10px;font:inherit}
 </style>
 
 <div class="app" id="app" dir="rtl"></div>
@@ -5918,11 +5932,15 @@ function home(){
     <div class="prog-row"><span>✅ ${good}/${ts.length} נושאים בשליטה · התחלתם ${started}</span><span>🏅 ${ch}/${ts.length} מבחני פרק</span></div></div>`})()}
   ${S.voice!==false&&voicesReady&&!HV?`<div class="card voicetip"><b>🔊 אין בטלפון קול בעברית, ולכן ההקראה לא נשמעת.</b><p><b>באנדרואיד:</b> הגדרות ← חפשו "המרת טקסט לדיבור" ← מנוע של Google ← התקנת נתונים קוליים ← עברית.</p><p><b>באייפון:</b> הגדרות ← נגישות ← תוכן מוקרא ← קולות ← עברית.</p><p>אחרי ההתקנה סגרו ופתחו את האפליקציה מחדש.</p></div>`:""}
   ${/^h1[12]_|^h[345]$/.test(S.grade)?`<div class="card hero bagrut"><h3>🎓 בגרות לדוגמה · ${gradeName(S.grade)}</h3><p>מבחן מלא בסגנון בגרות${/^h1[12]_/.test(S.grade)?" על כל החומר עד "+gradeName(S.grade).split(" · ")[0]:""}, מחולק לפרקים לפי נושאי הבחינה. מקבלים ציון, זמן ופירוט לפי פרק.</p>${(S.bagrut[S.grade]||[]).length?`<p class="label">ציון אחרון: ${S.bagrut[S.grade].slice(-1)[0].s}</p>`:""}<button class="btn wide" id="bag">להתחיל בגרות לדוגמה</button></div>`:""}
+  <button class="btn ghost wide" id="fam">👨‍👩‍👧 ${S.fam&&S.fam.code?"המשפחה שלנו: תחרות ומסך הורים":"משפחה: תחרות ומסך הורים משותף"}</button>
+  <div class="card hero tutor-card"><h3>📸 המורה של Yalla</h3><p>תקועים בשיעורי בית? מצלמים תרגיל ומקבלים הסבר שלב אחרי שלב.</p><button class="btn wide" id="tutor">לצלם תרגיל</button></div>
+  ${(()=>{const W=weakTopics();return W.length?`<div class="card hero smart"><h3>🎯 תרגול חכם</h3><p>10 שאלות על מה שהכי כדאי לחזק עכשיו: ${W.map(x=>x[0].title).join(" · ")}</p><button class="btn wide" id="smart">להתחיל תרגול חכם</button></div>`:""})()}
   <div class="card hero"><h3>מבחן לדוגמה</h3><p>12 שאלות ${S.grade==="g6"?"על נושאי המבחן הקרוב":"מכל הנושאים של "+gradeName(S.grade)}, כמו במבחן אמיתי. בסוף מקבלים ציון ורואים מה לחזק.</p>
-   ${last?`<p class="label">ציון אחרון: ${last.s}</p>`:""}<button class="btn wide" id="test">להתחיל מבחן</button></div>
+   ${last?`<p class="label">ציון אחרון: ${last.s}</p>`:""}<button class="btn wide" id="test">להתחיל מבחן</button><button class="btn ghost wide" id="wsall" style="margin-top:8px">🖨️ דף עבודה מכל הנושאים</button></div>
   ${[...new Set(TOPICS.filter(t=>t.grade===S.grade).map(t=>t.sec))].map(sec=>`<div class="label">${sec}</div><div class="topics">${TOPICS.filter(t=>t.grade===S.grade&&t.sec===sec).map(topicBtn).join("")}</div>`).join("")}`;
   app.querySelectorAll(".topic").forEach(b=>b.onclick=()=>topicMenu(b.dataset.id));
-  $("#test").onclick=startTest;$("#chg").onclick=onboarding;
+  $("#test").onclick=startTest;$("#chg").onclick=onboarding;if($("#smart"))$("#smart").onclick=startSmart;$("#tutor").onclick=tutor;$("#fam").onclick=famScreen;famSync();
+  if($("#wsall"))$("#wsall").onclick=()=>worksheet(TOPICS.filter(t=>t.grade===S.grade).map(t=>t.id),"כל הנושאים");
   $("#gr").onclick=gradePicker;if($("#bag"))$("#bag").onclick=startBagrut;
   $("#hv").onclick=()=>{S.voice=S.voice===false;save();home();if(S.voice)speak("ההקראה הופעלה",true)};
 }
@@ -5934,8 +5952,9 @@ function topicMenu(id){
   ${talk(`מה עושים${nm()}? מומלץ להתחיל בהסבר, ואז לתרגל.`)}
   <button class="btn wide" id="learn">📖 הסבר קצר</button>
   <button class="btn wide" id="prac">✏️ תרגול (10 שאלות)</button>
-  <button class="btn ghost wide" id="chap">📝 מבחן סוף פרק (8 שאלות)${S.chap[id]!=null?` · השיא: ${S.chap[id]}`:""}</button>`;
-  $("#back").onclick=home;$("#learn").onclick=()=>lesson(id,0);$("#prac").onclick=()=>startPractice([id],10,false);$("#chap").onclick=()=>startChapterTest(id);
+  <button class="btn ghost wide" id="chap">📝 מבחן סוף פרק (8 שאלות)${S.chap[id]!=null?` · השיא: ${S.chap[id]}`:""}</button>
+  <button class="btn ghost wide" id="ws">🖨️ דף עבודה להדפסה (עם פתרונות)</button>`;
+  $("#back").onclick=home;$("#learn").onclick=()=>lesson(id,0);$("#prac").onclick=()=>startPractice([id],10,false);$("#chap").onclick=()=>startChapterTest(id);$("#ws").onclick=()=>worksheet([id],t.title);
 }
 
 function lesson(id,i){
@@ -5957,6 +5976,130 @@ function makeQ(topicId){const t=topicById(topicId);const q=pick(t.gen)();q.topic
 function startPractice(topics,count,isTest){
   const qs=[];for(let i=0;i<count;i++)qs.push(makeQ(topics[i%topics.length]));
   P={qs:isTest?shuffle(qs):qs,i:0,right:0,isTest,topics,log:[]};question();
+}
+function weakTopics(){
+  const ts=TOPICS.filter(t=>t.grade===S.grade);
+  return ts.map(t=>{const p=prog(t.id);const w=((S.wrong||{})[t.id]||0)+(p.total>=3?Math.max(0,80-mastery(t.id))/10:0);return [t,w]}).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,4);
+}
+function startSmart(){
+  const W=weakTopics();if(!W.length)return;const tot=W.reduce((a,x)=>a+x[1],0);const qs=[];
+  W.forEach(([t,w],i)=>{const n=i===W.length-1?10-qs.length:Math.max(1,Math.round(10*w/tot));for(let k=0;k<n&&qs.length<10;k++)qs.push(makeQ(t.id))});
+  P={qs:shuffle(qs),i:0,right:0,isTest:false,smart:true,topics:W.map(x=>x[0].id),log:[]};question();
+}
+/* ---- printable worksheets ---- */
+function ansText(q){const a=q.ans;if(q.type==="choicetxt")return a;if(q.type==="dec")return M(fmt(a));if(q.type==="ratio")return M(`${a.a} : ${a.b}`);if(q.type==="mixed")return show(a,true);return show(a,q.type!=="frac")}
+function worksheet(ids,title){
+  const qs=[];for(let i=0;i<12;i++)qs.push(makeQ(ids[i%ids.length]));
+  const L="אבגד";
+  const qHTML=(q,i)=>`<div class="wq"><div class="wn">${i+1}.</div><div class="wb"><div>${q.prompt}</div>${q.vis?`<div class="vis">${q.vis}</div>`:""}${q.type==="choicetxt"?`<div class="wopts">${q.opts.map((o,k)=>`<span>${L[k]}. ${/[\u0590-\u05FF]/.test(o)?o:`<span class="math">${o}</span>`}</span>`).join("")}</div>`:`<div class="wline">תשובה: ____________${q.unit?" "+q.unit:""}</div>`}</div></div>`;
+  app.innerHTML=`<div class="top noprint"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">דף עבודה</h2></div>
+   <div class="noprint row"><button class="btn" id="pr">🖨️ הדפסה / שמירה כ-PDF</button><button class="btn ghost" id="nw">🔄 דף חדש</button></div>
+   <div class="sheet"><div class="shead"><b>Yalla Math · ${gradeName(S.grade)}</b><span>${title}</span><span>שם: ____________ &nbsp; תאריך: ________</span></div>
+   ${qs.map(qHTML).join("")}
+   <div class="pbreak"></div><div class="shead"><b>פתרונות</b><span>${title}</span></div>
+   ${qs.map((q,i)=>`<div class="wq ans"><div class="wn">${i+1}.</div><div class="wb"><div><b>תשובה:</b> ${ansText(q)}</div><div class="wsol">${q.sol}</div></div></div>`).join("")}</div>`;
+  $("#back").onclick=()=>ids.length===1?topicMenu(ids[0]):home();$("#pr").onclick=()=>window.print();$("#nw").onclick=()=>worksheet(ids,title);
+}
+
+const FAM_APP="math";
+function famStats(){const ts=TOPICS.filter(t=>t.grade===S.grade),ms=ts.map(t=>mastery(t.id)),last=S.tests[S.tests.length-1];const td=new Date().toDateString(),n=S.day&&S.day.d===td?S.day.n:0;
+  return {grade:gradeName(S.grade),topics:ts.length,mastered:ms.filter(m=>m>=80).length,avg:ts.length?Math.round(ms.reduce((a,b)=>a+b,0)/ts.length):0,stars:S.stars,test:last?last.s:"",todayN:n,today:n>=10?1:0}}
+const famEmoji=()=>coach().e,famHome=()=>home();
+/* ===================== Family: shared parent view + competition ===================== */
+const FAM_API=/myinspire\.co\.il$/.test(location.hostname)?"/api/family.php":"https://"+(FAM_APP==="math"?"yallamath":"yallaenglish")+".myinspire.co.il/api/family.php";
+async function famCall(b){try{const r=await fetch(FAM_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});return await r.json()}catch(e){return {error:"net"}}}
+function famDay(d){d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function famWeek(){
+  S.starHist=S.starHist||{};const t=famDay();if(S.starHist[t]==null)S.starHist[t]=S.stars;
+  const old=new Date();old.setDate(old.getDate()-7);const cut=famDay(old);
+  for(const k of Object.keys(S.starHist))if(k<famDay(new Date(Date.now()-15*864e5)))delete S.starHist[k];
+  const keys=Object.keys(S.starHist).filter(k=>k>=cut).sort();const base=keys.length?S.starHist[keys[0]]:S.stars;
+  return Math.max(0,S.stars-base);
+}
+let famLast=0;
+async function famSync(force){
+  if(!S.fam||!S.fam.code)return null;if(!force&&Date.now()-famLast<60000)return null;famLast=Date.now();
+  const st=Object.assign({week:famWeek()},famStats());save();
+  return famCall({action:"sync",code:S.fam.code,id:S.fam.id,app:FAM_APP,role:S.fam.role,name:(S.name||"").slice(0,20)||"ללא שם",e:famEmoji(),stats:st});
+}
+function famMedal(i){return ["🥇","🥈","🥉"][i]||"⭐"}
+async function famScreen(){
+  if(!S.fam||!S.fam.code)return famJoin();
+  app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">👨‍👩‍👧 המשפחה שלנו</h2></div><div class="card center"><div class="label">טוען…</div></div>`;
+  $("#back").onclick=famHome;
+  const d=await famSync(true)||await famCall({action:"get",code:S.fam.code});
+  if(!d||d.error){app.querySelector(".card").innerHTML=`<p>${d&&d.error==="nofamily"?"קוד המשפחה לא נמצא.":"לא הצלחתי להתחבר. בדקו את האינטרנט ונסו שוב."}</p><button class="btn ghost" id="lv">יציאה מהמשפחה</button>`;$("#lv").onclick=()=>{delete S.fam;save();famJoin()};return}
+  const kids={};
+  for(const m of d.members){if(m.role==="parent")continue;const k=(m.name||"").trim().toLowerCase();const K=kids[k]=kids[k]||{name:m.name,e:m.e,apps:{},week:0,today:0,t:0};K.apps[m.app]=m.stats||{};K.week+=+(m.stats&&m.stats.week)||0;K.today=K.today||+(m.stats&&m.stats.today)||0;K.t=Math.max(K.t,m.t||0);if(m.e)K.e=m.e}
+  const list=Object.values(kids).sort((a,b)=>b.week-a.week);
+  const ago=t=>{const m=Math.round((Date.now()/1000-t)/60);return m<2?"עכשיו":m<60?`לפני ${m} דקות`:m<1440?`לפני ${Math.round(m/60)} שעות`:`לפני ${Math.round(m/1440)} ימים`};
+  const en=s=>s?`<div class="fam-app">📘 <b>אנגלית:</b> ${esc(s.course||"")} · ${s.lessons||0} שיעורים${s.avg!=null&&s.avg!==""?` · ממוצע ${s.avg}`:""}${s.streak?` · 🔥 ${s.streak} ימים ברצף`:""}${s.test!=null&&s.test!==""?` · מבחן אחרון ${s.test}`:""}</div>`:"";
+  const ma=s=>s?`<div class="fam-app">🔢 <b>מתמטיקה:</b> ${esc(s.grade||"")} · ${s.mastered||0}/${s.topics||0} נושאים בשליטה · הצלחה ${s.avg||0}%${s.test!=null&&s.test!==""?` · מבחן אחרון ${s.test}`:""}${s.todayN?` · היום ${s.todayN} שאלות`:""}</div>`:"";
+  app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">👨‍👩‍👧 ${esc(d.family||"המשפחה שלנו")}</h2><button class="x" id="rf" aria-label="רענון">🔄</button></div>
+   <div class="card fam-code"><div class="label">קוד המשפחה</div><div class="code" dir="ltr">${S.fam.code}</div><button class="btn ghost" id="sh">📤 שיתוף הקוד</button></div>
+   <div class="card"><h3>🏆 תחרות השבוע</h3><p class="label">כוכבים שנאספו ב-7 הימים האחרונים, בשתי האפליקציות יחד</p>
+   ${list.length?list.map((k,i)=>`<div class="fam-row"><span class="m">${famMedal(i)}</span><span class="e">${k.e||"🙂"}</span><b class="grow">${esc(k.name)}</b><span>⭐ ${k.week}</span><span title="אתגר יומי">${k.today?"✅":"⏳"}</span></div>`).join(""):`<p>עוד אין ילדים במשפחה. הכניסו את הקוד באפליקציה של כל ילד.</p>`}
+   <p class="label">✅ = עשו היום את האתגר היומי: שיעור יומי באנגלית או 10 שאלות במתמטיקה</p></div>
+   ${list.map(k=>`<div class="card fam-kid"><div class="fam-row"><span class="e">${k.e||"🙂"}</span><b class="grow">${esc(k.name)}</b><span class="label">${ago(k.t)}</span></div>${en(k.apps.english)}${ma(k.apps.math)}</div>`).join("")}
+   <button class="link" id="lv">יציאה מהמשפחה במכשיר הזה</button>`;
+  $("#back").onclick=famHome;$("#rf").onclick=famScreen;
+  $("#sh").onclick=async()=>{const t=`הצטרפו למשפחה שלנו ב-Yalla! קוד המשפחה: ${S.fam.code}`;try{if(navigator.share)await navigator.share({text:t});else{await navigator.clipboard.writeText(S.fam.code);$("#sh").textContent="✅ הקוד הועתק"}}catch(e){}};
+  $("#lv").onclick=async()=>{await famCall({action:"leave",code:S.fam.code,id:S.fam.id});delete S.fam;save();famHome()};
+}
+function famJoin(){
+  app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">👨‍👩‍👧 משפחה</h2></div>
+   <div class="card"><h3>מה זה?</h3><p>מחברים את כל הילדים לקוד משפחה אחד. ההורים רואים את ההתקדמות של כולם במסך אחד, באנגלית ובמתמטיקה, ויש תחרות כוכבים שבועית ואתגר יומי.</p><p class="label">נשמרים רק שם פרטי ונתוני למידה (כוכבים, שיעורים, ציונים).</p></div>
+   <div class="card"><h3>הורה? צרו משפחה</h3><div class="field"><label class="label" for="fn">שם המשפחה (לא חובה)</label><input id="fn" maxlength="30" placeholder="למשל: משפחת כהן"></div><button class="btn wide" id="cr">יצירת קוד משפחה</button></div>
+   <div class="card"><h3>יש לכם קוד? הצטרפו</h3><div class="field"><label class="label" for="fc">קוד המשפחה</label><input id="fc" maxlength="8" dir="ltr" autocapitalize="characters" placeholder="ABCD2345" style="text-align:center;letter-spacing:3px;font-size:22px"></div>
+   <label class="chk"><input type="checkbox" id="fp"> אני הורה (לא להציג אותי בתחרות)</label><button class="btn wide" id="jn">הצטרפות</button><div class="label" id="fe"></div></div>`;
+  $("#back").onclick=famHome;
+  const id=()=>(S.fam&&S.fam.id)||Array.from(crypto.getRandomValues(new Uint8Array(8)),b=>b.toString(16).padStart(2,"0")).join("");
+  $("#cr").onclick=async()=>{const d=await famCall({action:"create",family:$("#fn").value.trim()});if(!d.code){$("#cr").textContent="לא הצלחתי, נסו שוב";return}S.fam={code:d.code,id:id(),role:"parent"};save();famScreen()};
+  $("#jn").onclick=async()=>{const c=$("#fc").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");if(c.length!==8){$("#fe").textContent="הקוד צריך להיות 8 תווים";return}
+    S.fam={code:c,id:id(),role:$("#fp").checked?"parent":"kid"};const d=await famSync(true);if(!d||d.error){$("#fe").textContent=d&&d.error==="nofamily"?"הקוד לא נמצא. בדקו שהקלדתם נכון.":"לא הצלחתי להתחבר. נסו שוב.";delete S.fam;save();return}save();famScreen()};
+}
+
+/* ---- AI tutor ---- */
+const TUTOR_API=/myinspire\.co\.il$/.test(location.hostname)?"/api/tutor.php":"https://yallamath.myinspire.co.il/api/tutor.php";
+async function tutorCall(body){
+  try{const r=await fetch(TUTOR_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({grade:gradeName(S.grade),name:S.name||""},body))});return await r.json()}catch(e){return {error:"net"}}
+}
+const tutorErr=d=>d.error==="nokey"?"המורה עוד לא הופעלה בשרת (חסר מפתח API).":d.error==="limit"?"הגעתם למכסה של היום. נמשיך מחר!":d.error==="img"||d.error==="big"?"לא הצלחתי לקרוא את התמונה. נסו לצלם שוב.":"לא הצלחתי להתחבר. בדקו את האינטרנט ונסו שוב.";
+function tutorLine(l){const m0=/^(\d+)\.\s*/.exec(l);let pre="";if(m0){pre=`<b>${m0[1]}.</b> `;l=l.slice(m0[0].length)}return pre+l.replace(/[0-9a-zA-Z(√|][0-9a-zA-Z()+\-−×·:=/.,^²³√| ]*[0-9a-zA-Z)²³|]/g,m=>/[0-9]/.test(m)||/[=+×:]/.test(m)?`<bdi dir="ltr" class="tm">${m}</bdi>`:m)}
+function tutorHTML(t){return `<div class="steps tutor-ans">${esc(t).split(/\n+/).map(l=>`<div>${tutorLine(l)}</div>`).join("")}</div>`}
+function shrinkImage(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const m=1400,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.82))};im.onerror=rej;im.src=fr.result};fr.onerror=rej;fr.readAsDataURL(file)})}
+function tutor(){
+  let hist=[],img=null;
+  app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">📸 המורה של Yalla</h2></div>
+   ${talk(`צלמו תרגיל מהמחברת או מהספר, או כתבו אותו, ואסביר לכם שלב אחרי שלב${nm()}.`)}
+   <div class="card tutor-in">
+     <label class="btn wide" for="tf">📷 לצלם או לבחור תמונה</label><input id="tf" type="file" accept="image/*" capture="environment" hidden>
+     <img id="tp" alt="התמונה שצילמתם" hidden>
+     <label class="label" for="tt">או לכתוב את השאלה:</label><textarea id="tt" rows="3" placeholder="למשל: איך פותרים 3/4 כפול 2/5?"></textarea>
+     <button class="btn wide" id="ts">שליחה למורה</button>
+   </div>
+   <div id="tout"></div>
+   <p class="label center">המורה היא בינה מלאכותית ויכולה לטעות לפעמים. כדאי לבדוק את הפתרון. לא שולחים תמונות של פנים או פרטים אישיים.</p>`;
+  $("#back").onclick=home;
+  $("#tf").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{img=await shrinkImage(f);const p=$("#tp");p.src=img;p.hidden=false}catch(x){img=null}};
+  const send=async(text,followup)=>{
+    const out=$("#tout");const box=document.createElement("div");box.className="card";box.innerHTML=`<div class="label">חושבת… ✍️</div>`;out.appendChild(box);box.scrollIntoView({behavior:"smooth"});
+    const d=await tutorCall({mode:followup||!img?"explain":"photo",image:followup?null:img,text,history:hist});
+    if(d.error||!d.text){box.innerHTML=`<p>${tutorErr(d)}</p>`;return}
+    hist.push({role:"user",content:text||"(תמונה של תרגיל)"},{role:"assistant",content:d.text});if(hist.length>6)hist=hist.slice(-6);
+    box.innerHTML=tutorHTML(d.text)+`<div class="row"><button class="btn ghost" data-a="rd">🔊 הקראה</button><button class="btn ghost" data-a="more">🤔 לא הבנתי, תסבירי אחרת</button></div>`;
+    box.querySelector('[data-a="rd"]').onclick=()=>speak(esc(d.text).replace(/\n+/g,"<br>"),true);
+    box.querySelector('[data-a="more"]').onclick=()=>send("לא הבנתי. תסבירי לי שוב בדרך אחרת, פשוטה יותר, עם דוגמה.",true);
+    speak(esc(d.text).replace(/\n+/g,"<br>"));
+  };
+  $("#ts").onclick=()=>{const t=$("#tt").value.trim();if(!t&&!img){$("#tt").focus();return}send(t,false);img=null;$("#tp").hidden=true;$("#tt").value=""};
+}
+async function tutorExplain(q,help){
+  const box=document.createElement("div");box.className="card";box.innerHTML=`<div class="label">המורה חושבת על הסבר אחר… ✍️</div>`;help.appendChild(box);
+  const tmp=document.createElement("div");tmp.innerHTML=q.prompt+" | פתרון: "+q.sol;
+  const d=await tutorCall({mode:"explain",text:"התלמיד/ה לא הבין/ה את ההסבר הרגיל. השאלה והפתרון: "+speechText(q.prompt).replace(/<[^>]+>/g," ")+" | הפתרון: "+speechText(q.sol).replace(/<[^>]+>/g," ")+". תסבירי בדרך אחרת, פשוטה, עם דוגמה דומה, ובסוף תחזרי לשאלה הזו."});
+  if(d.error||!d.text){box.innerHTML=`<p>${tutorErr(d)}</p>`;return}
+  box.innerHTML=tutorHTML(d.text)+`<button class="btn ghost" data-a="rd">🔊 הקראה</button>`;box.querySelector('[data-a="rd"]').onclick=()=>speak(esc(d.text).replace(/\n+/g,"<br>"),true);speak(esc(d.text).replace(/\n+/g,"<br>"));
 }
 function startChapterTest(id){const qs=[];for(let i=0;i<8;i++)qs.push(makeQ(id));P={qs,i:0,right:0,isTest:true,chapter:id,log:[]};question()}
 function bagrutTopics(){
@@ -6001,15 +6144,16 @@ function question(){
   const fb=$("#fb"),help=$("#help");
   const finish=(ok)=>{
     done=true;if(ok)P.right++;
-    if(!P.isTest||true){const p=S.prog[q.topic]=S.prog[q.topic]||{right:0,total:0};p.total++;if(ok)p.right++}
+    {const td=new Date().toDateString();if(!S.day||S.day.d!==td)S.day={d:td,n:0};S.day.n++}
+    if(!P.isTest||true){const p=S.prog[q.topic]=S.prog[q.topic]||{right:0,total:0};p.total++;if(ok)p.right++;S.wrong=S.wrong||{};const w=S.wrong[q.topic]||0;S.wrong[q.topic]=ok?Math.max(0,w-1):Math.min(10,w+2);if(!S.wrong[q.topic])delete S.wrong[q.topic]}
     if(ok)S.stars+=P.isTest?2:1;save();
     P.log.push({q,ok});
     $("#check").hidden=true;$("#hint").hidden=true;$("#how").hidden=true;
-    if(!help.querySelector(".explain")){const ex=document.createElement("button");ex.className="btn ghost wide";ex.textContent="📖 הסבר: איך פותרים את התרגיל";ex.onclick=()=>{help.innerHTML=explainHTML(q);ex.remove();speak(explainSpeech(q))};help.after(ex)}
+    if(!help.querySelector(".explain")){const ex=document.createElement("button");ex.className="btn ghost wide";ex.textContent="📖 הסבר: איך פותרים את התרגיל";ex.onclick=()=>{help.innerHTML=explainHTML(q);addNotUnderstood(help,q);ex.remove();speak(explainSpeech(q))};help.after(ex)}
     const nx=document.createElement("button");nx.className="btn wide";nx.textContent=P.i<total-1?"לשאלה הבאה":"לסיכום";nx.onclick=()=>{P.i++;P.i<total?question():summary()};
     help.after(nx);
   };
-  const showSol=()=>{help.innerHTML=explainHTML(q);if(!P.isTest)setTimeout(()=>speak(explainSpeech(q)),1800)};
+  const showSol=()=>{help.innerHTML=explainHTML(q);addNotUnderstood(help,q);if(!P.isTest)setTimeout(()=>speak(explainSpeech(q)),1800)};
   const judge=(val)=>{
     if(done)return;
     let ok,note="";
@@ -6069,7 +6213,7 @@ function question(){
   };
   $("#how").onclick=()=>{
     if(done)return;hintN=Math.max(hintN,(q.hint||[]).length||1);
-    help.innerHTML=explainHTML(q)+`<div class="label" style="margin-top:6px">עכשיו נסו לכתוב את התשובה בעצמכם 💪</div>`;speak(explainSpeech(q)+". עכשיו נסו לכתוב את התשובה בעצמכם.");
+    help.innerHTML=explainHTML(q)+`<div class="label" style="margin-top:6px">עכשיו נסו לכתוב את התשובה בעצמכם 💪</div>`;addNotUnderstood(help,q);speak(explainSpeech(q)+". עכשיו נסו לכתוב את התשובה בעצמכם.");
   };
   $("#hint").onclick=()=>{
     if(done)return;hintN=Math.min(q.hint.length,hintN+1);
@@ -6081,6 +6225,7 @@ function explainHTML(q){
   const h=(q.hint||[]);
   return `<div class="steps explain"><b>📖 איך פותרים, שלב אחרי שלב:</b>${h.map((x,i)=>`<div class="st"><span class="num">${i+1}</span><div>${x}</div></div>`).join("")}<div class="st sol"><span class="num">✓</span><div><b>הפתרון המלא:</b> ${q.sol}</div></div></div>`;
 }
+function addNotUnderstood(help,q){if(help.querySelector(".nu"))return;const b=document.createElement("button");b.className="btn ghost wide nu";b.textContent="🤖 לא הבנתי, הסבר אחר מהמורה";b.onclick=()=>{b.remove();tutorExplain(q,help)};help.appendChild(b)}
 function explainSpeech(q){return "איך פותרים. "+(q.hint||[]).map((x,i)=>"שלב "+(i+1)+": "+x).join(". ")+". הפתרון המלא: "+q.sol}
 
 function summary(){
