@@ -1250,6 +1250,8 @@ function chatEnd(){
 (function(){
   const go=()=>{stopVoice();if(typeof CH!=="undefined"&&CH){try{chatSend.rec&&chatSend.rec.stop()}catch(e){}CH=null};home();scrollTo(0,0)};
   const fix=()=>{
+    const atHome=!!app.querySelector("[data-home-screen]");
+    try{if(atHome){if(!history.state||!history.state.home)history.replaceState({home:1},"")}else if(!history.state||!history.state.inner)history.pushState({inner:1},"")}catch(e){}
     if(!(S.char&&S.course))return;
     if(app.querySelector("[data-home-screen]")||app.querySelector(".backhome"))return;
     const top=app.querySelector(".top");
@@ -1260,6 +1262,7 @@ function chatEnd(){
     const bar=document.createElement("div");bar.className="top backhome-bar";bar.appendChild(b);const t=document.createElement("span");t.className="label";t.textContent="דף הבית";bar.appendChild(t);
     app.insertBefore(bar,app.firstChild);
   };
+  addEventListener("popstate",()=>{if(S.char&&S.course&&!app.querySelector("[data-home-screen]"))go()});
   new MutationObserver(fix).observe(app,{childList:true});
 })();
 
