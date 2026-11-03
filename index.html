@@ -6006,7 +6006,7 @@ function famStats(){const ts=TOPICS.filter(t=>t.grade===S.grade),ms=ts.map(t=>ma
   return {grade:gradeName(S.grade),topics:ts.length,mastered:ms.filter(m=>m>=80).length,avg:ts.length?Math.round(ms.reduce((a,b)=>a+b,0)/ts.length):0,stars:S.stars,test:last?last.s:"",todayN:n,today:n>=10?1:0}}
 const famEmoji=()=>coach().e,famHome=()=>home();
 /* ===================== Family: shared parent view + competition ===================== */
-const FAM_API=/myinspire\.co\.il$/.test(location.hostname)?"/api/family.php":"https://"+(FAM_APP==="math"?"yallamath":"yallaenglish")+".myinspire.co.il/api/family.php";
+const FAM_API=/myinspire\.co\.il$/.test(location.hostname)?"/api/family.php":"https://"+(FAM_APP==="math"?"yallamath":FAM_APP==="theory"?"yallatheory":FAM_APP==="psy"?"yallapsy":"yallaenglish")+".myinspire.co.il/api/family.php";
 async function famCall(b){try{const r=await fetch(FAM_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});return await r.json()}catch(e){return {error:"net"}}}
 function famDay(d){d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function famWeek(){
@@ -6035,12 +6035,14 @@ async function famScreen(){
   const ago=t=>{const m=Math.round((Date.now()/1000-t)/60);return m<2?"עכשיו":m<60?`לפני ${m} דקות`:m<1440?`לפני ${Math.round(m/60)} שעות`:`לפני ${Math.round(m/1440)} ימים`};
   const en=s=>s?`<div class="fam-app">📘 <b>אנגלית:</b> ${esc(s.course||"")} · ${s.lessons||0} שיעורים${s.avg!=null&&s.avg!==""?` · ממוצע ${s.avg}`:""}${s.streak?` · 🔥 ${s.streak} ימים ברצף`:""}${s.test!=null&&s.test!==""?` · מבחן אחרון ${s.test}`:""}</div>`:"";
   const ma=s=>s?`<div class="fam-app">🔢 <b>מתמטיקה:</b> ${esc(s.grade||"")} · ${s.mastered||0}/${s.topics||0} נושאים בשליטה · הצלחה ${s.avg||0}%${s.test!=null&&s.test!==""?` · מבחן אחרון ${s.test}`:""}${s.todayN?` · היום ${s.todayN} שאלות`:""}</div>`:"";
+  const ps=s=>s?`<div class="fam-app">🎓 <b>פסיכומטרי:</b> ${s.est?`ציון משוער ${s.est} · `:""}מילולי ${s.v||0}% · כמותי ${s.q||0}% · אנגלית ${s.e||0}%${s.todayN?` · היום ${s.todayN} שאלות`:""}</div>`:"";
+  const th=s=>s?`<div class="fam-app">🚦 <b>תאוריה:</b> רישיון ${esc(s.license||"")} · ${s.mastered||0}/${s.total||0} שאלות נכונות${s.exam!=null&&s.exam!==""?` · מבחן אחרון ${s.exam}/30`:""}${s.todayN?` · היום ${s.todayN} שאלות`:""}</div>`:"";
   app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">👨‍👩‍👧 ${esc(d.family||"המשפחה שלנו")}</h2><button class="x" id="rf" aria-label="רענון">🔄</button></div>
    <div class="card fam-code"><div class="label">קוד המשפחה</div><div class="code" dir="ltr">${S.fam.code}</div><button class="btn ghost" id="sh">📤 שיתוף הקוד</button></div>
    <div class="card"><h3>🏆 תחרות השבוע</h3><p class="label">כוכבים שנאספו ב-7 הימים האחרונים, בשתי האפליקציות יחד</p>
    ${list.length?list.map((k,i)=>`<div class="fam-row"><span class="m">${famMedal(i)}</span><span class="e">${k.e||"🙂"}</span><b class="grow">${esc(k.name)}</b><span>⭐ ${k.week}</span><span title="אתגר יומי">${k.today?"✅":"⏳"}</span></div>`).join(""):`<p>עוד אין ילדים במשפחה. הכניסו את הקוד באפליקציה של כל ילד.</p>`}
-   <p class="label">✅ = עשו היום את האתגר היומי: שיעור יומי באנגלית או 10 שאלות במתמטיקה</p></div>
-   ${list.map(k=>`<div class="card fam-kid"><div class="fam-row"><span class="e">${k.e||"🙂"}</span><b class="grow">${esc(k.name)}</b><span class="label">${ago(k.t)}</span></div>${en(k.apps.english)}${ma(k.apps.math)}</div>`).join("")}
+   <p class="label">✅ = עשו היום את האתגר היומי: שיעור יומי באנגלית, 10 שאלות במתמטיקה או 20 שאלות תאוריה</p></div>
+   ${list.map(k=>`<div class="card fam-kid"><div class="fam-row"><span class="e">${k.e||"🙂"}</span><b class="grow">${esc(k.name)}</b><span class="label">${ago(k.t)}</span></div>${en(k.apps.english)}${ma(k.apps.math)}${th(k.apps.theory)}${ps(k.apps.psy)}</div>`).join("")}
    <button class="link" id="lv">יציאה מהמשפחה במכשיר הזה</button>`;
   $("#back").onclick=famHome;$("#rf").onclick=famScreen;
   $("#sh").onclick=async()=>{const t=`הצטרפו למשפחה שלנו ב-Yalla! קוד המשפחה: ${S.fam.code}`;try{if(navigator.share)await navigator.share({text:t});else{await navigator.clipboard.writeText(S.fam.code);$("#sh").textContent="✅ הקוד הועתק"}}catch(e){}};
@@ -6048,7 +6050,7 @@ async function famScreen(){
 }
 function famJoin(){
   app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">👨‍👩‍👧 משפחה</h2></div>
-   <div class="card"><h3>מה זה?</h3><p>מחברים את כל הילדים לקוד משפחה אחד. ההורים רואים את ההתקדמות של כולם במסך אחד, באנגלית ובמתמטיקה, ויש תחרות כוכבים שבועית ואתגר יומי.</p><p class="label">נשמרים רק שם פרטי ונתוני למידה (כוכבים, שיעורים, ציונים).</p></div>
+   <div class="card"><h3>מה זה?</h3><p>מחברים את כל הילדים לקוד משפחה אחד. ההורים רואים את ההתקדמות של כולם במסך אחד, באנגלית, במתמטיקה ובתאוריה, ויש תחרות כוכבים שבועית ואתגר יומי.</p><p class="label">נשמרים רק שם פרטי ונתוני למידה (כוכבים, שיעורים, ציונים).</p></div>
    <div class="card"><h3>הורה? צרו משפחה</h3><div class="field"><label class="label" for="fn">שם המשפחה (לא חובה)</label><input id="fn" maxlength="30" placeholder="למשל: משפחת כהן"></div><button class="btn wide" id="cr">יצירת קוד משפחה</button></div>
    <div class="card"><h3>יש לכם קוד? הצטרפו</h3><div class="field"><label class="label" for="fc">קוד המשפחה</label><input id="fc" maxlength="8" dir="ltr" autocapitalize="characters" placeholder="ABCD2345" style="text-align:center;letter-spacing:3px;font-size:22px"></div>
    <label class="chk"><input type="checkbox" id="fp"> אני הורה (לא להציג אותי בתחרות)</label><button class="btn wide" id="jn">הצטרפות</button><div class="label" id="fe"></div></div>`;
