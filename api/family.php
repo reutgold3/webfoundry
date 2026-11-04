@@ -29,7 +29,7 @@ $f = "$dir/$code.json"; if (!file_exists($f)) out(['error'=>'nofamily']);
 $fp = fopen($f, 'c+'); flock($fp, LOCK_EX); $fam = json_decode(stream_get_contents($fp), true) ?: ['members'=>[]];
 if (!is_array($fam['members'] ?? null)) $fam['members'] = [];
 if ($act === 'sync') {
-  $id = preg_replace('/[^a-z0-9]/', '', (string)($in['id'] ?? '')); $app = ($in['app'] ?? '') === 'math' ? 'math' : 'english';
+  $id = preg_replace('/[^a-z0-9]/', '', (string)($in['id'] ?? '')); $app = in_array($in['app'] ?? '', ['math','theory','psy','gemara'], true) ? $in['app'] : 'english';
   if (strlen($id) < 8) out(['error'=>'id']);
   $st = []; foreach ((array)($in['stats'] ?? []) as $k => $v) { $k = $clean($k, 20); if ($k === '') continue; $st[$k] = is_numeric($v) ? $v + 0 : $clean($v, 60); if (count($st) > 25) break; }
   $m = $fam['members'][$id] ?? [];
