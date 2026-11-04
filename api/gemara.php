@@ -37,8 +37,11 @@ function claude($key, $system, $user, $max = 900, $model = 'claude-sonnet-5-5'){
     CURLOPT_HTTPHEADER=>['Content-Type: application/json', 'x-api-key: ' . $key, 'anthropic-version: 2023-06-01'],
     CURLOPT_POSTFIELDS=>json_encode(['model'=>$model, 'max_tokens'=>$max, 'system'=>$system, 'messages'=>[['role'=>'user', 'content'=>$user]]], JSON_UNESCAPED_UNICODE)]);
   $r = curl_exec($ch); $c = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
-  if ($r === false || $c !== 200) return null; $j = json_decode($r, true); $t = '';
-  foreach (($j['content'] ?? []) as $b) if (($b['type'] ?? '') === 'text') $t .= $b['text']; return trim($t);
+  if ($r === false || $c !== 200) { $GLOBALS['dbg'] = ['code'=>$c, 'body'=>mb_substr((string)$r, 0, 300)]; return null; }
+  $j = json_decode($r, true); $t = '';
+  foreach (($j['content'] ?? []) as $b) if (($b['type'] ?? '') === 'text') $t .= $b['text'];
+  $t = trim($t); if ($t === '') { $GLOBALS['dbg'] = ['stop'=>$j['stop_reason'] ?? '', 'types'=>array_map(fn($b) => $b['type'] ?? '', (array)($j['content'] ?? []))]; return null; }
+  return $t;
 }
 $SYS = "את/ה מלמד/ת גמרא בישיבה תיכונית בישראל, סבלני/ת וברור/ה. עונים בעברית פשוטה, לתלמיד/ה בכיתות י'–י\"ב. נאמנים לפשט הגמרא ולפירוש רש\"י. לא ממציאים מקורות; אם לא בטוחים, אומרים זאת. רק נושאי לימוד תורה וגמרא.";
 $ref = mb_substr(preg_replace('/[^\p{L}\p{N} .:\'"׳״\-]/u', '', (string)($in['ref'] ?? '')), 0, 40);
@@ -48,14 +51,14 @@ if ($act === 'explain') {
   if ($seg === '') out(['error'=>'empty']); $cf = "$cache/e_" . md5($ref . '|' . $seg) . '.json'; if (is_file($cf)) { echo file_get_contents($cf); exit; }
   rate($cfg, 'ge', 120);
   $t = claude($key, $SYS, "מקור: $ref\nהקטע מהגמרא:\n$seg\n" . ($ctx ? "\nמה שלפניו (להקשר):\n$ctx\n" : '') . "\nכתבו:\n1. תרגום מילולי קצר לעברית (משפט אחר משפט).\n2. הסבר פשוט: מה אומרים כאן ולמה, ומה תפקיד הקטע בסוגיה (קושיה/תירוץ/מקור/מסקנה וכו').\n3. 2–4 מילים או ביטויים בארמית מהקטע עם פירושם.\nבלי הקדמות. פורמט: שורות קצרות עם כותרות 'תרגום:', 'הסבר:', 'מילים:'.");
-  if ($t === null) out(['error'=>'api']); $res = json_encode(['text'=>$t], JSON_UNESCAPED_UNICODE); file_put_contents($cf, $res); echo $res; exit;
+  if ($t === null) out(['error'=>'api', 'dbg'=>$GLOBALS['dbg'] ?? null]); $res = json_encode(['text'=>$t], JSON_UNESCAPED_UNICODE); file_put_contents($cf, $res); echo $res; exit;
 }
 if ($act === 'quiz') {
   if ($seg === '') out(['error'=>'empty']); $kind = ($in['kind'] ?? '') === 'unseen' ? 'unseen' : 'bagrut';
   $cf = "$cache/q_{$kind}_" . md5($ref . '|' . $seg) . '.json'; if (is_file($cf)) { echo file_get_contents($cf); exit; }
   rate($cfg, 'gq', 60);
   $t = claude($key, $SYS . " החזירו JSON בלבד.", "מקור: $ref\nטקסט הדף:\n$seg\n\nחברו 5 שאלות בסגנון בגרות בתלמוד" . ($kind === 'unseen' ? ' לקטע שלא נלמד (הבנת הטקסט, תרגום מילים, זיהוי קושיה ותירוץ, מבנה)' : ' (הבנה, הסבר שיטות, השוואה, תפקיד שלב בסוגיה, פירוש רש"י)') . ". החזירו בדיוק JSON בצורה: {\"q\":[{\"q\":\"שאלה\",\"model\":\"תשובה לדוגמה מלאה 2-4 משפטים\",\"points\":[\"נקודה שחייבת להופיע\",...]}]}", 1800);
-  if ($t === null) out(['error'=>'api']); if (!preg_match('/\{.*\}/s', $t, $m)) out(['error'=>'parse']); $j = json_decode($m[0], true); if (empty($j['q'])) out(['error'=>'parse']);
+  if ($t === null) out(['error'=>'api', 'dbg'=>$GLOBALS['dbg'] ?? null]); if (!preg_match('/\{.*\}/s', $t, $m)) out(['error'=>'parse']); $j = json_decode($m[0], true); if (empty($j['q'])) out(['error'=>'parse']);
   $res = json_encode(['q'=>array_slice($j['q'], 0, 6)], JSON_UNESCAPED_UNICODE); file_put_contents($cf, $res); echo $res; exit;
 }
 if ($act === 'grade') {
@@ -63,11 +66,11 @@ if ($act === 'grade') {
   $q = mb_substr((string)($in['q'] ?? ''), 0, 600); $ans = mb_substr((string)($in['ans'] ?? ''), 0, 1500); $model = mb_substr((string)($in['model'] ?? ''), 0, 1200);
   if ($ans === '') out(['error'=>'empty']);
   $t = claude($key, $SYS . " החזירו JSON בלבד.", "מקור: $ref\nקטע:\n$seg\nשאלה: $q\nתשובה לדוגמה: $model\nתשובת התלמיד/ה (ייתכן שנאמרה בעל פה ותומללה, לכן התעלמו משגיאות כתיב): $ans\n\nהעריכו בעדינות ובעידוד. החזירו JSON: {\"score\":0-100,\"good\":\"מה היה טוב (משפט)\",\"missing\":\"מה חסר או שגוי (1-2 משפטים)\",\"better\":\"ניסוח תשובה מלאה וקצרה\"}", 700, 'claude-haiku-5-5');
-  if ($t === null) out(['error'=>'api']); if (!preg_match('/\{.*\}/s', $t, $m)) out(['error'=>'parse']); $j = json_decode($m[0], true); if (!$j) out(['error'=>'parse']); out($j);
+  if ($t === null) out(['error'=>'api', 'dbg'=>$GLOBALS['dbg'] ?? null]); if (!preg_match('/\{.*\}/s', $t, $m)) out(['error'=>'parse']); $j = json_decode($m[0], true); if (!$j) out(['error'=>'parse']); out($j);
 }
 if ($act === 'ask') {
   rate($cfg, 'ga', 120); $qq = mb_substr(trim((string)($in['q'] ?? '')), 0, 800); if ($qq === '') out(['error'=>'empty']);
   $t = claude($key, $SYS, "מקור: $ref\nהקטע:\n$seg\n\nשאלת התלמיד/ה: $qq\nענו בקצרה ובבהירות (עד 8 שורות).", 700);
-  if ($t === null) out(['error'=>'api']); out(['text'=>$t]);
+  if ($t === null) out(['error'=>'api', 'dbg'=>$GLOBALS['dbg'] ?? null]); out(['text'=>$t]);
 }
 out(['error'=>'action']);
