@@ -35,7 +35,7 @@ function claude($key, $system, $user, $max = 900, $model = 'claude-sonnet-5-5'){
   $ch = curl_init('https://api.anthropic.com/v1/messages');
   curl_setopt_array($ch, [CURLOPT_POST=>true, CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>60,
     CURLOPT_HTTPHEADER=>['Content-Type: application/json', 'x-api-key: ' . $key, 'anthropic-version: 2023-06-01'],
-    CURLOPT_POSTFIELDS=>json_encode(['model'=>$model, 'max_tokens'=>$max, 'system'=>$system, 'messages'=>[['role'=>'user', 'content'=>$user]]], JSON_UNESCAPED_UNICODE)]);
+    CURLOPT_POSTFIELDS=>json_encode(['model'=>$model, 'max_tokens'=>$max, 'thinking'=>['type'=>'disabled'], 'system'=>$system, 'messages'=>[['role'=>'user', 'content'=>$user]]], JSON_UNESCAPED_UNICODE)]);
   $r = curl_exec($ch); $c = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
   if ($r === false || $c !== 200) { $GLOBALS['dbg'] = ['code'=>$c, 'body'=>mb_substr((string)$r, 0, 300)]; return null; }
   $j = json_decode($r, true); $t = '';
