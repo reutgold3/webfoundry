@@ -1,4 +1,4 @@
-const CACHE="yalla-gemara-v1";
+const CACHE="yalla-gemara-v2";
 
 const CORE=["/","/index.html","/manifest.webmanifest","/icons/icon-192.png","/icons/icon-512.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});

@@ -79,7 +79,25 @@ const errMsg=d=>d.error==="nokey"?"השירות החכם עוד לא הופעל 
 /* ===== speech ===== */
 let HV=null;function pickV(){if(!("speechSynthesis" in window))return;const he=speechSynthesis.getVoices().filter(v=>/^he|^iw/i.test(v.lang));HV=he.find(v=>/google|natural|neural/i.test(v.name))||he[0]||null}
 if("speechSynthesis" in window){pickV();speechSynthesis.onvoiceschanged=pickV}
-function speak(t){if(!("speechSynthesis" in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(t).replace(/[״"]/g,"").replace(/\s+/g," "));u.lang="he-IL";if(HV)u.voice=HV;u.rate=.88;speechSynthesis.speak(u)}catch(e){}}
+/* ===== Gemara read-aloud: expand abbreviations, drop deleted text, read in short chunks ===== */
+const ABBR={"גמ׳":"גמרא","גמ'":"גמרא","מתני׳":"מתניתין","מתני'":"מתניתין","ר׳":"רבי","ר'":"רבי","רב׳":"רבי","ת״ר":"תנו רבנן","ת״ש":"תא שמע","תנ״ה":"תניא נמי הכי","א״ר":"אמר רבי","א״ל":"אמר ליה","אמ״ל":"אמר ליה","א״ל":"אמר ליה","אמר״ל":"אמר ליה","א״כ":"אם כן","אע״ג":"אף על גב","אע״פ":"אף על פי","אפ״ה":"אפילו הכי","אפי׳":"אפילו","אי״ה":"אם ירצה השם","ב״ה":"בית הלל","ב״ש":"בית שמאי","ב״ד":"בית דין","בעל״ד":"בעל דבר","ד״ה":"דיבור המתחיל","ה״מ":"הני מילי","ה״נ":"הכא נמי","ה״ד":"היכי דמי","הכ״נ":"הכא נמי","ה״ק":"הכי קאמר","וכו׳":"וכולי","וגו׳":"וגומר","וכ״ת":"וכי תימא","וא״ת":"ואם תאמר","וי״ל":"ויש לומר","י״ל":"יש לומר","וה״ה":"והוא הדין","ה״ה":"הוא הדין","ז״ל":"זכרונו לברכה","ח״ו":"חס ושלום","כ״ש":"כל שכן","מ״ט":"מאי טעמא","מ״מ":"מכל מקום","מ״ד":"מאן דאמר","מה״ת":"מן התורה","מד״א":"במה דברים אמורים","בד״א":"במה דברים אמורים","נ״מ":"נפקא מינה","ס״ד":"סלקא דעתך","קמ״ל":"קא משמע לן","קמ״ש":"קא משמע לן","קס״ד":"קא סלקא דעתך","ק״ו":"קל וחומר","ר״ג":"רבן גמליאל","ר״א":"רבי אליעזר","ר״י":"רבי יהודה","ר״מ":"רבי מאיר","ר״ש":"רבי שמעון","ר״ע":"רבי עקיבא","ר״ל":"ריש לקיש","רשב״ג":"רבן שמעון בן גמליאל","רשב״א":"רבי שמעון בן אלעזר","ריב״ל":"רבי יהושע בן לוי","ר״נ":"רב נחמן","רש״י":"רש״י".replace("״",""),"שמ״ע":"שמע מינה","ש״מ":"שמע מינה","ת״ק":"תנא קמא","תוס׳":"תוספות","תד״ה":"תוספות דיבור המתחיל","דאורייתא":"דאורייתא","א״א":"אי אפשר","אא״כ":"אלא אם כן","בר״ה":"בראש השנה","יו״ט":"יום טוב","יוה״כ":"יום הכיפורים","ע״ה":"עם הארץ","ע״ז":"עבודה זרה","עכו״ם":"עובדי כוכבים ומזלות","ע״י":"על ידי","ע״כ":"על כרחך","עד״ה":"עד כאן","פי׳":"פירוש","פירש״י":"פירש רשי","ק״ש":"קריאת שמע","ס״ת":"ספר תורה","ת״ח":"תלמיד חכם","ת״ל":"תלמוד לומר","הקב״ה":"הקדוש ברוך הוא","ב״מ":"בבא מציעא","ב״ק":"בבא קמא","ב״ב":"בבא בתרא","ע״ש":"עיין שם","ע״ב":"עמוד ב","ע״א":"עמוד א","דף":"דף","יש״ר":"יישר","כו׳":"כולי","מ״ש":"מאי שנא","לא״ש":"לא שנא","ל״ש":"לא שנא","ואי״ת":"ואי תימא","ל״ק":"לא קשיא","ולא״ק":"ולא קשיא","מנה״מ":"מנא הני מילי","מה״מ":"מנא הני מילי","נה״מ":"הני מילי","אי״ב":"אי בעית","איבע״א":"איבעית אימא","ואב״א":"ואיבעית אימא","אב״א":"איבעית אימא"};
+const NIQ=/[֑-ׇ]/g;
+function gemSpeech(t){
+  t=String(t||"").replace(/<[^>]+>/g," ");
+  t=t.replace(/\([^)]*\)/g," ").replace(/[\[\]]/g,"");           // (…) = deleted text in the printed edition, […] = added text
+  t=t.replace(/["]/g,"״").replace(/[']/g,"׳");
+  t=t.split(/(\s+)/).map(w=>{const m=w.match(/^([^א-ת]*)(.*?)([.,:;?!—–\-]*)$/);if(!m)return w;const bare=m[2].replace(NIQ,"");
+    if(ABBR[bare])return m[1]+ABBR[bare]+m[3];
+    const pre=bare.match(/^([ודהלבכשמ]{1,2})(.+[״׳].*)$/);if(pre&&ABBR[pre[2]])return m[1]+pre[1]+ABBR[pre[2]]+m[3];
+    if(/[״׳]/.test(bare))return m[1]+bare.replace(/[״׳]/g,"")+m[3];   // unknown abbreviation: read letters as a word
+    return w}).join("");
+  return t.replace(/\s*[—–]\s*/g,", ").replace(/:/g,". ").replace(/\s+/g," ").trim();
+}
+function speak(t,onEnd){if(!("speechSynthesis" in window))return;try{speechSynthesis.cancel();
+  const parts=gemSpeech(t).match(/[^.?!]+[.?!]*/g)||[];const q=[];
+  for(const p of parts){let s=p.trim();while(s.length>180){const k=s.lastIndexOf(",",180)>60?s.lastIndexOf(",",180):s.lastIndexOf(" ",180);q.push(s.slice(0,k+1));s=s.slice(k+1).trim()}if(s)q.push(s)}
+  q.forEach((s,i)=>{const u=new SpeechSynthesisUtterance(s);u.lang="he-IL";if(HV)u.voice=HV;u.rate=.85;if(i===q.length-1&&onEnd)u.onend=onEnd;speechSynthesis.speak(u)})}catch(e){}}
+
 const stopVoice=()=>{try{speechSynthesis.cancel()}catch(e){}};
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 function micInto(btn,ta){if(!SR){btn.remove();return}let rec=null;btn.onclick=()=>{if(rec){rec.stop();return}stopVoice();rec=new SR();rec.lang="he-IL";rec.continuous=true;rec.interimResults=true;const base=ta.value?ta.value.trim()+" ":"";let fin="";
