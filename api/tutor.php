@@ -49,7 +49,7 @@ if ($msgs && $msgs[0]['role'] !== 'user') array_shift($msgs);
 if ($msgs && end($msgs)['role'] === 'user') array_pop($msgs);
 $msgs[] = ['role'=>'user', 'content'=>$content];
 
-$payload = ['model'=>'claude-sonnet-5-5', 'max_tokens'=>1200, 'system'=>$system, 'messages'=>$msgs];
+$payload = ['model'=>'claude-sonnet-5-5', 'max_tokens'=>1200, 'thinking'=>['type'=>'between_tools'], 'system'=>$system, 'messages'=>$msgs];
 $ch = curl_init('https://api.anthropic.com/v1/messages');
 curl_setopt_array($ch, [CURLOPT_POST=>true, CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>60,
   CURLOPT_HTTPHEADER=>['Content-Type: application/json', 'x-api-key: ' . $key, 'anthropic-version: 2023-06-01'],
