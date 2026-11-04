@@ -96,7 +96,25 @@ function gemSpeech(t){
 function speak(t,onEnd){if(!("speechSynthesis" in window))return;try{speechSynthesis.cancel();
   const parts=gemSpeech(t).match(/[^.?!]+[.?!]*/g)||[];const q=[];
   for(const p of parts){let s=p.trim();while(s.length>180){const k=s.lastIndexOf(",",180)>60?s.lastIndexOf(",",180):s.lastIndexOf(" ",180);q.push(s.slice(0,k+1));s=s.slice(k+1).trim()}if(s)q.push(s)}
+  if(!q.length){if(onEnd)setTimeout(onEnd,50);return}
   q.forEach((s,i)=>{const u=new SpeechSynthesisUtterance(s);u.lang="he-IL";if(HV)u.voice=HV;u.rate=.85;if(i===q.length-1&&onEnd)u.onend=onEnd;speechSynthesis.speak(u)})}catch(e){}}
+/* reading styles for the Gemara text itself: "il" Israeli, "ash" Ashkenazi yeshiva (approximation), "nig" study chant (pitch contour) */
+function ashkenazi(t){
+  return t.replace(/ת([֑-ׇ]*)/g,(m,v)=>v.includes("ּ")?m:"ס"+v)   // ת רפה → ס
+          .replace(/ָ/g,"ֹ")                                            // קמץ → חולם (o)
+          .replace(/וֹ(?![֑-ׇ]|י)/g,"וֹי");                              // חולם מלא → oi
+}
+function speakG(t,onEnd){const st=S.vstyle||"il";if(!("speechSynthesis" in window))return;
+  if(st==="il")return speak(t,onEnd);
+  try{speechSynthesis.cancel();let txt=gemSpeech(t);if(st==="ash")txt=ashkenazi(txt);
+    const sents=txt.match(/[^.?!]+[.?!]*/g)||[];const q=[];
+    for(const s0 of sents){const s=s0.trim();if(!s)continue;const isQ=/\?$/.test(s);const parts=s.split(/,\s*/);
+      parts.forEach((p,k)=>{const last=k===parts.length-1;let pitch=1,rate=.82;
+        if(st==="nig"){pitch=isQ?(last?1.45:1.05+k*.08):(last?.8:1.15);rate=last?.74:.86}
+        else if(st==="ash"){pitch=isQ&&last?1.3:1;rate=.8}
+        q.push({p,pitch,rate})})}
+    if(!q.length){if(onEnd)setTimeout(onEnd,50);return}
+    q.forEach((o,i)=>{const u=new SpeechSynthesisUtterance(o.p);u.lang="he-IL";if(HV)u.voice=HV;u.pitch=Math.min(2,o.pitch);u.rate=o.rate;if(i===q.length-1&&onEnd)u.onend=onEnd;speechSynthesis.speak(u)})}catch(e){}}
 
 const stopVoice=()=>{try{speechSynthesis.cancel()}catch(e){}};
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -189,6 +207,8 @@ async function daf(m,n,a){
   const k=m+"."+n+a;
   app.innerHTML=`<div class="top"><button class="x" id="back">→</button><h2 class="grow" style="font-family:var(--serif)">${dafName(m,n,a)}</h2><button class="x" id="ra" aria-label="להקריא הכול">🔊</button></div>
    <div class="row"><button class="btn ghost sm" id="pv" ${n<=2&&a==="a"?"disabled":""}>→ ${dafHe(prev[0],prev[1])}</button><button class="btn ghost sm" id="rs">רש"י: ${S.rashiOn?"מוצג":"מוסתר"}</button><button class="btn ghost sm" id="nxd">${dafHe(next[0],next[1])} ←</button></div>
+   <div class="tools" style="align-items:center"><span class="label">🎙️ קריאת הגמרא:</span>${[["il","ישראלית"],["ash","אשכנזית"],["nig","בניגון"]].map(([k,l])=>`<button data-vs="${k}" class="${(S.vstyle||"il")===k?"on":""}">${l}</button>`).join("")}</div>
+   <button class="btn wide" id="shiur">🎧 שיעור קולי על העמוד</button>
    ${d.he.map((t,i)=>`<div class="seg" data-i="${i}"><div class="gtext">${esc(t).replace(/^(מתני׳|גמ׳)/,"<b>$1</b>")}</div>
      <div class="rashi" ${S.rashiOn&&(d.rashi[i]||[]).length?"":"hidden"}>${(d.rashi[i]||[]).map(r=>esc(r)).join("<br>")}</div>
      <div class="tools"><button data-a="say">🔊 קריאה</button><button data-a="exp">💡 פירוש פשוט</button>${(d.rashi[i]||[]).length?`<button data-a="rashi">רש"י</button>`:""}<button data-a="ask">❓ שאלה</button></div><div class="out"></div></div>`).join("")}
@@ -196,11 +216,13 @@ async function daf(m,n,a){
    <button class="btn ghost wide" id="qz">✍️ שאלות בגרות על העמוד</button>
    <p class="attr">${esc(d.version||"")} · Sefaria${d.license?" · "+esc(d.license):""}</p>`;
   $("#back").onclick=()=>MAS[m]?masechet(m):home();$("#pv").onclick=()=>daf(m,prev[0],prev[1]);$("#nxd").onclick=()=>daf(m,next[0],next[1]);
-  $("#rs").onclick=()=>{S.rashiOn=!S.rashiOn;save();daf(m,n,a)};$("#ra").onclick=()=>speak(d.he.join(". "));
+  $("#rs").onclick=()=>{S.rashiOn=!S.rashiOn;save();daf(m,n,a)};$("#ra").onclick=()=>speakG(d.he.join(". "));
+  app.querySelectorAll("[data-vs]").forEach(b=>b.onclick=()=>{S.vstyle=b.dataset.vs;save();app.querySelectorAll("[data-vs]").forEach(x=>x.classList.toggle("on",x===b));speakG(d.he[0])});
+  $("#shiur").onclick=()=>shiur(m,n,a,d);
   $("#done").onclick=()=>{S.learned[k]=Date.now();S.stars+=3;act();$("#done").textContent="✅ למדתי את העמוד הזה"};
   $("#qz").onclick=()=>dafQuiz(m,n,a,d.he.join("\n"),"bagrut");
   app.querySelectorAll(".seg").forEach(sg=>{const i=+sg.dataset.i,txt=d.he[i],out=sg.querySelector(".out");
-    sg.querySelector('[data-a="say"]').onclick=()=>speak(txt);
+    sg.querySelector('[data-a="say"]').onclick=()=>speakG(txt);
     const rb=sg.querySelector('[data-a="rashi"]');if(rb)rb.onclick=()=>{const r=sg.querySelector(".rashi");r.hidden=!r.hidden};
     sg.querySelector('[data-a="exp"]').onclick=async e=>{const b=e.currentTarget;if(out.dataset.e){out.innerHTML="";delete out.dataset.e;return}out.innerHTML=`<div class="label">מכין פירוש… ✍️</div>`;
       const r=await api({action:"explain",ref:dafName(m,n,a),seg:txt,ctx:d.he.slice(Math.max(0,i-2),i).join(" ")});out.dataset.e=1;
@@ -208,6 +230,21 @@ async function daf(m,n,a){
     sg.querySelector('[data-a="ask"]').onclick=()=>{out.innerHTML=`<div class="row"><textarea placeholder="מה לא ברור? אפשר גם לדבר 🎤"></textarea></div><div class="row"><button class="mic" aria-label="דיבור">🎤</button><button class="btn sm">שליחה</button></div><div class="ans"></div>`;
       const ta=out.querySelector("textarea");micInto(out.querySelector(".mic"),ta);out.querySelector(".btn").onclick=async()=>{const q=ta.value.trim();if(!q)return;const A=out.querySelector(".ans");A.innerHTML=`<div class="label">חושב… ✍️</div>`;const r=await api({action:"ask",ref:dafName(m,n,a),seg:txt,q});A.innerHTML=r.error?`<p class="label">${errMsg(r)}</p>`:`<div class="ai">${esc(r.text)}</div>`;if(!r.error)speak(r.text);act()}};
   });
+}
+async function shiur(m,n,a,d){stopVoice();
+  app.innerHTML=`<div class="top"><button class="x" id="back">→</button><h2 class="grow">🎧 שיעור: ${dafName(m,n,a)}</h2></div><div class="card center"><div class="label">הרב מכין את השיעור… (עד דקה) ✍️</div></div>`;$("#back").onclick=()=>{stopVoice();daf(m,n,a)};
+  const r=await api({action:"shiur",ref:dafName(m,n,a),seg:d.he.join("\n")});
+  if(r.error||!r.parts){app.querySelector(".card").innerHTML=`<p>${errMsg(r)}</p>`;return}
+  let k=-1,playing=false;
+  app.innerHTML=`<div class="top"><button class="x" id="back">→</button><h2 class="grow">🎧 שיעור: ${dafName(m,n,a)}</h2></div>
+   <div class="row"><button class="btn" id="pl">▶️ השמעה</button><button class="btn ghost" id="st">⏸ עצירה</button></div>
+   ${r.parts.map((p,i)=>`<div class="seg" data-p="${i}">${p.src?`<div class="gtext" style="font-size:20px">${esc(p.src)}</div>`:""}<div>${esc(p.say)}</div></div>`).join("")}
+   <p class="attr">השיעור נוצר בעזרת בינה מלאכותית. כדאי לבדוק מול הרב.</p>`;
+  const mark=i=>app.querySelectorAll("[data-p]").forEach(x=>{const on=+x.dataset.p===i;x.style.outline=on?"3px solid var(--accent)":"";if(on)x.scrollIntoView({behavior:"smooth",block:"center"})});
+  const next=()=>{if(!playing)return;k++;if(k>=r.parts.length){playing=false;mark(-1);return}mark(k);const p=r.parts[k];if(p.src)speakG(p.src,()=>speak(p.say,next));else speak(p.say,next)};
+  $("#pl").onclick=()=>{if(playing)return;playing=true;if(k<0||k>=r.parts.length-1)k=-1;else k--;next()};$("#st").onclick=()=>{playing=false;stopVoice()};
+  app.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{playing=true;k=+x.dataset.p-1;next()});
+  $("#back").onclick=()=>{playing=false;stopVoice();daf(m,n,a)};act();
 }
 /* ===== bagrut prep ===== */
 function pickLearned(){const L=Object.keys(S.learned);

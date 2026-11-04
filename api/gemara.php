@@ -45,7 +45,7 @@ function claude($key, $system, $user, $max = 900, $model = 'claude-sonnet-5-5'){
 }
 $SYS = "את/ה מלמד/ת גמרא בישיבה תיכונית בישראל, סבלני/ת וברור/ה. עונים בעברית פשוטה, לתלמיד/ה בכיתות י'–י\"ב. נאמנים לפשט הגמרא ולפירוש רש\"י. לא ממציאים מקורות; אם לא בטוחים, אומרים זאת. רק נושאי לימוד תורה וגמרא.";
 $ref = mb_substr(preg_replace('/[^\p{L}\p{N} .:\'"׳״\-]/u', '', (string)($in['ref'] ?? '')), 0, 40);
-$seg = mb_substr(trim((string)($in['seg'] ?? '')), 0, 2500);
+$seg = mb_substr(trim((string)($in['seg'] ?? '')), 0, $act === 'shiur' ? 9000 : 2500);
 $ctx = mb_substr(trim((string)($in['ctx'] ?? '')), 0, 2500);
 if ($act === 'explain') {
   if ($seg === '') out(['error'=>'empty']); $cf = "$cache/e3_" . md5($ref . '|' . $seg) . '.json'; if (is_file($cf)) { echo file_get_contents($cf); exit; }
@@ -67,6 +67,14 @@ if ($act === 'grade') {
   if ($ans === '') out(['error'=>'empty']);
   $t = claude($key, $SYS . " החזירו JSON בלבד.", "מקור: $ref\nקטע:\n$seg\nשאלה: $q\nתשובה לדוגמה: $model\nתשובת התלמיד/ה (ייתכן שנאמרה בעל פה ותומללה, לכן התעלמו משגיאות כתיב): $ans\n\nהעריכו בעדינות ובעידוד. החזירו JSON: {\"score\":0-100,\"good\":\"מה היה טוב (משפט)\",\"missing\":\"מה חסר או שגוי (1-2 משפטים)\",\"better\":\"ניסוח תשובה מלאה וקצרה\"}", 700, 'claude-haiku-5-5');
   if ($t === null) out(['error'=>'api', 'dbg'=>$GLOBALS['dbg'] ?? null]); if (!preg_match('/\{.*\}/s', $t, $m)) out(['error'=>'parse']); $j = json_decode($m[0], true); if (!$j) out(['error'=>'parse']); out($j);
+}
+if ($act === 'shiur') {
+  if ($seg === '') out(['error'=>'empty']); $cf = "$cache/s1_" . md5($ref . '|' . $seg) . '.json'; if (is_file($cf)) { echo file_get_contents($cf); exit; }
+  rate($cfg, 'gs', 40);
+  $t = claude($key, $SYS . " החזירו JSON בלבד.", "מקור: $ref\nטקסט העמוד:\n$seg\n\nהכינו שיעור קולי קצר על העמוד, כמו רב בישיבה תיכונית שקורא ומסביר: מחלקים את הטקסט לקטעים קצרים לפי הסדר (משפט או שניים). לכל קטע: src = המילים המקוריות מהגמרא בדיוק כפי שהן בטקסט (בלי ניקוד), say = הסבר בעל פה בעברית פשוטה ומדוברת: תרגום, מה זה אומר, ומה מקומו בסוגיה (קושיה, תירוץ, ראיה...). אפשר להוסיף בסוף קטע סיכום עם src ריק. הסבירו רק מה שכתוב בעמוד, בלי להמציא. עד 14 קטעים. החזירו JSON: {\"parts\":[{\"src\":\"...\",\"say\":\"...\"}]}", 3500);
+  if ($t === null) out(['error'=>'api', 'dbg'=>$GLOBALS['dbg'] ?? null]); if (!preg_match('/\{.*\}/s', $t, $mm)) out(['error'=>'parse']); $j = json_decode($mm[0], true); if (empty($j['parts'])) out(['error'=>'parse']);
+  $parts = []; foreach (array_slice($j['parts'], 0, 16) as $p) if (is_array($p)) $parts[] = ['src'=>(string)($p['src'] ?? ''), 'say'=>(string)($p['say'] ?? '')];
+  $res = json_encode(['parts'=>$parts], JSON_UNESCAPED_UNICODE); file_put_contents($cf, $res); echo $res; exit;
 }
 if ($act === 'ask') {
   rate($cfg, 'ga', 120); $qq = mb_substr(trim((string)($in['q'] ?? '')), 0, 800); if ($qq === '') out(['error'=>'empty']);
