@@ -37,7 +37,7 @@ $system = "את/ה בודק/ת מנוסה של מטלת הכתיבה (החיבו
  . "{\"content\":1-6,\"language\":1-6,\"strengths\":[\"עד 3 נקודות חוזק\"],\"improve\":[\"עד 4 הצעות שיפור מעשיות וספציפיות\"],"
  . "\"fixes\":[{\"from\":\"ציטוט קצר מהחיבור עם שגיאה\",\"to\":\"הניסוח המתוקן\"}],\"summary\":\"2-3 משפטים של סיכום אישי\","
  . "\"outline\":\"מבנה מוצע לחיבור טוב על הנושא, בנקודות קצרות\"}. עד 6 תיקונים. הכול בעברית.";
-$payload = ['model'=>'claude-sonnet-5-5', 'max_tokens'=>1500, 'system'=>$system,
+$payload = ['model'=>'claude-sonnet-5-5', 'max_tokens'=>1500, 'thinking'=>['type'=>'between_tools'], 'system'=>$system,
   'messages'=>[['role'=>'user', 'content'=>"נושא המטלה:\n$prompt\n\nהחיבור של הנבחן:\n$essay"]]];
 $ch = curl_init('https://api.anthropic.com/v1/messages');
 curl_setopt_array($ch, [CURLOPT_POST=>true, CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>60,
