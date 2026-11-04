@@ -778,9 +778,12 @@ function welcome(){
      ${st?`<span class="chip">🔥 ${st} ${st===1?"יום":"ימים"} ברצף</span>`:""}
      <div class="label">שפת העזרה והתרגום</div>
      <div class="seg langs" role="group" aria-label="שפת העזרה">${Object.keys(HELP).map(k=>`<button class="segb lang" data-k="${k}" aria-pressed="${S.help===k}" lang="${k}">${HELP[k].name}</button>`).join("")}</div>
+     <div class="label">מה לומדים היום? כיתה, רמה או סוג לימוד</div>
+     <div class="courses" id="wcourses">${Object.keys(GROUPS).map(g=>{const cs=COURSES.filter(c=>c.group===g);if(!cs.length)return "";const grid=g==="kids"||g==="middle"||g==="high";
+       return `<div class="group"><div class="label">${GROUPS[g]}</div>${grid?`<div class="kidrow">`:""}${cs.map(c=>`<button class="course" data-cid="${c.id}" aria-pressed="${c.id===S.course}"><span class="e" aria-hidden="true">${c.e}</span><span><b>${c.he}</b><span>${c.units.length} שיעורים</span></span></button>`).join("")}${grid?`</div>`:""}</div>`}).join("")}</div>
      <div class="label">עם מי לומדים היום?</div>
      <div class="chars mini">${(kidsCourse()?CHARS.filter(c=>c.kid).concat(CHARS.filter(c=>!c.kid)):CHARS.filter(c=>!c.kid).concat(CHARS.filter(c=>c.kid))).map(c=>`<button class="char" data-id="${c.id}" aria-pressed="${c.id===S.char}"><span class="e">${c.e}</span><span class="n">${c.name}</span></button>`).join("")}</div>
-     <button class="btn wide" id="go">יאללה, מתחילים!</button>
+     <button class="btn wide" id="go" style="position:sticky;bottom:12px;z-index:5">יאללה, מתחילים!</button>
      <button class="link" id="notme">זה לא אני? החלפת שם</button>
    </div>`;
   app.querySelectorAll(".chars.mini .char").forEach(b=>b.onclick=()=>{
@@ -794,6 +797,9 @@ function welcome(){
     S.help=b.dataset.k;save();applyHelp();if(S.course)ensureAssets().catch(()=>{});
     app.querySelectorAll(".segb.lang").forEach(x=>x.setAttribute("aria-pressed",x===b));
   });
+  app.querySelectorAll("#wcourses .course").forEach(b=>b.onclick=()=>{S.course=b.dataset.cid;save();
+    app.querySelectorAll("#wcourses .course").forEach(x=>x.setAttribute("aria-pressed",x===b));
+    const C2=course();$(".welcome .sub").textContent=`${char().name} מחכה לך. ${C2.he}: ${C2.sub||""}`;ensureAssets().catch(()=>{})});
   $("#go").onclick=()=>{home();say(`${gEn}${n?", "+n:""}! I'm so happy to see you!`)};
   $("#notme").onclick=()=>pickChar(false);
 }
