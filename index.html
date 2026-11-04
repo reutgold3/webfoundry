@@ -675,6 +675,11 @@ const stopVoice=()=>{try{speechSynthesis.cancel()}catch(e){}};
 /* ===================== Speech recognition ===================== */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let srBlocked=!SR;
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const STANDALONE=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const srHardErr=e=>e==="not-allowed"||e==="service-not-allowed";
+function micWhy(err){if(!SR)return IOS&&STANDALONE?"באייפון, באפליקציה שמותקנת על המסך, אין זיהוי דיבור. כדי לדבר, פתחו את האתר ב־Safari.":"הדפדפן הזה לא תומך בזיהוי דיבור. כדי לדבר, פתחו את האפליקציה ב־Chrome.";
+  if(srHardErr(err))return "אין הרשאה למיקרופון. אשרו גישה למיקרופון בהגדרות הדפדפן (סמל המנעול ליד הכתובת) ונסו שוב.";return "המיקרופון לא הגיב. נסו שוב."}
 const NUMW={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20};
 function lev(a,b){const m=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=m[0];m[0]=i;for(let j=1;j<=b.length;j++){const t=m[j];m[j]=Math.min(m[j]+1,m[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return m[b.length]}
 const CONTR=[[/\b(it|that|what|there|he|she|where|who)'s\b/g,"$1 is"],[/\bi'm\b/g,"i am"],[/\b(\w+)'re\b/g,"$1 are"],[/\b(\w+)'ll\b/g,"$1 will"],[/\b(\w+)'d\b/g,"$1 would"],[/\b(\w+)'ve\b/g,"$1 have"],[/\bcan't\b/g,"can not"],[/\bwon't\b/g,"will not"],[/\b(\w+)n't\b/g,"$1 not"],[/\bcannot\b/g,"can not"]];
@@ -699,7 +704,7 @@ function listenOnce(){
     r.onresult=e=>{got=true;res([...e.results[0]].map(a=>a.transcript))};
     r.onerror=e=>{(e.error==="no-speech"||e.error==="aborted")?res([]):rej(e.error||"error")};
     r.onend=()=>{if(!got)res([])};
-    try{r.start()}catch(e){rej("start")}
+    try{r.start()}catch(e){try{speechSynthesis.cancel()}catch(x){}setTimeout(()=>{try{r.start()}catch(e2){rej("start")}},300)}
   });
 }
 
@@ -715,7 +720,7 @@ function wireMic(cands){ // cands: [{text, pick}]
       for(const c of cands)for(const t of heard){const sc=matchScore(t,c.text);if(sc>bs){bs=sc;best=c}}
       if(best&&bs>=.6){h.textContent=`שמעתי: "${heard[0]}"`;best.pick()}
       else h.textContent=heard.length?`שמעתי: "${heard[0]}". נסו שוב, או לחצו על התשובה.`:"לא שמעתי. נסו שוב, קצת יותר חזק.";
-    }catch(e){b.classList.remove("on");srBlocked=true;b.remove();const h2=document.getElementById("amh");if(h2)h2.textContent="המיקרופון לא זמין כאן. לחצו על התשובה."}
+    }catch(e){b.classList.remove("on");const h2=document.getElementById("amh");if(srHardErr(e)){srBlocked=true;b.remove()}if(h2)h2.textContent=micWhy(e)+(srHardErr(e)?" בינתיים לחצו על התשובה.":"")}
   };
 }
 
@@ -1589,6 +1594,7 @@ function testFinish(){
 /* ===================== Lesson engine ===================== */
 let LS=null;
 function startLesson(idx,isRepeat){
+  if(SR&&srBlocked&&!S.micDenied)srBlocked=false;
   const C=course(),L=C.units[idx],pic=isPicUnit(L);
   const prevUnits=C.units.filter((u,i)=>i!==idx&&i<Math.min(doneIn(C),C.units.length));
   const steps=[{t:"intro"}];
@@ -1721,7 +1727,7 @@ function speakStep(w,isAnswer){
    <div class="word ${pic?"":"phrase"}">${esc(w.en)}</div>${pic?"":`<div class="word-he">${esc(w.he)}</div>`}
    <button class="speak" id="hear" aria-label="להשמיע">🔊</button>
    <div class="row">${srBlocked?"":`<button class="mic" id="mic" aria-label="לחצו ודברו">🎤</button>`}</div>
-   <div class="heard" id="heard">${srBlocked?"אמרו את זה בקול, ואז לחצו על הכפתור.":"לחצו על המיקרופון ודברו"}</div></div>
+   <div class="heard" id="heard">${srBlocked?esc(micWhy())+" בינתיים: אמרו את זה בקול, ואז לחצו על הכפתור.":"לחצו על המיקרופון ודברו"}</div></div>
    <div class="row"><button class="btn ghost" id="said" ${srBlocked?"":"hidden"}>אמרתי את זה!</button><button class="link" id="skip" hidden>דלגו</button></div>`);
   wireTalk(en);say(en);
   $("#hear").onclick=()=>say(w.en);
@@ -1740,8 +1746,8 @@ function speakStep(w,isAnswer){
       if(tries>=2)$("#skip").hidden=false;
       if(tries>=3)$("#said").hidden=false;
     }catch(err){
-      mic.classList.remove("on");srBlocked=true;mic.remove();
-      $("#heard").textContent="המיקרופון לא זמין כאן. אמרו את זה בקול, ואז לחצו על הכפתור.";
+      mic.classList.remove("on");if(srHardErr(err)){srBlocked=true;mic.remove()}
+      $("#heard").textContent=micWhy(err)+" אפשר גם להגיד בקול וללחוץ על הכפתור.";
       $("#said").hidden=false;
     }
   };
