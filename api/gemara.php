@@ -48,9 +48,9 @@ $ref = mb_substr(preg_replace('/[^\p{L}\p{N} .:\'"׳״\-]/u', '', (string)($in['
 $seg = mb_substr(trim((string)($in['seg'] ?? '')), 0, 2500);
 $ctx = mb_substr(trim((string)($in['ctx'] ?? '')), 0, 2500);
 if ($act === 'explain') {
-  if ($seg === '') out(['error'=>'empty']); $cf = "$cache/e2_" . md5($ref . '|' . $seg) . '.json'; if (is_file($cf)) { echo file_get_contents($cf); exit; }
+  if ($seg === '') out(['error'=>'empty']); $cf = "$cache/e3_" . md5($ref . '|' . $seg) . '.json'; if (is_file($cf)) { echo file_get_contents($cf); exit; }
   rate($cfg, 'ge', 120);
-  $t = claude($key, $SYS, "מקור: $ref\nהקטע מהגמרא:\n$seg\n" . ($ctx ? "\nמה שלפניו (להקשר):\n$ctx\n" : '') . "\nכתבו:\n1. תרגום מילולי קצר לעברית (משפט אחר משפט).\n2. הסבר פשוט: מה אומרים כאן ולמה, ומה תפקיד הקטע בסוגיה (קושיה/תירוץ/מקור/מסקנה וכו').\n3. 2–4 מילים או ביטויים בארמית מהקטע עם פירושם.\nבלי הקדמות. פורמט: שורות קצרות עם כותרות 'תרגום:', 'הסבר:', 'מילים:'.");
+  $t = claude($key, $SYS, "מקור: $ref\nהקטע מהגמרא:\n$seg\n" . ($ctx ? "\nמה שלפניו (להקשר):\n$ctx\n" : '') . "\nכתבו:\n1. תרגום מילולי קצר לעברית (משפט אחר משפט).\n2. הסבר פשוט: מה אומרים כאן ולמה, ומה תפקיד הקטע בסוגיה (קושיה/תירוץ/מקור/מסקנה וכו'). הסבירו רק את מה שכתוב בקטע הזה. אל תספרו מה הגמרא תאמר בהמשך ואל תביאו טעמים או שיטות שאינם בקטע, כדי לא לטעות.\n3. 2–4 מילים או ביטויים בארמית מהקטע עם פירושם.\nבלי הקדמות. פורמט: שורות קצרות עם כותרות 'תרגום:', 'הסבר:', 'מילים:'.");
   if ($t === null) out(['error'=>'api', 'dbg'=>$GLOBALS['dbg'] ?? null]); $res = json_encode(['text'=>$t], JSON_UNESCAPED_UNICODE); file_put_contents($cf, $res); echo $res; exit;
 }
 if ($act === 'quiz') {
