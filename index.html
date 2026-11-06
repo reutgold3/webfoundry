@@ -497,7 +497,7 @@ function addTrack(t){
     const c=COURSES.find(x=>x.id===t.id);c.langs=t.base?{}:{ru:1,ar:1};c.v=t.v||1;for(const u of c.units){u.he0=u.he;for(const i of u.items)i.he0=i.he}const R=READ[t.id];if(R)R.forEach(r=>{if(r)r.he0=r[1]});
 }
 const TRK_LOAD={};
-const ASSET_V="6cbb4847";const ASSET={bag:Object.keys(BAGRUT).length>0,en:!!TR.en,uiru:!!(TR.ru&&TR.ru.ui),uiar:!!(TR.ar&&TR.ar.ui)};
+const ASSET_V="13ac216b";const ASSET={bag:Object.keys(BAGRUT).length>0,en:!!TR.en,uiru:!!(TR.ru&&TR.ru.ui),uiar:!!(TR.ar&&TR.ar.ui)};
 const isBagC=id=>/^(h1[012]|amir)$/.test(id),wantLang=()=>S.help==="ru"||S.help==="ar";
 function mergeLang(id,L,p){const T=TR[L]=TR[L]||{items:{},units:{},readings:{}};for(const k in p.units)if(!T.units[k])T.units[k]=p.units[k];for(const k in p.items)if(!T.items[k])T.items[k]=p.items[k];T.readings[id]=p.readings}
 const getJ=u=>fetch(u).then(r=>{if(!r.ok)throw new Error("http "+r.status);return r.json()});
@@ -1275,8 +1275,11 @@ function parents(){
      ${active.length?`<table class="ptable"><thead><tr><th>מסלול</th><th>שיעורים</th><th>ממוצע</th><th>מבחן אחרון</th></tr></thead><tbody>
      ${active.map(c=>{const t=(S.tests&&S.tests[c.id])||[];return `<tr><td>${esc(c.he)}</td><td>${Math.min(doneIn(c),c.units.length)}/${c.units.length}</td><td>${avgScore(c)??"–"}</td><td>${t.length?t[t.length-1].s:"–"}</td></tr>`}).join("")}</tbody></table>`:`<p>עדיין אין התקדמות.</p>`}
    </div>
-   <div class="hero"><h3>הגדרות לימוד</h3><p>שעת שיעור: ${esc(S.remind)} · אורך שיעור: ${esc(LEN[S.len].he)}</p></div>`;
+   <div class="hero"><h3>הגדרות לימוד</h3><p>שעת שיעור: ${esc(S.remind)} · אורך שיעור: ${esc(LEN[S.len].he)}</p></div>
+   <div class="hero"><h3>שיחה חופשית עם בינה מלאכותית (כיתות א׳–ו׳)</h3><p>בשיחה החופשית מה שהילד כותב או אומר נשלח דרך השרת שלנו לשירות Claude של Anthropic כדי לקבל תשובה. השם של הילד לא נשלח, ותוכן השיחות לא נשמר אצלנו. מומלץ להסביר לילד לא לכתוב פרטים אישיים.</p>
+     <p><b>מצב: ${S.chatOK?"מאושרת ✅":"כבויה 🔒"}</b></p><button class="btn ${S.chatOK?"ghost":""} wide" id="chatok">${S.chatOK?"לכבות את השיחה החופשית":"אני מאשר/ת שיחה חופשית"}</button></div>`;
   $("#back").onclick=settings;
+  $("#chatok").onclick=()=>{S.chatOK=!S.chatOK;save();parents()};
 }
 
 /* ===================== Placement test ===================== */
@@ -1326,8 +1329,16 @@ const CHAT_TOPICS=[
  ["shop","🛍️","משחק תפקידים: בחנות","Role play: the character is a shop assistant"],["interview","🧑‍💼","תרגול ראיון עבודה","Role play: the character interviews the learner for a job"],
  ["doctor","🩺","משחק תפקידים: אצל הרופא","Role play: the character is a doctor"],["debate","⚖️","ויכוח ידידותי","Friendly debate: the character takes a position and the learner argues"]
 ];
+const KID_COURSES=["g12","g2","g3","g4","g56","g6"];
+const kidChat=()=>KID_COURSES.includes(S.course);
 function chatTopics(){
   stopVoice();
+  if(kidChat()&&!S.chatOK){
+    app.innerHTML=`<div class="top"><button class="x" id="quit" aria-label="חזרה">✕</button><div class="grow"></div></div>
+    <div class="hero"><h3>🔒 שיחה חופשית באישור הורה</h3><p>בשיחה החופשית מה שכותבים או אומרים נשלח לשירות בינה מלאכותית כדי לקבל תשובה. בכיתות א׳–ו׳ השיחה נפתחת רק אחרי שהורה מאשר אותה במסך ההורים.</p>
+    <button class="btn wide" id="askp">אני הורה, לאישור</button></div>`;
+    $("#quit").onclick=home;$("#askp").onclick=parentGate;return;
+  }
   app.innerHTML=`<div class="top"><button class="x" id="quit" aria-label="חזרה">✕</button><div class="grow"></div></div>
   ${talkHTML("What would you like to talk about?","על מה בא לכם לדבר?")}
   <div class="topic-grid">${CHAT_TOPICS.map(t=>`<button class="tpc" data-t="${t[0]}"><span aria-hidden="true">${t[1]}</span>${esc(t[2])}</button>`).join("")}</div>
@@ -1357,7 +1368,7 @@ async function chatAsk(){
   const wait=chatBubble("bot",`<div class="avatar-s" aria-hidden="true">${char().e}</div><div class="cb"><span class="dots"><i></i><i></i><i></i></span></div>`);
   let data=null;
   try{
-    const r=await fetch(CHAT_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:CH.msgs.slice(-16),course:S.course,help:S.help||"he",char:char().name,kid:!!char().kid,name:(S.name||"").slice(0,20),topic:CH.topic[3]})});
+    const r=await fetch(CHAT_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:CH.msgs.slice(-16),course:S.course,help:S.help||"he",char:char().name,kid:!!char().kid,name:kidChat()?"":(S.name||"").slice(0,20),topic:CH.topic[3]})});
     data=await r.json();
   }catch(e){data={error:"net"}}
   wait.remove();CH.busy=false;if(!CH)return;$("#csend").disabled=false;
