@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "il.co.myinspire.yallapsy",
+      "sha256_cert_fingerprints": [
+        "92:C6:C4:E4:46:F5:47:30:2E:30:C0:F3:7D:2F:EB:55:10:9D:0F:4F:5F:5B:A3:AB:30:A0:1E:83:44:0E:85:BB"
+      ]
+    }
+  }
+]
