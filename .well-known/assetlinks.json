@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "il.co.myinspire.yallamath",
+      "sha256_cert_fingerprints": [
+        "7D:3C:6F:AA:1D:AF:3D:44:51:39:7E:A4:83:E6:32:C4:D5:30:C5:5C:47:C6:D5:18:96:E3:33:04:5B:5A:A3:13"
+      ]
+    }
+  }
+]
