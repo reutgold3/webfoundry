@@ -314,7 +314,18 @@ function renderSheet(){
   $('#cls').onclick=()=>select(null);
   $('#say').onclick=()=>speak(i);
 }
-function speak(i){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(i.he);u.lang='he-IL';u.rate=.95;speechSynthesis.speak(u);const u2=new SpeechSynthesisUtterance(i.la.replace(/\(.*?\)/g,'').replace(/^Mm?\. /,'musculus '));u2.lang='it-IT';u2.rate=.9;speechSynthesis.speak(u2)}catch(e){}}
+let HV=null,EV=null;function pickV(){if(!("speechSynthesis" in window))return;const all=speechSynthesis.getVoices();const he=all.filter(v=>/^he|^iw/i.test(v.lang));HV=he.find(v=>/google|natural|neural/i.test(v.name))||he[0]||null;const en=all.filter(v=>/^en/i.test(v.lang));EV=en.find(v=>/en[-_]US/i.test(v.lang)&&/google|natural|neural|samantha/i.test(v.name))||en.find(v=>/en[-_]US/i.test(v.lang))||en[0]||null}
+if("speechSynthesis" in window){pickV();speechSynthesis.onvoiceschanged=pickV}
+function speak(i){
+  if(!("speechSynthesis" in window)){toast('אין הקראה במכשיר הזה');return}
+  try{speechSynthesis.cancel();pickV();
+    const he=new SpeechSynthesisUtterance((i.hc||i.he).replace(/[()–]/g,' '));he.lang='he-IL';if(HV)he.voice=HV;he.rate=.9;
+    const en=new SpeechSynthesisUtterance(i.en);en.lang='en-US';if(EV)en.voice=EV;en.rate=.9;
+    setTimeout(()=>{speechSynthesis.speak(he);speechSynthesis.speak(en)},60);
+    if(!HV&&!EV)toast('לא נמצא קול הקראה במכשיר');
+  }catch(e){}
+}
+function toast(t){const d=document.createElement('div');d.textContent=t;d.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#16202B;color:#fff;padding:8px 14px;border-radius:999px;z-index:9;font-size:14px';document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}
 
 /* ---------- quiz ---------- */
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
