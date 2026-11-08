@@ -7,7 +7,8 @@
       "namespace": "android_app",
       "package_name": "il.co.myinspire.yallatheory",
       "sha256_cert_fingerprints": [
-        "DB:33:25:F7:85:29:7D:E0:EA:70:DF:6B:E4:EE:79:31:40:8F:AC:41:B2:37:9B:0B:38:86:19:1E:7B:CD:9E:12"
+        "DB:33:25:F7:85:29:7D:E0:EA:70:DF:6B:E4:EE:79:31:40:8F:AC:41:B2:37:9B:0B:38:86:19:1E:7B:CD:9E:12",
+        "16:7E:18:73:0A:87:56:82:53:A7:CC:B1:7D:38:3E:C0:70:1F:2F:50:57:DE:89:FE:4A:05:4A:B7:C0:4E:1E:7C"
       ]
     }
   }
