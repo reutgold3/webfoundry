@@ -240,6 +240,7 @@ button.chip{cursor:pointer}
 .chars.mini .char .e{font-size:32px}
 .chars.mini .char .n{font-size:14px}
 .welcome{min-height:0;padding-block:8px}
+.top .chip{white-space:nowrap;flex:none}
 .kidrow .course{padding:10px 12px;gap:10px}
 .kidrow .course .e{font-size:30px}
 .kidrow .course b{font-size:17px;text-wrap:balance}
@@ -497,7 +498,7 @@ function addTrack(t){
     const c=COURSES.find(x=>x.id===t.id);c.langs=t.base?{}:{ru:1,ar:1};c.v=t.v||1;for(const u of c.units){u.he0=u.he;for(const i of u.items)i.he0=i.he}const R=READ[t.id];if(R)R.forEach(r=>{if(r)r.he0=r[1]});
 }
 const TRK_LOAD={};
-const ASSET_V="13ac216b";const ASSET={bag:Object.keys(BAGRUT).length>0,en:!!TR.en,uiru:!!(TR.ru&&TR.ru.ui),uiar:!!(TR.ar&&TR.ar.ui)};
+const ASSET_V="6d79b7dc";const ASSET={bag:Object.keys(BAGRUT).length>0,en:!!TR.en,uiru:!!(TR.ru&&TR.ru.ui),uiar:!!(TR.ar&&TR.ar.ui)};
 const isBagC=id=>/^(h1[012]|amir)$/.test(id),wantLang=()=>S.help==="ru"||S.help==="ar";
 function mergeLang(id,L,p){const T=TR[L]=TR[L]||{items:{},units:{},readings:{}};for(const k in p.units)if(!T.units[k])T.units[k]=p.units[k];for(const k in p.items)if(!T.items[k])T.items[k]=p.items[k];T.readings[id]=p.readings}
 const getJ=u=>fetch(u).then(r=>{if(!r.ok)throw new Error("http "+r.status);return r.json()});
@@ -765,6 +766,7 @@ function wireTalk(en){
 
 /* ===================== Onboarding ===================== */
 function render(){ if(!S.char||!S.course) pickCourse(true); else welcome(); }
+let HIDDEN_AT=0;document.addEventListener("visibilitychange",()=>{if(document.hidden){HIDDEN_AT=Date.now();return}if(HIDDEN_AT&&Date.now()-HIDDEN_AT>10*60*1000&&S.char&&S.course&&document.querySelector("[data-home-screen]")){welcome();scrollTo(0,0)}HIDDEN_AT=0});
 
 function welcome(){
   const h=new Date().getHours();
@@ -863,8 +865,8 @@ function home(){
   const avg=avgScore(C),best=bestScore(C),tests=(S.tests&&S.tests[C.id])||[];
   const canTest=Math.min(done,C.units.length)>=2;
   app.innerHTML=`
-   <i data-home-screen hidden></i><div class="top"><div class="grow"><div class="label">Yalla English · ${esc(C.he)}</div></div>
-     <span class="chip" title="ימים ברצף">🔥 ${liveStreak()}</span><button class="chip" id="shop" title="חנות הפרסים">⭐ ${balance()} · חנות</button>
+   <i data-home-screen hidden></i><div class="top"><button class="x" id="tostart" aria-label="חזרה להתחלה">🏠</button><button class="chip" id="chgcourse" style="flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;margin-inline-end:auto">${esc(C.he)} ↩</button>
+     <span class="chip" title="ימים ברצף">🔥 ${liveStreak()}</span><button class="chip" id="shop" title="חנות הפרסים" aria-label="חנות הפרסים">⭐ ${balance()} 🛍️</button>
      <button class="x" id="settings" aria-label="הגדרות">⚙️</button></div>
    ${talkHTML(en,he)}
    ${C.abc||["g12","g2","g3"].includes(C.id)?`<div class="hero abc-card"><div class="today-topic"><span class="big" aria-hidden="true">🔤</span><div><h3>האותיות באנגלית</h3><p>${Object.keys(S.abc||{}).length}/${ABC_LESSONS.length} שיעורים · <span>שם האות, הצליל, אותיות גדולות וקטנות, קריאה וכתיבה</span></p></div></div><button class="btn wide" id="abc">ללמוד את האותיות</button></div>`:""}
@@ -908,7 +910,7 @@ function home(){
   if($("#repeat"))$("#repeat").onclick=()=>startLesson((done-1+C.units.length)%C.units.length,true);
   $("#change").onclick=()=>pickChar(false);
   $("#course").onclick=()=>pickCourse(false);
-  if($("#abc"))$("#abc").onclick=abcHome;$("#settings").onclick=settings;$("#shop").onclick=shop;$("#games").onclick=games;$("#chat").onclick=chatTopics;if($("#smart"))$("#smart").onclick=startSmart;$("#fam").onclick=famScreen;famSync();$("#dict").onclick=dictionary;
+  if($("#abc"))$("#abc").onclick=abcHome;$("#settings").onclick=settings;$("#tostart").onclick=()=>{stopVoice();welcome();scrollTo(0,0)};$("#chgcourse").onclick=()=>{stopVoice();welcome();setTimeout(()=>{const w=$("#wcourses");w&&w.scrollIntoView({block:"start",behavior:"smooth"})},50)};$("#shop").onclick=shop;$("#games").onclick=games;$("#chat").onclick=chatTopics;if($("#smart"))$("#smart").onclick=startSmart;$("#fam").onclick=famScreen;famSync();$("#dict").onclick=dictionary;
   if(canTest)$("#test").onclick=startTest;
   if($("#bag"))$("#bag").onclick=startBagrut;
   app.querySelectorAll(".uchip").forEach(b=>b.onclick=()=>startUnitTest(+b.dataset.u));
