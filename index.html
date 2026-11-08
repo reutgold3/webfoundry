@@ -6096,13 +6096,24 @@ function famJoin(){
 /* ---- AI tutor ---- */
 const TUTOR_API=/myinspire\.co\.il$/.test(location.hostname)?"/api/tutor.php":"https://yallamath.myinspire.co.il/api/tutor.php";
 async function tutorCall(body){
-  try{const r=await fetch(TUTOR_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({grade:gradeName(S.grade),name:S.name||""},body))});return await r.json()}catch(e){return {error:"net"}}
+  try{const r=await fetch(TUTOR_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({grade:gradeName(S.grade),name:kidGrade()?"":(S.name||"")},body))});return await r.json()}catch(e){return {error:"net"}}
 }
 const tutorErr=d=>d.error==="nokey"?"המורה עוד לא הופעלה בשרת (חסר מפתח API).":d.error==="limit"?"הגעתם למכסה של היום. נמשיך מחר!":d.error==="img"||d.error==="big"?"לא הצלחתי לקרוא את התמונה. נסו לצלם שוב.":"לא הצלחתי להתחבר. בדקו את האינטרנט ונסו שוב.";
 function tutorLine(l){const m0=/^(\d+)\.\s*/.exec(l);let pre="";if(m0){pre=`<b>${m0[1]}.</b> `;l=l.slice(m0[0].length)}return pre+l.replace(/[0-9a-zA-Z(√|][0-9a-zA-Z()+\-−×·:=/.,^²³√| ]*[0-9a-zA-Z)²³|]/g,m=>/[0-9]/.test(m)||/[=+×:]/.test(m)?`<bdi dir="ltr" class="tm">${m}</bdi>`:m)}
 function tutorHTML(t){return `<div class="steps tutor-ans">${esc(t).split(/\n+/).map(l=>`<div>${tutorLine(l)}</div>`).join("")}</div>`}
 function shrinkImage(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const m=1400,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.82))};im.onerror=rej;im.src=fr.result};fr.onerror=rej;fr.readAsDataURL(file)})}
+const kidGrade=()=>/^g[1-6]$/.test(S.grade||"");
+function tutorGate(){
+  const a=12+Math.floor(Math.random()*8),b=6+Math.floor(Math.random()*4);
+  app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">🔒 המורה של Yalla</h2></div>
+   <div class="card"><h3>באישור הורה</h3><p>המורה היא בינה מלאכותית: התמונה או הטקסט שהילד שולח עוברים דרך השרת שלנו לשירות Claude של Anthropic כדי לקבל הסבר. השם של הילד לא נשלח, ולא שומרים אצלנו את התמונות או השאלות. בכיתות א׳–ו׳ המורה נפתחת רק באישור הורה.</p>
+   <label class="label" for="pg">להורים: כמה זה ${a} × ${b}?</label><input id="pg" inputmode="numeric" autocomplete="off" style="font-size:22px;text-align:center">
+   <button class="btn wide" id="pok">אני הורה ומאשר/ת</button><p class="label" id="pe"></p></div>`;
+  $("#back").onclick=home;
+  $("#pok").onclick=()=>{if(+$("#pg").value===a*b){S.tutorOK=true;save();tutor()}else{$("#pe").textContent="התשובה לא נכונה. בקשו מהורה לאשר."}};
+}
 function tutor(){
+  if(kidGrade()&&!S.tutorOK)return tutorGate();
   let hist=[],img=null;
   app.innerHTML=`<div class="top"><button class="x" id="back" aria-label="חזרה">→</button><h2 class="grow">📸 המורה של Yalla</h2></div>
    ${talk(`צלמו תרגיל מהמחברת או מהספר, או כתבו אותו, ואסביר לכם שלב אחרי שלב${nm()}.`)}
@@ -6113,8 +6124,10 @@ function tutor(){
      <button class="btn wide" id="ts">שליחה למורה</button>
    </div>
    <div id="tout"></div>
-   <p class="label center">המורה היא בינה מלאכותית ויכולה לטעות לפעמים. כדאי לבדוק את הפתרון. לא שולחים תמונות של פנים או פרטים אישיים.</p>`;
+   <p class="label center">המורה היא בינה מלאכותית ויכולה לטעות לפעמים. כדאי לבדוק את הפתרון. לא שולחים תמונות של פנים או פרטים אישיים.</p>
+   ${kidGrade()?`<p class="center"><button class="btn ghost" id="toff">🔒 לבטל את אישור ההורה</button></p>`:""}`;
   $("#back").onclick=home;
+  if($("#toff"))$("#toff").onclick=()=>{S.tutorOK=false;save();home()};
   $("#tf").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{img=await shrinkImage(f);const p=$("#tp");p.src=img;p.hidden=false}catch(x){img=null}};
   const send=async(text,followup)=>{
     const out=$("#tout");const box=document.createElement("div");box.className="card";box.innerHTML=`<div class="label">חושבת… ✍️</div>`;out.appendChild(box);box.scrollIntoView({behavior:"smooth"});
