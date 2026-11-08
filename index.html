@@ -415,7 +415,7 @@ try{TOPICS.push(...([
      return {prompt:`הפעולה ${M("#")} מוגדרת כך: ${M(`a # b = ${p}a + b`)}. אם ${M(`${k} # x = ${S0(v)}`)}, מהו ${M("x")}?`,...CH(x,[v-k,-x,x+p]),
        hint:[`כתבו את ההגדרה עם המספרים: ${M(`${p} · ${k} + x = ${S0(v)}`)}.`,`פתרו את המשוואה.`],
        sol:`${M(`${p*k} + x = ${S0(v)}`)} ⇒ ${M(`x = ${S0(x)}`)}`}},
-   ()=>{const S=v=>typeof v==="number"?(v<0?"−"+fmt(-v):fmt(v)):String(v),S0=S,fmt0=S,UO=a=>shuffle([...new Set(a)]),S1=v=>v<0?"("+S(v)+")":S(v),CH=(a,w,st)=>{const A=S(a),o=[A];for(const x of w){if(typeof x==="number"&&!isFinite(x))continue;const s=S(typeof x==="number"?Math.round(x*100)/100:x);if(!o.includes(s)&&o.length<4)o.push(s)}if(typeof a==="number"){const d=st||Math.max(1,Math.round(Math.abs(a)/8));for(const k of [1,-1,2,-2,3,-3,4,5,6,7,8,9]){if(o.length>=4)break;const v=Math.round((a+k*d)*1000)/1000;if(a>0&&v<=0)continue;const s=S(v);if(!o.includes(s))o.push(s)}}return {type:"choicetxt",ans:A,opts:shuffle(o)}};const p=pick([2,3]),q=pick([-2,-1,1,2,3]),a=rnd(1,5),t=[a];for(let i=0;i<4;i++)t.push(t[i]*p+q);const nx=t[4]*p+q;
+   ()=>{const S=v=>typeof v==="number"?(v<0?"−"+fmt(-v):fmt(v)):String(v),S0=S,fmt0=S,UO=a=>shuffle([...new Set(a)]),S1=v=>v<0?"("+S(v)+")":S(v),CH=(a,w,st)=>{const A=S(a),o=[A];for(const x of w){if(typeof x==="number"&&!isFinite(x))continue;const s=S(typeof x==="number"?Math.round(x*100)/100:x);if(!o.includes(s)&&o.length<4)o.push(s)}if(typeof a==="number"){const d=st||Math.max(1,Math.round(Math.abs(a)/8));for(const k of [1,-1,2,-2,3,-3,4,5,6,7,8,9]){if(o.length>=4)break;const v=Math.round((a+k*d)*1000)/1000;if(a>0&&v<=0)continue;const s=S(v);if(!o.includes(s))o.push(s)}}return {type:"choicetxt",ans:A,opts:shuffle(o)}};const p=pick([2,3]),q=pick([-2,-1,1,2,3]);let a=rnd(1,5);while(a*p+q===a||a*p+q<=0)a=rnd(1,5);const t=[a];for(let i=0;i<4;i++)t.push(t[i]*p+q);const nx=t[4]*p+q;
      return {prompt:`מהו המספר הבא בסדרה ${M(t.slice(0,4).join(", ")+", ?")}`,...CH(t[4],[t[3]+(t[3]-t[2]),t[3]*p,t[4]+q]),
        hint:[`בדקו את היחס בין כל איבר לקודם: האם יש כפל ואחר כך חיבור?`,`${M(`${t[0]} · ${p} ${q<0?"−":"+"} ${Math.abs(q)} = ${t[1]}`)}`],
        sol:`החוק: כופלים ב-${p} ו${q<0?"מחסירים":"מוסיפים"} ${Math.abs(q)}.<br>${M(`${t[3]} · ${p} ${q<0?"−":"+"} ${Math.abs(q)} = ${t[4]}`)}`}},
@@ -992,8 +992,10 @@ function domain(d){
 /* ===== question rendering ===== */
 const KEYS=["א","ב","ג","ד"],KEYSE=["A","B","C","D"];
 function passageHTML(p){return p?`<details open class="card" style="padding:12px"><summary class="label">📖 ${esc(p.title||"קטע קריאה")}</summary><div class="passage ${p.en?"en":""}" ${p.en?'dir="ltr" lang="en"':""}>${esc(p.text).split(/\n\n+/).map(x=>`<p>${x}</p>`).join("")}</div></details>`:""}
-function qBody(it){const isEn=!!it.en;return `<div class="card ${isEn?"en":""}" ${isEn?'dir="ltr" lang="en"':""}><div class="label">${TYPES[it.type]?TYPES[it.type][0]:""}${it.lvl?" · "+"★".repeat(it.lvl):""}</div><div class="qtext">${it.math?it.q:esc(it.q)}</div><button class="link" id="rd" style="align-self:flex-start;padding:0">🔊 ${isEn?"Read":"הקראה"}</button></div>`}
-function optsHTML(it,sel,cls){const isEn=!!it.en;return `<div class="opts ${isEn?"en":""}" ${isEn?'dir="ltr"':""}>${it.o.map((o,k)=>`<button class="opt ${cls?cls(k):""} ${sel===k?"sel":""}" data-k="${k}"><span class="k">${(isEn?KEYSE:KEYS)[k]}</span><span>${it.math?o:esc(o)}</span></button>`).join("")}</div>`}
+function bidiTxt(t){return t.replace(/(?:(?<![\u0590-\u05FF\w])[-−])?[A-Za-z0-9(√](?:[A-Za-z0-9 +\-−×÷=<>≤≥()²³⁴ⁿ√·\/^.,'%°|]*[A-Za-z0-9)²³⁴ⁿ°%|])?/g,m=>/[A-Za-z=+×÷<>≤≥√^²³ⁿ−]|\d-\d|^[-−]\d/.test(m)&&!/^[A-Za-z]+$/.test(m)?`\u0001${m}\u0002`:m)}
+function mb(x,isHtml){if(x==null)return "";const fin=t=>esc(t).replace(/\u0001/g,'<span dir="ltr" class="mx">').replace(/\u0002/g,"</span>");if(!isHtml)return fin(bidiTxt(String(x)));return String(x).split(/(<[^>]+>)/).map(p=>p[0]==="<"?p:fin(bidiTxt(p.replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&").replace(/&nbsp;/g," ")))).join("")}
+function qBody(it){const isEn=!!it.en;return `<div class="card ${isEn?"en":""}" ${isEn?'dir="ltr" lang="en"':""}><div class="label">${TYPES[it.type]?TYPES[it.type][0]:""}${it.lvl?" · "+"★".repeat(it.lvl):""}</div><div class="qtext">${isEn?(it.math?it.q:esc(it.q)):mb(it.q,it.math)}</div><button class="link" id="rd" style="align-self:flex-start;padding:0">🔊 ${isEn?"Read":"הקראה"}</button></div>`}
+function optsHTML(it,sel,cls){const isEn=!!it.en;return `<div class="opts ${isEn?"en":""}" ${isEn?'dir="ltr"':""}>${it.o.map((o,k)=>`<button class="opt ${cls?cls(k):""} ${sel===k?"sel":""}" data-k="${k}"><span class="k">${(isEn?KEYSE:KEYS)[k]}</span><span>${isEn?(it.math?o:esc(o)):mb(o,it.math)}</span></button>`).join("")}</div>`}
 /* ===== practice ===== */
 let P=null;
 function practice(items,title,topic){
@@ -1009,7 +1011,7 @@ function pq(){
   app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(done)return;done=true;const k=+b.dataset.k,ok=k===it.a;record(it,ok);if(ok)P.right++;
     app.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(+x.dataset.k===it.a)x.classList.add("good")});if(!ok)b.classList.add("bad");
     const fb=$("#fb");fb.className="fb "+(ok?"good":"bad");fb.textContent=ok?pick(["נכון! 👏","מצוין!","בדיוק!","כל הכבוד!"]):"לא נכון. התשובה הנכונה בירוק.";
-    $("#exb").innerHTML=`<div class="ex"><b>💡 הסבר:</b> ${it.math?it.ex:esc(it.ex)}</div><button class="link" id="rx" style="padding:4px 0">🔊 להקריא את ההסבר</button>`;$("#rx").onclick=()=>speakIt(it.ex,false);
+    $("#exb").innerHTML=`<div class="ex"><b>💡 הסבר:</b> ${mb(it.ex,it.math)}</div><button class="link" id="rx" style="padding:4px 0">🔊 להקריא את ההסבר</button>`;$("#rx").onclick=()=>speakIt(it.ex,false);
     const nb=document.createElement("button");nb.className="btn wide";nb.textContent=P.i<n-1?"לשאלה הבאה":"לסיכום";nb.onclick=()=>{P.i++;if(P.i<n)pq();else pDone()};$("#nx").appendChild(nb)});
 }
 function pDone(){const n=P.items.length;app.innerHTML=`<div class="card center"><div style="font-size:52px">${P.right/n>=.85?"🏆":P.right/n>=.6?"👏":"💪"}</div><h2>${P.right}/${n}</h2><p>${P.right/n>=.85?"מעולה! אתם שולטים בזה.":"כל תרגול מקרב אתכם ליעד. ממשיכים!"}</p></div>
@@ -1098,7 +1100,7 @@ function startChapter(d,inSim,seed){
 }
 function tick(){if(!X||!X.items)return clearInterval(TIMER);const left=Math.max(0,X.end-Date.now());const el=$("#tm");if(el){el.textContent=`⏱ ${Math.floor(left/60000)}:${String(Math.floor(left%60000/1000)).padStart(2,"0")}`;el.classList.toggle("low",left<3*60000)}if(!left){clearInterval(TIMER);xDone()}}
 function xq(){
-  const it=X.items[X.i],n=X.items.length;const sim=X.sim;
+  X.i=Math.max(0,Math.min(X.i,X.items.length-1));const it=X.items[X.i],n=X.items.length;const sim=X.sim;
   app.innerHTML=`<div class="top"><button class="x" id="quit" aria-label="יציאה">→</button><b class="grow">${DOM[X.d].e} ${DOM[X.d].he}${sim?` · פרק ${sim.k+1}/6`:""}</b><span class="chip timer" id="tm">⏱</span></div>
    <div class="qnav">${X.items.map((x,k)=>`<button data-k="${k}" class="${X.ans[k]!=null?"ans":""} ${X.flag[k]?"flag":""} ${k===X.i?"cur":""}">${k+1}</button>`).join("")}</div>
    ${passageHTML(it.passage&&Object.assign({en:it.en},it.passage))}${qBody(it)}${optsHTML(it,X.ans[X.i])}
@@ -1106,7 +1108,7 @@ function xq(){
    <button class="btn wide" id="sb">סיום הפרק</button><div class="fb" id="fb"></div>`;
   tick();$("#quit").onclick=()=>{clearInterval(TIMER);X=null;home()};
   $("#rd").onclick=()=>speakIt(it.q+". "+it.o.map((o,k)=>(k+1)+". "+o).join(". "),!!it.en);
-  app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{X.ans[X.i]=+b.dataset.k;app.querySelectorAll(".opt").forEach(x=>x.classList.toggle("sel",x===b));const nv=app.querySelector(`.qnav [data-k="${X.i}"]`);if(nv)nv.classList.add("ans");if(X.i<n-1)setTimeout(()=>{X.i++;xq();scrollTo(0,0)},300)});
+  app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{X.ans[X.i]=+b.dataset.k;app.querySelectorAll(".opt").forEach(x=>x.classList.toggle("sel",x===b));const nv=app.querySelector(`.qnav [data-k="${X.i}"]`);if(nv)nv.classList.add("ans");const ci=X.i;if(ci<n-1)setTimeout(()=>{if(!X||X.i!==ci||!document.querySelector(".qnav"))return;X.i++;xq();scrollTo(0,0)},300)});
   app.querySelectorAll(".qnav button").forEach(b=>b.onclick=()=>{X.i=+b.dataset.k;xq()});
   $("#pv").onclick=()=>{X.i--;xq()};$("#nq").onclick=()=>{X.i++;xq()};$("#fl").onclick=()=>{X.flag[X.i]=!X.flag[X.i];xq()};
   $("#sb").onclick=()=>{const f=$("#fb");if(X.ans.some(a=>a==null)&&!f.dataset.c){f.dataset.c=1;f.className="fb bad";f.textContent="יש שאלות בלי תשובה. לחצו שוב כדי לסיים בכל זאת.";return}xDone()};
@@ -1127,8 +1129,8 @@ function xDone(){
   const show=only=>{app.innerHTML=`<div class="card center"><div style="font-size:48px">${pct>=.8?"🏆":pct>=.6?"👏":"💪"}</div><h2>${DOM[x.d].he}</h2><div class="big">${right}/${x.items.length}</div><p class="label">ציון משוער לתחום: ${est} · ${mins} דקות</p></div>
     <div class="row"><button class="btn" id="ag">פרק נוסף</button><button class="btn ghost" id="hm">למסך הבית</button></div>
     <div class="top"><h3 class="grow">סקירה והסברים</h3><label class="chk"><input type="checkbox" id="ow" ${only?"checked":""}> רק טעויות</label></div>
-    ${x.items.map((it,k)=>({it,k})).filter(({it,k})=>!only||x.ans[k]!==it.a).map(({it,k})=>`<div class="card ${it.en?"en":""}"><div class="label">שאלה ${k+1} ${x.ans[k]===it.a?"✅":"❌"}</div><div class="qtext">${it.math?it.q:esc(it.q)}</div>
-      ${optsHTML(it,null,j=>j===it.a?"good":j===x.ans[k]?"bad":"").replace(/<button/g,"<div").replace(/<\/button>/g,"</div>")}<div class="ex" dir="rtl"><b>💡</b> ${it.math?it.ex:esc(it.ex)}</div></div>`).join("")}`;
+    ${x.items.map((it,k)=>({it,k})).filter(({it,k})=>!only||x.ans[k]!==it.a).map(({it,k})=>`<div class="card ${it.en?"en":""}"><div class="label">שאלה ${k+1} ${x.ans[k]===it.a?"✅":"❌"}</div><div class="qtext">${it.en?(it.math?it.q:esc(it.q)):mb(it.q,it.math)}</div>
+      ${optsHTML(it,null,j=>j===it.a?"good":j===x.ans[k]?"bad":"").replace(/<button/g,"<div").replace(/<\/button>/g,"</div>")}<div class="ex" dir="rtl"><b>💡</b> ${mb(it.ex,it.math)}</div></div>`).join("")}`;
     $("#ag").onclick=()=>x.chx?exams():startChapter(x.d);$("#hm").onclick=home;$("#ow").onchange=e=>show(e.target.checked)};show(false);scrollTo(0,0);
 }
 /* ===== vocabulary flashcards ===== */
