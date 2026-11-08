@@ -91,6 +91,18 @@ h3{font-size:18px;font-weight:600}
 .flash{min-height:300px;justify-content:center;align-items:center;text-align:center;width:100%}
 .flash.back{justify-content:flex-start}
 .fc{text-align:start;width:100%}
+.clipbar{display:flex;align-items:center;gap:8px;margin-top:8px;background:rgba(14,27,38,.85);border-radius:999px;padding:5px 8px}
+.clipbar input{flex:1;min-width:0;accent-color:var(--amber)}
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{display:flex;align-items:center;gap:12px;background:var(--paper);border-radius:16px;padding:12px 14px;box-shadow:0 3px 0 var(--line);text-align:start}
+.step span{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--bg);font-weight:700}
+.step b{flex:1;font-weight:500}.step small{color:var(--soft)}
+.step.done span{background:var(--good);color:#fff}.step.next{outline:2px solid var(--accent)}
+#printws{position:fixed;inset:0;z-index:20;background:#fff;color:#16202B;overflow:auto;padding:16px}
+.wsp{max-width:760px;margin:0 auto 30px}.wsp img{width:100%;border:1px solid #ddd;border-radius:8px}
+.wsl{columns:2;font-size:15px;line-height:2.1}.wsc{font-size:12px;color:#777}
+.wsbar{position:sticky;bottom:0;display:flex;gap:10px;justify-content:center;padding:10px;background:#fff}
+@media print{body>*:not(#printws){display:none!important}#printws{position:static;overflow:visible;padding:0}.wsbar{display:none}.wsp{page-break-after:always}}
 </style>
 
 <div id="home" class="page"></div>
@@ -174,7 +186,7 @@ function baseCol(i){if(i.L==='o'||i.L==='v'||i.L==='n')return SYSCOL[i.r]||LAYER
 function initStage(){
   if(stageReady) return;stageReady=true;
   const el=$('#stage');
-  renderer=new T.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(2,devicePixelRatio));
+  renderer=new T.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:/[?&]shot/.test(location.search)});renderer.setPixelRatio(Math.min(2,devicePixelRatio));renderer.localClippingEnabled=true;
   el.appendChild(renderer.domElement);
   scene=new T.Scene();
   camera=new T.PerspectiveCamera(35,1,.01,50);
@@ -188,13 +200,14 @@ function initStage(){
   let down=null;
   renderer.domElement.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,t:Date.now()}});
   renderer.domElement.addEventListener('pointerup',e=>{if(!down)return;const dx=Math.abs(e.clientX-down.x),dy=Math.abs(e.clientY-down.y);if(dx<6&&dy<6&&Date.now()-down.t<500)pick(e);down=null});
-  (function loop(){requestAnimationFrame(loop);if(anim)stepAnim();controls.update();if(needs){renderer.render(scene,camera);needs=false}})();
+  (function loop(){requestAnimationFrame(loop);if(anim)stepAnim();if(pul)stepPulse();controls.update();if(needs){renderer.render(scene,camera);needs=false}})();
 }
 let anim=null,shift=0;
 function applyShift(){const el=$('#stage'),w=el.clientWidth||innerWidth,h=el.clientHeight||innerHeight;if(shift)camera.setViewOffset(w,h,0,h*shift,w,h);else camera.clearViewOffset();camera.updateProjectionMatrix();needs=true}
 function setShift(f){shift=f;applyShift()}
 function fitTo(list,instant){
-  const box=new T.Box3();list.forEach(m=>box.union(m.geometry.boundingBox));if(box.isEmpty())return;
+  const box=new T.Box3();list.forEach(m=>box.union(m.geometry.boundingBox));fitBox(box,instant)}
+function fitBox(box,instant){if(box.isEmpty())return;
   const c=box.getCenter(new T.Vector3()),sz=box.getSize(new T.Vector3());
   const asp=(innerWidth/innerHeight)||.5,useH=1-shift*2;
   const r=Math.max(sz.y/useH,sz.x/asp,sz.z)*.5+.008;
@@ -210,19 +223,19 @@ function backView(){camera.position.set(0,.9,-4);controls.target.set(0,.9,0)}
 let _bz=null;function bodyZ(){if(_bz==null){const b=new T.Box3();meshes.filter(m=>m.userData.info.L==='b').forEach(m=>b.union(m.geometry.boundingBox));_bz=b.getCenter(new T.Vector3()).z}return _bz}
 
 /* ---------- display state ---------- */
-let group=null,layer='b',region='all',selected=null,isolated=false,colorByRegion=false,ghost=false,mode='explore',quiz=null,hiRefs=[];
+let custom=null,clip=null,group=null,layer='b',region='all',selected=null,isolated=false,colorByRegion=false,ghost=false,mode='explore',quiz=null,hiRefs=[];
 const active=m=>m.userData.info.L===layer;
 const inRegion=m=>active(m)&&(region==='all'||m.userData.info.r===region);
 function paint(){
-  const qt=mode==='quiz'&&quiz?quiz.target:null;
+  const qt=mode==='quiz'&&quiz&&quiz.target&&(quiz.kind!=='tap'||quiz.answered)?quiz.target:null,wrong=mode==='quiz'&&quiz?quiz.wrong:null;
   for(const m of meshes){
-    const inf=m.userData.info,L=inf.L,sel=m===selected||(group&&inf.g===group),act=L===layer,inR=inRegion(m),ref=hiRefs.includes(m);
+    const inf=m.userData.info,L=inf.L,sel=m===selected||(group&&inf.g===group)||(custom&&custom.set.has(m)),act=L===layer,inR=inRegion(m),ref=hiRefs.includes(m);
     let vis=act||L==='b';                      // bones are always the frame of reference
     if(isolated) vis=sel||ref;
     m.visible=vis;
     const mat=m.material;
     let col=colorByRegion&&act?(REGC[inf.r]||baseCol(inf)):baseCol(inf);
-    if(qt===m) col='#F2A516'; else if(sel) col='#22C3BA'; else if(ref) col='#F2A516';
+    if(qt===m) col='#F2A516'; else if(wrong===m) col='#E04B5A'; else if(sel) col='#22C3BA'; else if(ref) col='#F2A516';
     mat.color.set(col);
     let op=1;
     if(L==='b'&&layer!=='b'&&layer!=='m'&&!ref) op=.18;   // faded skeleton behind organs / nerves / vessels
@@ -230,6 +243,8 @@ function paint(){
     if(L==='m'&&ghost&&!sel&&qt!==m) op=Math.min(op,.2);
     if(qt&&act&&qt!==m&&layer!=='b') op=Math.min(op,.08);
     if(hiRefs.length&&L==='m'&&!sel) op=Math.min(op,.15);
+    if(custom&&custom.ghost&&act&&!sel) op=Math.min(op,.12);
+    if(custom&&custom.bonesOnly&&L!=='b') vis=false,m.visible=false;
     const tr=op<1||qt===m;if(mat.transparent!==tr)mat.needsUpdate=true;
     mat.transparent=tr;mat.opacity=op;mat.depthWrite=op>=1;
     mat.emissive.set(sel||qt===m||ref?'#103A38':'#000');
@@ -238,16 +253,16 @@ function paint(){
   needs=true;
 }
 function pick(e){
-  if(mode==='quiz') return;
+  if(mode==='quiz'){if(quiz&&quiz.kind==='tap'&&!quiz.answered)tapAnswer(e);return}
   const r=renderer.domElement.getBoundingClientRect();
   const v=new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
   ray.setFromCamera(v,camera);
   const cands=meshes.filter(m=>m.visible&&active(m)&&!(m.material.transparent&&m.material.opacity<.2));
-  const hit=ray.intersectObjects(cands,false)[0];
+  const hit=ray.intersectObjects(cands,false).find(h=>!clip||clip.plane.distanceToPoint(h.point)>=0);
   select(hit?hit.object:null);
 }
 function select(m,focus){
-  selected=m;group=null;hiRefs=[];if(!m)isolated=false;if(mode==='explore')setShift(m?.2:0);paint();
+  selected=m;group=null;custom=null;hiRefs=[];stopPulse();if(!m)isolated=false;if(mode==='explore')setShift(m?.2:0);paint();
   if(m){S.seen[m.userData.id]=1;save();if(focus)fitTo([m])}
   renderSheet();
 }
@@ -255,7 +270,8 @@ function select(m,focus){
 /* ---------- home ---------- */
 function bestTxt(k){const b=S.best[k];return b!=null?'שיא: '+b+'/10':'עוד לא נבחנת'}
 function home(){
-  mode='explore';$('#stage').hidden=true;$('#ui').hidden=true;$('#home').hidden=false;
+  mode='explore';$('#stage').hidden=true;$('#ui').hidden=true;$('#home').hidden=false;stopPulse();
+  if(clip){clip=null;renderer.clippingPlanes=[]}
   const seen=Object.keys(S.seen).length;
   const tile=(L,k,he,e)=>`<button class="tile" data-q="${L}:${k}" style="--c:${(REGC[k]||LAYERS[L].col)==='#FFFFFF'?'#9AA':(REGC[k]||LAYERS[L].col)}"><span class="e">${e}</span><b>${he}</b><span>${bestTxt(L+':'+k)}</span></button>`;
   const due=cardsDue().length;
@@ -266,10 +282,17 @@ function home(){
    <div class="layers">${Object.entries(LAYERS).map(([k,l])=>`<button data-go="${k}"><span>${l.e}</span>${l.he}</button>`).join('')}</div>
    <div class="label">צפית ב-${seen} מבנים</div><div class="meter"><i style="width:${Math.min(100,seen/20)}%;background:#fff"></i></div></div>
   <button class="card fc" id="fc"><div class="row" style="align-items:center"><div style="flex:none;font-size:34px">🗂️</div><div><b>כרטיסיות שרירים לחזרה</b><div class="label">מוצא · אחיזה · פעולה · עצבוב${due?` · ${due} לחזרה היום`:''}</div></div></div></button>
+  <h2>🧭 מסלולי לימוד</h2>
+  <div class="grid2">${TRACKS.map(t=>`<button class="tile" data-track="${t.id}" style="--c:${t.c}"><span class="e">${t.e}</span><b>${t.he}</b><span>${trackDone(t)}/${t.steps.length} שלבים</span></button>`).join('')}</div>
+  <h2>🦴 מפרקים</h2>
+  <div class="gchips">${(N&&N.joints?N.joints.joints:JOINTS_FALLBACK).map(j=>`<button data-joint="${j.id}">${j.he}</button>`).join('')}</div>
+  <h2>⚡ מפת עצבוב</h2>
+  <p class="label">בחרו עצב וראו את כל השרירים שהוא מעצבב.</p>
+  <div class="gchips">${NERVES.map(([k,h])=>`<button data-nerve="${k}">${h}</button>`).join('')}</div>
   <h2>🔗 קבוצות שרירים</h2>
   <div class="gchips">${GROUPS.map(([k,h])=>`<button data-grp="${k}">${h}</button>`).join('')}</div>
   <h2>🎯 בוחנים</h2>
-  <p class="label">המבנה מסומן בכתום על המודל, ואתם בוחרים את התשובה. 10 שאלות בכל בוחן.</p>
+  <p class="label">בבוחן רגיל המבנה מסומן בכתום ואתם בוחרים שם. במבחן מעשי מקבלים שם ולוחצים על המבנה במודל, כמו במבחן תיוג.</p>
   <div class="tabs">${Object.entries(LAYERS).map(([k,l])=>`<button data-tab="${k}" class="${k===homeTab?'on':''}">${l.e} ${l.he}</button>`).join('')}</div>
   <div id="tabbody"></div>
   <div class="card credit"><b>מקור המודל</b>
@@ -277,6 +300,7 @@ function home(){
    <span><a href="privacy.html">מדיניות פרטיות</a> · <a href="terms.html">תנאי שימוש</a></span></div>`;
   const drawTab=()=>{const l=LAYERS[homeTab];
     $('#tabbody').innerHTML=`<button class="btn ghost wide" data-q="${homeTab}:all">🎯 בוחן: ${l.reg[0][1]}</button>
+     <button class="btn ghost wide" data-q="${homeTab}:all:tap">👆 מבחן מעשי: מצאו על המודל</button>
      ${homeTab==='m'?`<div class="row"><button class="btn ghost" data-q="m:all:act">⚙️ בוחן פעולות</button><button class="btn ghost" data-q="m:all:nerve">⚡ בוחן עצבוב</button></div>`:''}
      <div class="grid2">${l.reg.filter(r=>r[0]!=='all').map(([k,he,e])=>tile(homeTab,k,he,e)).join('')}</div>`;
     document.querySelectorAll('#tabbody [data-q]').forEach(b=>b.onclick=()=>{const [L,r,kind]=b.dataset.q.split(':');startQuiz(L,r,kind||'name')})};
@@ -285,19 +309,22 @@ function home(){
   document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>explore(b.dataset.go,'all'));
   document.querySelectorAll('[data-grp]').forEach(b=>b.onclick=async()=>{await explore('m','all');showGroup(b.dataset.grp)});
   $('#fc').onclick=flashcards;
+  document.querySelectorAll('[data-track]').forEach(b=>b.onclick=()=>openTrack(b.dataset.track));
+  document.querySelectorAll('[data-joint]').forEach(b=>b.onclick=()=>showJoint(b.dataset.joint));
+  document.querySelectorAll('[data-nerve]').forEach(b=>b.onclick=()=>showNerve(b.dataset.nerve));
 }
 let homeTab='b';
 async function openStage(L){
   $('#home').hidden=true;await loadPack('skeleton');if(L!=='b')await loadPack(LAYERS[L].pack);initStage();$('#stage').hidden=false;$('#ui').hidden=false;
 }
 async function explore(L,r){
-  await openStage(L);mode='explore';quiz=null;layer=L;region=r||'all';selected=null;group=null;hiRefs=[];isolated=false;setShift(0);
+  await openStage(L);mode='explore';quiz=null;layer=L;region=r||'all';selected=null;group=null;custom=null;stopPulse();hiRefs=[];isolated=false;setShift(0);
   frontView();paint();fitTo(meshes.filter(inRegion),true);renderUI();
 }
 async function setLayer(L){
   if(L===layer)return;
   await loadPack(LAYERS[L].pack);
-  layer=L;region='all';selected=null;group=null;hiRefs=[];isolated=false;setShift(0);paint();frontView();fitTo(meshes.filter(inRegion),true);renderUI();
+  layer=L;region='all';selected=null;group=null;custom=null;stopPulse();hiRefs=[];isolated=false;setShift(0);paint();frontView();fitTo(meshes.filter(inRegion),true);renderUI();
 }
 function chipsHTML(){const r=regList();return r.length<2?'':`<div class="chips">${r.map(([k,he])=>`<button data-r="${k}" class="${k===region?'on':''}">${he}</button>`).join('')}</div>`}
 function renderUI(){
@@ -309,7 +336,9 @@ function renderUI(){
    <div id="menu" class="menu" hidden>
      <button id="clr">🎨 צבע לפי אזור${colorByRegion?' ✓':''}</button>
      ${layer==='m'?`<button id="gh">👻 שרירים שקופים${ghost?' ✓':''}</button>`:''}
-     <button id="fv">⟲ מבט מלפנים</button><button id="bv">↺ מבט מאחור</button></div>
+     <button id="fv">⟲ מבט מלפנים</button><button id="bv">↺ מבט מאחור</button>
+     <button id="cut">✂️ חתך${clip?' ✓':''}</button><button id="ws">🖨️ דף עבודה להדפסה</button></div>
+   ${clip?`<div class="clipbar"><div class="seg">${[['y','רוחבי'],['x','אורכי'],['z','חזיתי']].map(([a,h])=>`<button data-ax="${a}" class="${clip.ax===a?'on':''}">${h}</button>`).join('')}</div><input type="range" id="clipr" min="0" max="1000" value="${Math.round(clip.t*1000)}" aria-label="מיקום החתך"><button class="mini" id="flipc" aria-label="הפוך צד">⇄</button></div>`:''}
    <div id="sbox" hidden><div class="search"><input id="sq" placeholder="חיפוש: עצם הירך / biceps / קיבה / aorta…" autocomplete="off"></div><div class="results" id="sres"></div></div>
    ${chipsHTML()}
    <div class="spacer"></div>
@@ -321,6 +350,10 @@ function renderUI(){
   if($('#gh'))$('#gh').onclick=()=>{ghost=!ghost;paint();renderUI()};
   $('#fv').onclick=()=>{frontView();fitTo(meshes.filter(m=>m.visible&&inRegion(m)),true);$('#menu').hidden=true};
   $('#bv').onclick=()=>{backView();fitTo(meshes.filter(m=>m.visible&&inRegion(m)),true);$('#menu').hidden=true};
+  $('#cut').onclick=()=>{if(clip){clip=null;renderer.clippingPlanes=[]}else{clip={ax:'x',t:.5,flip:false,plane:new T.Plane()};applyClip();camera.position.set(controls.target.x+4,controls.target.y,controls.target.z)}needs=true;renderUI()};
+  $('#ws').onclick=()=>{$('#menu').hidden=true;worksheet()};
+  if(clip){document.querySelectorAll('[data-ax]').forEach(b=>b.onclick=()=>{clip.ax=b.dataset.ax;clip.t=.5;applyClip();if(clip.ax==='x'){camera.position.set(controls.target.x+4,controls.target.y,controls.target.z)}else if(clip.ax==='y'){camera.position.set(controls.target.x,controls.target.y+3,controls.target.z+1.5)}else frontView();needs=true;renderUI()});
+    $('#clipr').oninput=e=>{clip.t=e.target.value/1000;applyClip()};$('#flipc').onclick=()=>{clip.flip=!clip.flip;applyClip()}}
   $('#srch').onclick=()=>{const b=$('#sbox');b.hidden=!b.hidden;if(!b.hidden)$('#sq').focus()};
   $('#sq').oninput=e=>search(e.target.value);
   document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{region=b.dataset.r;isolated=false;if(selected&&!inRegion(selected))selected=null;setShift(selected?.2:0);paint();fitTo(meshes.filter(inRegion));renderUI()});
@@ -353,6 +386,8 @@ function refsFor(text,m){
 function oian(i){return i.k&&N.oian?N.oian[i.k]:null}
 function renderSheet(){
   const el=$('#sheet');if(!el)return;
+  if(custom&&!selected){el.innerHTML=`<div class="sheet">${custom.html}<div class="row" style="flex-wrap:nowrap">${custom.btns||''}<button class="mini" id="cls" aria-label="סגירה">✕</button></div></div>`;
+    $('#cls').onclick=()=>{custom=null;isolated=false;setShift(0);paint();renderSheet()};if(custom.bind)custom.bind(el);return}
   if(group&&!selected){const [h,e]=N.groups[group];const names=[...new Set(meshes.filter(m=>m.userData.info.g===group).map(m=>nameOf(m.userData.info).split(' – ')[0]))];
     el.innerHTML=`<div class="sheet"><div><span class="tag">🔗 קבוצת שרירים</span></div><div class="he">${esc(h)}</div><div class="en">${esc(e)}</div>
      <div class="label">כוללת: ${names.map(esc).join(' · ')}</div>
@@ -369,12 +404,17 @@ function renderSheet(){
      <button data-ref="o"><b>📍 מוצא</b><span>${bd(info.o)}</span></button>
      <button data-ref="i"><b>📌 אחיזה</b><span>${bd(info.i)}</span></button>
      <div><b>⚙️ פעולה</b><span>${bd(info.a)}</span></div>
-     <div><b>⚡ עצבוב</b><span>${bd(info.n)}</span></div></div>`:''}
+     <div><b>⚡ עצבוב</b><span>${bd(info.n)}</span></div></div>
+     <div class="row" style="flex-wrap:wrap;gap:6px"><button class="mini" id="pulse">▶️ הדמיית כיווץ</button>${nerveOf(info.n)?`<button class="mini" id="nmap">⚡ כל שרירי ${esc(nerveOf(info.n)[1])}</button>`:''}</div>`:''}
+   ${(i.L==='v'||i.L==='n'||i.L==='o')?`<button class="mini" id="path" style="align-self:flex-start">${i.L==='v'?'🩸 הראה את כל המסלול והענפים':'🔗 הראה את כל החלקים'}</button>`:''}
    <div class="row" style="flex-wrap:nowrap"><button class="mini" id="iso">${isolated?'👁️ הצג הכל':'🔎 בודד'}</button><button class="mini" id="foc">🎯 התמקד</button><button class="mini" id="say" aria-label="השמעה">🔊</button><button class="mini" id="cls" aria-label="סגירה">✕</button></div></div>`;
   $('#iso').onclick=()=>{isolated=!isolated;paint();fitTo(isolated?[selected,...hiRefs]:meshes.filter(m=>m.visible&&inRegion(m)));renderSheet()};
   $('#foc').onclick=()=>fitTo([selected]);
   $('#cls').onclick=()=>select(null);
   $('#say').onclick=()=>speak(i);
+  if($('#pulse'))$('#pulse').onclick=()=>pulse(selected);
+  if($('#nmap'))$('#nmap').onclick=()=>showNerve(nerveOf(info.n)[0]);
+  if($('#path'))$('#path').onclick=()=>showPath(selected);
   if($('#grp'))$('#grp').onclick=()=>showGroup(i.g);
   el.querySelectorAll('[data-ref]').forEach(b=>b.onclick=()=>{const r=refsFor(info[b.dataset.ref],selected);hiRefs=r;paint();if(r.length){fitTo([selected,...r])}else toast('העצם לא מסומנת במודל');el.querySelectorAll('[data-ref]').forEach(x=>x.classList.toggle('on',x===b))});
 }
@@ -406,7 +446,7 @@ function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;
 const uniqKey=m=>nameOf(m.userData.info);
 const ansOf=(m,kind)=>{const i=m.userData.info;if(kind==='name')return nameOf(i);const o=oian(i);return o?(kind==='act'?o.a:o.n):null};
 async function startQuiz(L,r,kind){
-  await openStage(L);mode='quiz';setShift(.22);layer=L;region=r;selected=null;group=null;hiRefs=[];isolated=false;ghost=false;colorByRegion=false;
+  await openStage(L);custom=null;mode='quiz';setShift(.22);layer=L;region=r;selected=null;group=null;hiRefs=[];isolated=false;ghost=false;colorByRegion=false;
   let pool=meshes.filter(inRegion);if(kind!=='name')pool=pool.filter(m=>ansOf(m,kind));
   const byName={};pool.forEach(m=>{(byName[uniqKey(m)]??=[]).push(m)});
   const names=shuffle(Object.keys(byName)).slice(0,10);
@@ -415,7 +455,8 @@ async function startQuiz(L,r,kind){
 }
 function nextQ(){
   const q=quiz;if(q.i>=q.qs.length) return endQuiz();
-  q.target=q.qs[q.i];q.answered=false;
+  q.target=q.qs[q.i];q.answered=false;q.wrong=null;
+  if(q.kind==='tap'){const c=q.target.geometry.boundingSphere.center;const back=c.z<bodyZ()-.01;if(back)backView();else frontView();fitTo(q.pool,true);paint();renderQuiz();return}
   const correct=ansOf(q.target,q.kind);
   let opts=[...new Set(q.pool.map(m=>ansOf(m,q.kind)))].filter(a=>a&&a!==correct);
   if(opts.length<3)opts=[...new Set(meshes.filter(active).map(m=>ansOf(m,q.kind)))].filter(a=>a&&a!==correct);
@@ -428,6 +469,14 @@ function nextQ(){
 function optLabel(a,kind){if(kind!=='name')return `<span>${esc(a)}</span>`;const m=meshes.find(x=>nameOf(x.userData.info)===a);return `<span>${esc(a)}</span><small>${esc(m?m.userData.info.la:'')}</small>`}
 function renderQuiz(){
   const q=quiz,rg=LAYERS[q.L].reg.find(r=>r[0]===q.r)||LAYERS[q.L].reg[0];
+  if(q.kind==='tap'){$('#ui').innerHTML=`
+   <div class="bar"><button class="x" id="back" aria-label="יציאה">✕</button><div class="ttl">👆 ${rg[1]} · ${q.i+1}/${q.qs.length}</div></div>
+   <div class="bar" style="margin-top:8px"><div class="qbar"><i style="width:${q.i/q.qs.length*100}%"></i></div></div>
+   <div class="spacer"></div>
+   <div class="sheet"><span class="label">לחצו על המודל במקום של:</span><div class="he">${esc(nameOf(q.target.userData.info))}</div><div class="la">${esc(q.target.userData.info.la)}</div>
+    ${q.target.userData.info.side?`<span class="label">${sideHe(q.target.userData.info.side)} של הגוף (אפשר גם הצד השני)</span>`:''}
+    <div id="fb"><p class="label">אפשר לסובב ולהגדיל לפני שלוחצים.</p><button class="mini" id="skip">לא יודע/ת, הראו לי</button></div></div>`;
+   $('#back').onclick=home;$('#skip').onclick=()=>tapResult(null);return}
   const Q={name:`מה שם ה${LAYERS[q.L].what} המסומן בכתום?`,act:`מה הפעולה של השריר המסומן? (${esc(nameOf(q.target.userData.info))})`,nerve:`איזה עצב מעצבב את השריר המסומן? (${esc(nameOf(q.target.userData.info))})`}[q.kind];
   $('#ui').innerHTML=`
    <div class="bar"><button class="x" id="back" aria-label="יציאה">✕</button><div class="ttl">🎯 ${rg[1]} · ${q.i+1}/${q.qs.length}</div><button class="x" id="foc" aria-label="התמקד">🎯</button></div>
@@ -440,6 +489,19 @@ function renderQuiz(){
   $('#foc').onclick=()=>fitTo([q.target]);
   document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(+b.dataset.k));
 }
+function tapAnswer(e){
+  const r=renderer.domElement.getBoundingClientRect();
+  ray.setFromCamera(new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);
+  const hit=ray.intersectObjects(meshes.filter(m=>m.visible&&active(m)),false).find(h=>!clip||clip.plane.distanceToPoint(h.point)>=0);
+  if(hit)tapResult(hit.object);
+}
+function tapResult(m){
+  const q=quiz;q.answered=true;const ok=!!m&&nameOf(m.userData.info)===nameOf(q.target.userData.info);
+  if(ok){q.score++;q.target=m}else q.wrong=m;
+  paint();if(!ok)fitTo([q.target,...(m?[m]:[])]);
+  $('#fb').innerHTML=`<p style="font-weight:600;color:${ok?'var(--good)':'var(--bad)'}">${ok?'נכון! 👏':m?'לא. לחצת על: '+esc(nameOf(m.userData.info))+'. המקום הנכון מסומן בכתום.':'המקום הנכון מסומן בכתום.'}</p><button class="btn wide" id="nx">${q.i+1<q.qs.length?'לשאלה הבאה':'לתוצאות'}</button>`;
+  $('#nx').onclick=()=>{q.i++;q.wrong=null;nextQ()};
+}
 function answer(k){
   const q=quiz;if(q.answered)return;q.answered=true;
   const correct=ansOf(q.target,q.kind),ok=q.opts[k]===correct;if(ok)q.score++;
@@ -449,13 +511,133 @@ function answer(k){
 }
 function endQuiz(){
   const q=quiz,key=q.L+':'+q.r+(q.kind!=='name'?':'+q.kind:'');S.best[key]=Math.max(S.best[key]||0,q.score);save();
-  q.target=null;paint();fitTo(q.pool);
+  q.target=null;q.wrong=null;paint();fitTo(q.pool);
   $('#ui').innerHTML=`<div class="spacer"></div><div class="sheet" style="text-align:center">
    <div style="font-size:44px">${q.score>=8?'🏆':q.score>=5?'💪':'📚'}</div><div class="he">${q.score} מתוך ${q.qs.length}</div>
    <p>${q.score>=8?'מצוין! אתם מכירים את האזור הזה.':q.score>=5?'יפה! עוד סבב אחד ותשלטו.':'כדאי לחקור את האזור ואז לנסות שוב.'}</p>
    <div class="row"><button class="btn" id="again">שוב</button><button class="btn ghost" id="exp">לחקור</button></div>
    <button class="mini" id="hm" style="align-self:center">🏠 לדף הבית</button></div>`;
   $('#again').onclick=()=>startQuiz(q.L,q.r,q.kind);$('#exp').onclick=()=>explore(q.L,q.r);$('#hm').onclick=home;
+}
+
+/* ---------- cross-section ---------- */
+function applyClip(){
+  const b=new T.Box3();meshes.filter(m=>m.visible).forEach(m=>b.union(m.geometry.boundingBox));
+  const a={x:0,y:1,z:2}[clip.ax],lo=b.min.getComponent(a),hi=b.max.getComponent(a);
+  const pos=lo+(hi-lo)*(clip.ax==='y'?1-clip.t:clip.t);
+  const n=new T.Vector3();n.setComponent(a,clip.flip?1:-1);
+  clip.plane.set(n,-n.getComponent(a)*pos);   // keeps the side where n·p + d >= 0
+  renderer.clippingPlanes=[clip.plane];
+  meshes.forEach(m=>m.material.side=T.DoubleSide);needs=true;
+}
+
+/* ---------- muscle contraction pulse ---------- */
+let pul=null;
+function pulse(m){
+  stopPulse();const bb=m.geometry.boundingBox,c=bb.getCenter(new T.Vector3()),sz=bb.getSize(new T.Vector3());
+  const ax=sz.x>sz.y&&sz.x>sz.z?'x':sz.y>sz.z?'y':'z';
+  pul={m,c,ax,t0:performance.now()};toast('הדמיה: השריר מתקצר ומתעבה כשהוא מתכווץ');
+}
+function stepPulse(){
+  const k=(performance.now()-pul.t0)/2400;if(k>=1){stopPulse();return}
+  const w=Math.sin(k*Math.PI*3)**2,s=new T.Vector3(1+.12*w,1+.12*w,1+.12*w);s[pul.ax]=1-.18*w;
+  pul.m.scale.copy(s);pul.m.position.set(pul.c.x*(1-s.x),pul.c.y*(1-s.y),pul.c.z*(1-s.z));needs=true;
+}
+function stopPulse(){if(pul){pul.m.scale.set(1,1,1);pul.m.position.set(0,0,0);pul=null;needs=true}}
+
+/* ---------- custom highlight sets: joints, nerve map, paths ---------- */
+const JOINTS_FALLBACK=[];
+function setCustom(c,L,ms,back){
+  selected=null;group=null;hiRefs=[];isolated=false;custom=c;custom.set=new Set(ms);setShift(.2);paint();
+  if(back===undefined)back=ms.length&&ms.reduce((a,m)=>a+m.geometry.boundingSphere.center.z,0)/ms.length<bodyZ();
+  if(back)backView();else frontView();if(ms.length)fitTo(ms,true);renderSheet();
+}
+async function showJoint(id){
+  await explore('b','all');const j=N.joints.joints.find(x=>x.id===id);
+  const bones=meshes.filter(m=>{const i=m.userData.info;return i.L==='b'&&j.bones.some(r=>new RegExp(r).test(i.en))&&(!j.side||!i.side||i.side==='right')});
+  const have=new Set(Object.values(N.names).filter(i=>i.L==='m'&&i.k).map(i=>i.k));
+  const mus=j.mus.map(k=>`<span class="tag" style="margin:2px">${esc(N.mhe[k]||N.joints.extra[k]||k)}${have.has(k)?'':' *'}</span>`).join('');
+  const jb=bones.filter(m=>new RegExp(j.bones[0]).test(m.userData.info.en)),ob=bones.filter(m=>!jb.includes(m));
+  const A=new T.Box3(),Bx=new T.Box3();jb.forEach(m=>A.union(m.geometry.boundingBox));ob.forEach(m=>Bx.union(m.geometry.boundingBox));
+  A.expandByScalar(.015);Bx.expandByScalar(.015);const meet=A.clone().intersect(Bx);
+  setTimeout(()=>{if(!meet.isEmpty()){meet.expandByScalar(.05);fitBox(meet,true)}},0);
+  setCustom({html:`<div><span class="tag">🦴 מפרק</span></div><div class="he">${esc(j.he)}</div><div class="la">${esc(j.la)}</div>
+    <div class="oian" style="grid-template-columns:1fr"><div><b>סוג</b><span>${esc(j.type)}</span></div><div><b>תנועות</b><span>${esc(j.mov)}</span></div><div><b>רצועות ומבנים</b><span>${esc(j.lig)}</span></div>
+    <div><b>שרירים שמניעים את המפרק</b><span>${mus}</span></div></div>
+    <span class="label">העצמות מסומנות בטורקיז. הרצועות מופיעות כטקסט, כי הן לא קיימות במודל התלת-ממדי${/\*/.test(mus)?'. * = השריר לא קיים במודל':''}.</span>`,
+    btns:`<button class="mini" id="jm">💪 הראה את השרירים</button>`,
+    bind:()=>{$('#jm').onclick=async()=>{await setLayer('m');const ms=meshes.filter(m=>{const i=m.userData.info;return i.L==='m'&&j.mus.includes(i.k)&&(!j.side||!i.side||i.side==='right')});
+      setCustom({ghost:true,html:`<div><span class="tag">💪 שרירי המפרק</span></div><div class="he">${esc(j.he)}</div><div class="label">${[...new Set(ms.map(m=>nameOf(m.userData.info).split(' – ')[0]))].map(esc).join(' · ')}</div>`},'m',ms)}}},'b',bones,false);
+}
+const NERVES=[['medianus','העצב המדיאני'],['ulnaris','העצב האולנרי'],['radialis','העצב הרדיאלי'],['musculocutaneus','העצב השרירי-עורי'],['axillaris','העצב האקסילרי'],['femoralis','העצב הפמורלי'],['obturatorius','העצב האובטורטורי'],['ischiadicus|tibialis','העצב הטיביאלי (מהסיאטי)'],['fibularis|peroneus','העצב הפיבולרי'],['gluteus superior','העצב העכוזי העליון'],['gluteus inferior','העצב העכוזי התחתון'],['plantaris','העצבים הפלנטריים'],['facialis','עצב הפנים (VII)'],['accessorius','העצב העזר (XI)'],['oculomotorius|trochlearis|abducens','עצבי העין (III, IV, VI)'],['vagus|laryngeus','עצב התועה (X)']];
+const nerveRe=k=>new RegExp('(N\\.|Nn\\.|nerve|עצב)[^,;]*?('+k+')','i');
+function nerveOf(t){if(!t)return null;return NERVES.find(([k])=>nerveRe(k).test(t))||null}
+async function showNerve(k){
+  await explore('m','all');const nv=NERVES.find(x=>x[0]===k);
+  const ms=meshes.filter(m=>{const i=m.userData.info,o=oian(i);return o&&nerveRe(k).test(o.n)&&(!i.side||i.side==='right')});
+  const names=[...new Set(ms.map(m=>nameOf(m.userData.info).split(' – ')[0]))];
+  setCustom({ghost:true,html:`<div><span class="tag">⚡ מפת עצבוב</span></div><div class="he">${esc(nv[1])}</div>
+    <div class="label">${names.length} שרירים: ${names.map(esc).join(' · ')}</div>
+    <span class="label">פגיעה בעצב תחליש את השרירים האלה. מסומן בצד ימין של הגוף.</span>`},'m',ms);
+}
+function showPath(m){
+  const base=m.userData.info.en.toLowerCase().replace(/^(left|right) /,'');
+  const ms=meshes.filter(x=>{const i=x.userData.info;return i.L===m.userData.info.L&&i.en.toLowerCase().includes(base)});
+  setCustom({ghost:true,html:`<div><span class="tag">${LAYERS[m.userData.info.L].e} מסלול</span></div><div class="he">${esc(nameOf(m.userData.info))}</div>
+    <div class="label">${ms.length} חלקים וענפים מסומנים${ms.length>1?': '+[...new Set(ms.map(x=>nameOf(x.userData.info)))].slice(0,12).map(esc).join(' · '):''}</div>`},m.userData.info.L,ms);
+}
+
+/* ---------- course tracks ---------- */
+const TRACKS=[
+ {id:'physio',he:'פיזיותרפיה וספורט',e:'🏃',c:'#43AA8B',steps:[['explore','b','upper','חקירה: עצמות הגפה העליונה'],['quiz','b','upper','בוחן: גפה עליונה'],['explore','b','lower','חקירה: עצמות הגפה התחתונה'],['quiz','b','lower','בוחן: גפה תחתונה'],['joint','shoulder','','מפרק הכתף'],['joint','knee','','מפרק הברך'],['quiz','m','arm','בוחן: שרירי הזרוע והאמה'],['quiz','m','thigh','בוחן: שרירי הירך והאגן'],['quiz','m','leg','בוחן: שרירי השוק'],['quiz','m','all:act','בוחן פעולות'],['quiz','m','all:nerve','בוחן עצבוב'],['quiz','m','all:tap','מבחן מעשי מסכם']]},
+ {id:'med',he:'רפואה – אנטומיה כללית',e:'🩺',c:'#4D96FF',steps:[['quiz','b','all','בוחן: שלד'],['quiz','b','skull','בוחן: גולגולת'],['quiz','m','all','בוחן: שרירים'],['quiz','m','all:nerve','בוחן עצבוב'],['quiz','o','cardiac','בוחן: הלב'],['quiz','o','respiratory','בוחן: מערכת הנשימה'],['quiz','o','digestive','בוחן: מערכת העיכול'],['quiz','v','arterial','בוחן: עורקים'],['quiz','v','venous','בוחן: ורידים'],['quiz','n','brain','בוחן: המוח'],['quiz','o','all:tap','מבחן מעשי: איברים']]},
+ {id:'nursing',he:'סיעוד ופרא-רפואה',e:'💉',c:'#E76F51',steps:[['explore','o','all','חקירה: איברים פנימיים'],['quiz','o','cardiac','בוחן: הלב'],['quiz','o','respiratory','בוחן: נשימה'],['quiz','o','digestive','בוחן: עיכול'],['quiz','o','urinary','בוחן: מערכת השתן'],['explore','v','all','חקירה: כלי דם'],['quiz','v','arterial','בוחן: עורקים'],['quiz','b','all','בוחן: שלד'],['quiz','o','all:tap','מבחן מעשי מסכם']]},
+ {id:'dental',he:'רפואת שיניים',e:'🦷',c:'#C77DFF',steps:[['explore','b','skull','חקירה: גולגולת'],['quiz','b','skull','בוחן: גולגולת'],['quiz','b','teeth','בוחן: שיניים'],['joint','tmj','','מפרק הלסת'],['quiz','m','headneck','בוחן: שרירי ראש וצוואר'],['quiz','m','larynx','בוחן: שרירי הגרון'],['quiz','n','nerve','בוחן: עצבי הראש'],['quiz','b','skull:tap','מבחן מעשי: גולגולת']]},
+];
+const stepKey=st=>st[0]==='quiz'?st[1]+':'+st[2]:st[0]==='joint'?'joint:'+st[1]:'exp:'+st[1]+':'+st[2];
+function stepDone(st){S.done=S.done||{};if(st[0]==='quiz')return (S.best[stepKey(st)]||0)>=7;return !!S.done[stepKey(st)]}
+const trackDone=t=>t.steps.filter(stepDone).length;
+function openTrack(id){
+  const t=TRACKS.find(x=>x.id===id);mode='explore';$('#stage').hidden=true;$('#ui').hidden=true;$('#home').hidden=false;
+  const next=t.steps.findIndex(st=>!stepDone(st));
+  $('#home').innerHTML=`<div class="top"><button class="x" id="hb" aria-label="חזרה">→</button><h2>${t.e} ${t.he}</h2></div>
+   <div class="card"><div class="label">${trackDone(t)} מתוך ${t.steps.length} שלבים הושלמו · בוחן נחשב מושלם מ-7/10</div><div class="meter"><i style="width:${trackDone(t)/t.steps.length*100}%"></i></div></div>
+   <div class="steps">${t.steps.map((st,k)=>`<button class="step ${stepDone(st)?'done':''} ${k===next?'next':''}" data-st="${k}"><span>${stepDone(st)?'✓':k+1}</span><b>${esc(st[3])}</b>${st[0]==='quiz'&&S.best[stepKey(st)]!=null?`<small>${S.best[stepKey(st)]}/10</small>`:''}</button>`).join('')}</div>`;
+  $('#hb').onclick=home;
+  document.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{const st=t.steps[+b.dataset.st];S.done=S.done||{};
+    if(st[0]==='quiz'){const [r,kind]=st[2].split(':');startQuiz(st[1],r,kind||'name')}
+    else if(st[0]==='joint'){S.done[stepKey(st)]=1;save();showJoint(st[1])}
+    else{S.done[stepKey(st)]=1;save();explore(st[1],st[2])}});
+}
+
+/* ---------- printable worksheet ---------- */
+function worksheet(){
+  const w=renderer.domElement.width,h=renderer.domElement.height;
+  const vis=meshes.filter(m=>m.visible&&active(m)&&!(m.material.transparent&&m.material.opacity<.3)&&(!custom||custom.set.has(m)||!custom.ghost));
+  const pts=[],used=new Set();
+  const order=vis.map(m=>({m,c:m.geometry.boundingSphere.center.clone().project(camera)})).filter(o=>!clip||clip.plane.distanceToPoint(o.m.geometry.boundingSphere.center)>=0).filter(o=>Math.abs(o.c.x)<.9&&o.c.y>-.6&&o.c.y<.9&&o.c.z<1).sort((a,b)=>b.m.geometry.boundingSphere.radius-a.m.geometry.boundingSphere.radius);
+  for(const o of order){const n=nameOf(o.m.userData.info);if(used.has(n))continue;if(pts.some(p=>Math.hypot(p.c.x-o.c.x,(p.c.y-o.c.y)*h/w)<.12))continue;used.add(n);pts.push(o);if(pts.length>=12)break}
+  if(pts.length<3){toast('הגדילו או סובבו כדי שיהיו מבנים גלויים');return}
+  const sel0=selected,cus0=custom;selected=null;custom=null;paint();renderer.render(scene,camera);
+  const img=renderer.domElement.toDataURL('image/png');selected=sel0;custom=cus0;paint();
+  const cv=document.createElement('canvas');cv.width=w+360;cv.height=h;const g=cv.getContext('2d');
+  g.fillStyle='#fff';g.fillRect(0,0,cv.width,h);
+  const im=new Image();im.onload=()=>{
+    g.drawImage(im,180,0);
+    pts.sort((a,b)=>b.c.y-a.c.y);
+    const L=pts.filter(p=>p.c.x<0),Rr=pts.filter(p=>p.c.x>=0);
+    const lab=(arr,xEdge)=>arr.forEach((p,k)=>{const n=pts.indexOf(p)+1;const px=180+(p.c.x+1)/2*w,py=(1-p.c.y)/2*h,ty=(k+1)*h/(arr.length+1);
+      g.strokeStyle='#16202B';g.lineWidth=Math.max(2,w/400);g.beginPath();g.moveTo(xEdge,ty);g.lineTo(px,py);g.stroke();
+      g.fillStyle='#16202B';g.beginPath();g.arc(px,py,g.lineWidth*2.2,0,7);g.fill();
+      g.beginPath();g.arc(xEdge,ty,w/32,0,7);g.fillStyle='#fff';g.fill();g.stroke();g.fillStyle='#16202B';g.font=`bold ${w/26}px sans-serif`;g.textAlign='center';g.textBaseline='middle';g.fillText(n,xEdge,ty)});
+    lab(L,90);lab(Rr,cv.width-90);
+    const pg=document.createElement('div');pg.id='printws';
+    pg.innerHTML=`<div class="wsp"><h2>דף עבודה – ${esc(LAYERS[layer].he)}</h2><p>שם: ____________________ &nbsp; תאריך: __________</p><img src="${cv.toDataURL('image/png')}">
+      <ol class="wsl">${pts.map(()=>'<li>______________________________</li>').join('')}</ol></div>
+      <div class="wsp"><h2>פתרון</h2><ol class="wsl">${pts.map(p=>`<li><b>${esc(nameOf(p.m.userData.info))}</b> · <i dir="ltr">${esc(p.m.userData.info.la)}</i></li>`).join('')}</ol><p class="wsc">Yalla Anatomy · מודל: BodyParts3D, CC BY 4.0</p></div>
+      <div class="wsbar"><button class="btn" id="wsprint">🖨️ הדפסה</button><button class="btn ghost" id="wsclose">סגירה</button></div>`;
+    document.body.appendChild(pg);$('#wsprint').onclick=()=>print();$('#wsclose').onclick=()=>pg.remove();
+  };im.src=img;
 }
 
 /* ---------- flashcards (Leitner boxes, muscles) ---------- */
@@ -495,7 +677,7 @@ function drawCard(){
 }
 function grade(ok){const f=FC,c=f.list[f.i];const s=S.cards[c.k]||{box:0};s.box=ok?Math.min(4,(s.box||0)+1):0;s.due=dayNum()+BOX_DAYS[s.box];S.cards[c.k]=s;save();if(ok)f.known++;f.i++;f.flip=false;drawCard()}
 
-home();
+loadNames().then(home).catch(home);
 </script>
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));</script>
 </body></html>
