@@ -381,13 +381,23 @@ function renderSheet(){
 let HV=null,EV=null;function pickV(){if(!("speechSynthesis" in window))return;const all=speechSynthesis.getVoices();const he=all.filter(v=>/^he|^iw/i.test(v.lang));HV=he.find(v=>/google|natural|neural/i.test(v.name))||he[0]||null;const en=all.filter(v=>/^en/i.test(v.lang));EV=en.find(v=>/en[-_]US/i.test(v.lang)&&/google|natural|neural|samantha/i.test(v.name))||en.find(v=>/en[-_]US/i.test(v.lang))||en[0]||null}
 if("speechSynthesis" in window){pickV();speechSynthesis.onvoiceschanged=pickV}
 function speak(i){
-  if(!("speechSynthesis" in window)){toast('אין הקראה במכשיר הזה');return}
-  try{speechSynthesis.cancel();pickV();
-    const he=new SpeechSynthesisUtterance(nameOf(i).replace(/[()–]/g,' '));he.lang='he-IL';if(HV)he.voice=HV;he.rate=.9;
-    const en=new SpeechSynthesisUtterance(i.en);en.lang='en-US';if(EV)en.voice=EV;en.rate=.9;
-    setTimeout(()=>{speechSynthesis.speak(he);speechSynthesis.speak(en)},60);
-    if(!HV&&!EV)toast('לא נמצא קול הקראה במכשיר');
-  }catch(e){}
+  const ss=window.speechSynthesis;
+  if(!ss||!window.SpeechSynthesisUtterance){toast('אין הקראה בדפדפן הזה');return}
+  pickV();
+  const mk=(t,lang,v)=>{const u=new SpeechSynthesisUtterance(t);u.lang=lang;if(v)u.voice=v;u.rate=.9;u.volume=1;return u};
+  const en=mk(i.la||i.en,EV?EV.lang:'en-US',EV);          // Latin name, read by an English voice: available on every device
+  const queue=[];
+  if(HV) queue.push(mk(nameOf(i).replace(/[()–]/g,' '),HV.lang,HV));
+  queue.push(en);
+  try{
+    if(ss.speaking||ss.pending) ss.cancel();
+    ss.resume();
+    queue.forEach(u=>ss.speak(u));                          // called directly inside the tap, so the browser allows it
+    let started=false;queue[0].onstart=()=>started=true;
+    queue.forEach(u=>u.onerror=e=>{if(e.error!=='interrupted'&&e.error!=='canceled')toast('ההקראה נחסמה: '+e.error)});
+    setTimeout(()=>{if(!started&&!ss.speaking)toast('המכשיר לא הקריא. בדקו שהעוצמה פתוחה ושיש קול הקראה בהגדרות')},2500);
+    if(!HV) toast('אין קול עברי במכשיר, מוקרא השם הלטיני');
+  }catch(e){toast('שגיאת הקראה')}
 }
 function toast(t){const d=document.createElement('div');d.textContent=t;d.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#16202B;color:#fff;padding:8px 14px;border-radius:999px;z-index:9;font-size:14px';document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}
 
