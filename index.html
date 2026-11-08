@@ -64,6 +64,8 @@ h1,h2,h3{font-family:var(--display);margin:0;line-height:1.2}h1{font-size:28px}h
 .menu{align-self:flex-end;background:#fff;color:#16202B;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.35);margin-top:6px;display:flex;flex-direction:column;min-width:200px;overflow:hidden}
 .menu button{text-align:start;padding:11px 14px;border-bottom:1px solid #EEE;font-weight:500}
 h3{font-size:18px;font-weight:600}
+.grpbtn{align-self:flex-start;background:#FFF4DC;color:#7A4B00;border-radius:999px;padding:6px 12px;font-size:14px}
+.gchips{display:flex;flex-wrap:wrap;gap:8px}.gchips button{background:var(--paper);border-radius:999px;padding:7px 13px;font-weight:600;font-size:15px;box-shadow:0 3px 0 var(--line)}
 .credit{font-size:13px;color:var(--soft);line-height:1.6}
 .credit a{color:var(--accent-deep)}
 </style>
@@ -86,6 +88,7 @@ const REG=[['all','כל השלד','🦴'],['skull','גולגולת','💀'],['ne
 const MREG=[['all','כל השרירים','💪'],['headneck','ראש וצוואר','🗣️'],['eye','שרירי העין','👁️'],['larynx','גרון','🎤'],['back','גב','🔙'],['trunk','חזה ובטן','🫁'],['arm','זרוע ואמה','💪'],['handm','כף היד','✋'],['thigh','ירך ואגן','🦵'],['leg','שוק','🦶'],['footm','כף הרגל','👣'],['pelvicfloor','רצפת האגן','⭕']];
 const REGC={skull:'#E9C46A',neck:'#90BE6D',spine:'#F4A261',thorax:'#E76F51',upper:'#4D96FF',hand:'#6BCB77',pelvis:'#C77DFF',lower:'#43AA8B',foot:'#F28482',teeth:'#FFFFFF',
  headneck:'#E9C46A',eye:'#90E0EF',larynx:'#90BE6D',back:'#F4A261',trunk:'#E76F51',arm:'#4D96FF',handm:'#6BCB77',thigh:'#C77DFF',leg:'#43AA8B',footm:'#F28482',pelvicfloor:'#FFB4A2'};
+const GROUPS=[['hamstrings','המסטרינגס'],['quadriceps','קוואדריצפס'],['rotatorcuff','שרוול המסובבים'],['glutes','שרירי העכוז'],['calf','שרירי התאומים'],['adductors','המקרבים'],['iliopsoas','איליופסואס'],['erector','זוקפי הגו'],['deeprot','מסובבי הירך העמוקים'],['peroneals','הפרוניאלים'],['scalenes','הסקלנים'],['rhomboids','הרומבואידים'],['wristflex','כופפי האמה'],['wristext','פושטי האמה'],['suprahyoid','העל-לשוניים'],['infrahyoid','התת-לשוניים'],['intercostals','הבין-צלעיים'],['extraocular','שרירי העין'],['levatorani','לבטור אני']];
 const BONE='#EDE4D0',MUSC='#B5473E';
 const sideHe=s=>s==='left'?'צד שמאל':s==='right'?'צד ימין':'';
 const regList=()=>layer==='m'?MREG:REG;
@@ -155,7 +158,7 @@ function fitTo(list,instant){
   const dist=r/Math.tan(T.MathUtils.degToRad(camera.fov/2))*(mode==='quiz'?1.45:1.18);
   const dir=camera.position.clone().sub(controls.target);if(dir.lengthSq()<1e-6)dir.set(0,0,1);dir.normalize();
   const toPos=c.clone().add(dir.multiplyScalar(dist));
-  if(instant){camera.position.copy(toPos);controls.target.copy(c);needs=true;return}
+  if(instant){anim=null;camera.position.copy(toPos);controls.target.copy(c);needs=true;return}
   anim={t0:performance.now(),p0:camera.position.clone(),c0:controls.target.clone(),p1:toPos,c1:c};
 }
 function stepAnim(){const k=Math.min(1,(performance.now()-anim.t0)/550),e=1-Math.pow(1-k,3);camera.position.lerpVectors(anim.p0,anim.p1,e);controls.target.lerpVectors(anim.c0,anim.c1,e);needs=true;if(k>=1)anim=null}
@@ -164,13 +167,13 @@ function backView(){camera.position.set(0,.9,-4);controls.target.set(0,.9,0)}
 
 /* ---------- display state ---------- */
 // layer: 'b' = skeleton only, 'm' = muscles over skeleton
-let layer='b',region='all',selected=null,isolated=false,colorByRegion=false,ghost=false,mode='explore',quiz=null;
+let group=null,layer='b',region='all',selected=null,isolated=false,colorByRegion=false,ghost=false,mode='explore',quiz=null;
 const active=m=>m.userData.info.L===layer;                       // pickable layer
 const inRegion=m=>active(m)&&(region==='all'||m.userData.info.r===region);
 function paint(){
   const qt=mode==='quiz'&&quiz?quiz.target:null;
   for(const m of meshes){
-    const inf=m.userData.info,isM=inf.L==='m',sel=m===selected,act=active(m),inR=inRegion(m);
+    const inf=m.userData.info,isM=inf.L==='m',sel=m===selected||(group&&inf.g===group),act=active(m),inR=inRegion(m);
     let vis=true;
     if(isM&&layer==='b') vis=false;
     if(isolated) vis=sel;
@@ -201,7 +204,7 @@ function pick(e){
   select(hit?hit.object:null);
 }
 function select(m,focus){
-  selected=m;if(!m)isolated=false;if(mode==='explore')setShift(m?.16:0);paint();
+  selected=m;group=null;if(!m)isolated=false;if(mode==='explore')setShift(m?.16:0);paint();
   if(m){S.seen[m.userData.id]=1;save();if(focus)fitTo([m])}
   renderSheet();
 }
@@ -218,6 +221,8 @@ function home(){
    <p>סובבו, הגדילו ולחצו על כל מבנה כדי לראות את שמו בעברית, בלטינית ובאנגלית.</p>
    <div class="row"><button class="btn" id="go">🦴 שלד</button><button class="btn" id="gom">💪 שרירים</button></div>
    <div class="label">צפית ב-${seen} מתוך 693 מבנים</div><div class="meter"><i style="width:${seen/6.93}%;background:#fff"></i></div></div>
+  <h2>🔗 קבוצות שרירים</h2>
+  <div class="gchips">${GROUPS.map(([k,h])=>`<button data-grp="${k}">${h}</button>`).join('')}</div>
   <h2>🎯 בוחן "זהה את המבנה"</h2>
   <p class="label">המבנה מסומן בכתום על המודל, ואתם בוחרים את השם הנכון. 10 שאלות בכל בוחן.</p>
   <h3>🦴 עצמות</h3>
@@ -229,6 +234,7 @@ function home(){
   <div class="card credit"><b>מקור המודל</b>
    <span>המודל התלת-ממדי מבוסס על BodyParts3D, © The Database Center for Life Science, ברישיון <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. בוצעו התאמות: פישוט הגאומטריה, דחיסה, שמות בעברית ובלטינית. מיועד ללימוד בלבד ואינו כלי רפואי.</span>
    <span><a href="privacy.html">מדיניות פרטיות</a></span></div>`;
+  document.querySelectorAll('[data-grp]').forEach(b=>b.onclick=async()=>{await explore('m','all');showGroup(b.dataset.grp)});
   $('#go').onclick=()=>explore('b','all');$('#gom').onclick=()=>explore('m','all');
   document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const [L,r]=b.dataset.q.split(':');startQuiz(L,r)});
 }
@@ -274,20 +280,36 @@ function renderUI(){
 function search(q){
   q=q.trim().toLowerCase();const box=$('#sres');if(q.length<2){box.innerHTML='';return}
   const seen=new Set(),out=[];
-  for(const m of meshes){const i=m.userData.info;const hay=(i.he+' '+i.la+' '+i.en).toLowerCase();if(hay.includes(q)){const k=i.he+i.side;if(seen.has(k))continue;seen.add(k);out.push(m)}if(out.length>=30)break}
-  box.innerHTML=out.length?out.map(m=>{const i=m.userData.info;return `<button data-id="${m.userData.id}">${i.L==='m'?'💪':'🦴'} ${esc(i.he)} ${i.side?'· '+sideHe(i.side):''}<small>${esc(i.la)}</small></button>`}).join(''):'<div style="padding:12px">לא נמצא'+(packs.muscles?'':' (שרירים ייטענו כשתעברו ללשונית "שרירים")')+'</div>';
+  const gs=packs.muscles?Object.entries(N.groups).filter(([k,[h,e]])=>(h+' '+e).toLowerCase().includes(q)||h.replace(/[()]/g,'').includes(q)):[];
+  for(const m of meshes){const i=m.userData.info;const hay=(i.he+' '+(i.hc||'')+' '+i.la+' '+i.en+' '+(i.g?N.groups[i.g].join(' '):'')).toLowerCase();if(hay.includes(q)){const k=i.he+i.side;if(seen.has(k))continue;seen.add(k);out.push(m)}if(out.length>=30)break}
+  box.innerHTML=(out.length||gs.length)?gs.map(([k,[h,e]])=>`<button data-g="${k}">🔗 <b>${esc(h)}</b> · קבוצת שרירים<small>${esc(e)}</small></button>`).join('')+out.map(m=>{const i=m.userData.info;return `<button data-id="${m.userData.id}">${i.L==='m'?'💪':'🦴'} ${esc(i.hc||i.he)} ${i.side?'· '+sideHe(i.side):''}<small>${esc(i.la)}</small></button>`}).join(''):'<div style="padding:12px">לא נמצא'+(packs.muscles?'':' (שרירים ייטענו כשתעברו ללשונית "שרירים")')+'</div>';
   box.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{$('#sbox').hidden=true;const m=byId[b.dataset.id];layer=m.userData.info.L;region='all';renderUI();select(m,true)});
+  box.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{$('#sbox').hidden=true;layer='m';region='all';renderUI();showGroup(b.dataset.g)});
+}
+let _bz=null;function bodyZ(){if(_bz==null){const b=new T.Box3();meshes.filter(m=>m.userData.info.L==='b').forEach(m=>b.union(m.geometry.boundingBox));_bz=b.getCenter(new T.Vector3()).z}return _bz}
+function showGroup(k){
+  selected=null;group=k;isolated=false;setShift(.16);paint();
+  const ms=meshes.filter(m=>m.userData.info.g===k);
+  const back=ms.reduce((a,m)=>a+m.geometry.boundingSphere.center.z,0)/ms.length<bodyZ();if(back)backView();else frontView();fitTo(ms,true);
+  renderSheet();
 }
 function regName(i){const l=(i.L==='m'?MREG:REG).find(r=>r[0]===i.r);return l?l[1]:''}
 function renderSheet(){
   const el=$('#sheet');if(!el)return;
+  if(group&&!selected){const [h,e]=N.groups[group];const names=[...new Set(meshes.filter(m=>m.userData.info.g===group).map(m=>m.userData.info.hc||m.userData.info.he.split(' – ')[0]))];
+    el.innerHTML=`<div class="sheet"><div><span class="tag">🔗 קבוצת שרירים</span></div><div class="he">${esc(h)}</div><div class="en">${esc(e)}</div>
+     <div class="label">כוללת: ${names.map(esc).join(' · ')}</div>
+     <div class="row" style="flex-wrap:nowrap"><button class="mini" id="giso">${isolated?'👁️ הצג הכל':'🔎 בודד'}</button><button class="mini" id="cls" aria-label="סגירה">✕</button></div></div>`;
+    $('#giso').onclick=()=>{isolated=!isolated;paint();renderSheet()};$('#cls').onclick=()=>{group=null;isolated=false;setShift(0);paint();renderSheet()};return}
   if(!selected){el.innerHTML=`<div class="hint">👆 לחצו על ${layer==='m'?'שריר':'עצם'} · גררו כדי לסובב · צבטו כדי להגדיל</div>`;return}
   const i=selected.userData.info;
   el.innerHTML=`<div class="sheet">
    <div><span class="tag">${i.L==='m'?'💪 שריר':'🦴 עצם'}</span><span class="tag">${regName(i)}</span>${i.side?`<span class="tag">${sideHe(i.side)}</span>`:''}</div>
-   <div class="he">${esc(i.he)}</div><div class="la">${esc(i.la)}</div><div class="en">${esc(i.en)}</div>
+   <div class="he">${esc(i.hc||i.he)}</div>${i.hc?`<div class="label">${esc(i.he)}</div>`:''}<div class="la">${esc(i.la)}</div><div class="en">${esc(i.en)}</div>
+   ${i.g?`<button class="grpbtn" id="grp">🔗 חלק מקבוצת: <b>${esc(N.groups[i.g][0])}</b> ←</button>`:''}
    <div class="row" style="flex-wrap:nowrap"><button class="mini" id="iso">${isolated?'👁️ הצג הכל':'🔎 בודד'}</button><button class="mini" id="foc">🎯 התמקד</button><button class="mini" id="say" aria-label="השמעה">🔊</button><button class="mini" id="cls" aria-label="סגירה">✕</button></div></div>`;
   $('#iso').onclick=()=>{isolated=!isolated;paint();fitTo(isolated?[selected]:meshes.filter(m=>m.visible&&inRegion(m)));renderSheet()};
+  if($('#grp'))$('#grp').onclick=()=>showGroup(i.g);
   $('#foc').onclick=()=>fitTo([selected]);
   $('#cls').onclick=()=>select(null);
   $('#say').onclick=()=>speak(i);
@@ -296,7 +318,7 @@ function speak(i){try{speechSynthesis.cancel();const u=new SpeechSynthesisUttera
 
 /* ---------- quiz ---------- */
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
-const uniqKey=m=>m.userData.info.he;
+const uniqKey=m=>m.userData.info.hc||m.userData.info.he;
 async function startQuiz(L,r){
   await openStage(L);mode='quiz';setShift(.22);layer=L;region=r;selected=null;isolated=false;ghost=false;colorByRegion=false;
   const pool=meshes.filter(inRegion);const byName={};pool.forEach(m=>{(byName[uniqKey(m)]??=[]).push(m)});
@@ -312,8 +334,8 @@ function nextQ(){
   if(pool.length<3){pool=shuffle([...new Set(meshes.filter(active).map(uniqKey))].filter(n=>n!==correct))}
   q.opts=shuffle([correct,...pool.slice(0,3)]);
   // look at the target from the side it faces (front or back)
-  const c=q.target.geometry.boundingSphere.center,bodyZ=.02;
-  camera.position.set(controls.target.x,controls.target.y,c.z<bodyZ-.03?-4:4);
+  const c=q.target.geometry.boundingSphere.center;
+  camera.position.set(controls.target.x,controls.target.y,c.z<bodyZ()-.01?-4:4);
   paint();fitTo([q.target,...q.pool.filter(m=>m!==q.target&&m.geometry.boundingSphere.center.distanceTo(c)<Math.max(.04,q.target.geometry.boundingSphere.radius*1.2))].slice(0,12));
   renderQuiz();
 }
@@ -325,7 +347,7 @@ function renderQuiz(){
    <div class="bar" style="margin-top:8px"><div class="qbar"><i style="width:${q.i/q.qs.length*100}%"></i></div></div>
    <div class="spacer"></div>
    <div class="sheet"><b>מה שם ה${q.L==='m'?'שריר':'מבנה'} המסומן בכתום?</b>${q.target.userData.info.side?`<span class="label">${sideHe(q.target.userData.info.side)} של הגוף</span>`:''}
-    <div class="opts">${q.opts.map((n,k)=>{const i=infoOf(n);return `<button class="opt" data-k="${k}"><span>${esc(i.he)}</span><small>${esc(i.la)}</small></button>`}).join('')}</div>
+    <div class="opts">${q.opts.map((n,k)=>{const i=infoOf(n);return `<button class="opt" data-k="${k}"><span>${esc(i.hc||i.he)}</span><small>${esc(i.la)}</small></button>`}).join('')}</div>
     <div id="fb"></div></div>`;
   $('#back').onclick=home;
   $('#foc').onclick=()=>fitTo([q.target]);
@@ -336,7 +358,7 @@ function answer(k){
   const correct=uniqKey(q.target),ok=q.opts[k]===correct;if(ok)q.score++;
   document.querySelectorAll('.opt').forEach((b,j)=>{if(q.opts[j]===correct)b.classList.add('ok');else if(j===k)b.classList.add('no')});
   const i=q.target.userData.info;
-  $('#fb').innerHTML=`<p style="font-weight:600;color:${ok?'var(--good)':'var(--bad)'}">${ok?'נכון! 👏':'לא נכון. התשובה: '+esc(i.he)}</p><button class="btn wide" id="nx">${q.i+1<q.qs.length?'לשאלה הבאה':'לתוצאות'}</button>`;
+  $('#fb').innerHTML=`<p style="font-weight:600;color:${ok?'var(--good)':'var(--bad)'}">${ok?'נכון! 👏':'לא נכון. התשובה: '+esc(i.hc||i.he)}</p><button class="btn wide" id="nx">${q.i+1<q.qs.length?'לשאלה הבאה':'לתוצאות'}</button>`;
   $('#nx').onclick=()=>{q.i++;nextQ()};
 }
 function endQuiz(){
