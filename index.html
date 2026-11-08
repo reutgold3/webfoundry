@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0E1B26"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icons/icon-192.png"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"></head><body>
+<title>Yalla Anatomy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Rubik:wght@400;500;700&display=swap">
+<style>
+/* Yalla Anatomy: a dark "lightbox" stage for bone-white 3D models, warm paper cards for study UI. Accent: teal (selection), amber (quiz target). */
+:root{--bg:#F3F0EA;--paper:#fff;--ink:#16202B;--soft:#5D6672;--line:#E1DBD0;--stage:#0E1B26;--stage2:#18303F;
+ --accent:#0F8C86;--accent-deep:#0A615D;--amber:#F2A516;--good:#21A366;--bad:#E04B5A;
+ --display:"Fredoka","Rubik",system-ui,sans-serif;--body:"Rubik",system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:light}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0B141C;--paper:#15222D;--ink:#EAF1F4;--soft:#9FB0BA;--line:#22323F;--la:#8FD3CE;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0B141C;--paper:#15222D;--ink:#EAF1F4;--soft:#9FB0BA;--line:#22323F;--la:#8FD3CE;color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.2}h1{font-size:28px}h2{font-size:22px;font-weight:600}p{margin:0}
+.page{max-width:580px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-left,0px)) 36px;display:flex;flex-direction:column;gap:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 20px;border-radius:999px;font-family:var(--display);font-weight:600;font-size:18px;background:var(--accent);color:#fff;box-shadow:0 5px 0 var(--accent-deep)}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--accent-deep)}
+.btn.ghost{background:var(--paper);color:var(--ink);box-shadow:0 5px 0 var(--line)}.btn.wide{width:100%}
+.card{background:var(--paper);border-radius:22px;padding:16px 18px;box-shadow:0 5px 0 var(--line);display:flex;flex-direction:column;gap:10px}
+.hero{background:linear-gradient(140deg,var(--stage),#1F4A5C);color:#fff;box-shadow:0 5px 0 #071016}
+.hero .label{color:#B9D6DE}.hero .btn{background:#fff;color:var(--ink);box-shadow:0 5px 0 #7FB7C1}
+.label{font-size:14px;color:var(--soft);font-weight:500}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{background:var(--paper);border-radius:18px;padding:14px;box-shadow:0 4px 0 var(--line);display:flex;flex-direction:column;gap:4px;text-align:start;border-top:6px solid var(--c,var(--accent))}
+.tile .e{font-size:26px}.tile b{font-family:var(--display);font-size:17px}.tile span{font-size:13px;color:var(--soft)}
+.meter{height:8px;border-radius:999px;background:#ECE7DF;overflow:hidden}.meter i{display:block;height:100%;background:var(--c,var(--accent));border-radius:999px}
+.x{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.95);box-shadow:0 3px 0 rgba(0,0,0,.25);font-size:20px;display:grid;place-items:center;flex:none;color:var(--ink)}
+/* stage */
+#stage{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 35%,var(--stage2),var(--stage) 70%);touch-action:none}
+#stage canvas{display:block;width:100%;height:100%}
+.ui{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;padding:max(10px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-left,0px)) max(12px,env(safe-area-inset-bottom,0px))}
+.ui>*{pointer-events:auto}
+.bar{display:flex;align-items:center;gap:8px}
+.ttl{flex:1;min-width:0;color:#fff;font-family:var(--display);font-size:19px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 2px 6px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;background:rgba(255,255,255,.12);color:#E7F2F4;border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 13px;font-size:15px;font-weight:500;white-space:nowrap}
+.chips button.on{background:#fff;color:var(--ink);border-color:#fff}
+.spacer{flex:1;pointer-events:none}
+.sheet{background:var(--paper);border-radius:22px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:8px;max-width:560px;width:100%;margin:0 auto}
+.sheet .he{font-family:var(--display);font-size:23px;font-weight:600;line-height:1.2}
+.sheet .la{direction:ltr;text-align:right;font-style:italic;color:var(--la,#24444E);font-size:17px}
+.sheet .en{direction:ltr;text-align:right;color:var(--soft);font-size:14px}
+.tag{display:inline-block;background:#E8F4F3;color:var(--accent-deep);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:600;margin-inline-end:6px}
+.mini{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:40px;padding:0 10px;white-space:nowrap;border-radius:999px;background:#EEF3F2;color:#16202B;font-weight:600;font-size:15px}
+.hint{color:#CFE3E8;font-size:14px;text-align:center;padding:6px;text-shadow:0 1px 2px #000}
+.search{display:flex;gap:6px}.search input{flex:1;min-width:0;border-radius:999px;border:0;padding:10px 14px;font:inherit;font-size:16px;background:rgba(255,255,255,.95)}
+.results{background:#fff;color:#16202B;border-radius:16px;max-height:40vh;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.3);margin-top:6px}
+.results button{display:block;width:100%;text-align:start;padding:10px 14px;border-bottom:1px solid #EEE}
+.results small{display:block;direction:ltr;text-align:right;color:var(--soft);font-style:italic}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:9px 12px;text-align:start;display:flex;flex-direction:column}
+.opt small{direction:ltr;text-align:right;color:var(--soft);font-style:italic}
+.opt.ok{border-color:var(--good);background:#E7F7EE;color:#16202B}.opt.no{border-color:var(--bad);background:#FDECEE;color:#16202B}
+.qbar{height:7px;border-radius:999px;background:rgba(255,255,255,.2);overflow:hidden;flex:1}.qbar i{display:block;height:100%;background:var(--amber)}
+.loading{position:fixed;inset:0;display:grid;place-items:center;color:#fff;font-family:var(--display);font-size:20px;background:var(--stage);z-index:5;text-align:center;padding:20px}
+.loading .meter{width:220px;margin:14px auto 0;background:rgba(255,255,255,.2)}
+.credit{font-size:13px;color:var(--soft);line-height:1.6}
+.credit a{color:var(--accent-deep)}
+</style>
+
+<div id="home" class="page"></div>
+<div id="stage" hidden></div>
+<div id="ui" class="ui" hidden></div>
+<div id="loading" class="loading" hidden><div>טוען את המודל התלת-ממדי…<div class="meter"><i id="lbar" style="width:5%"></i></div></div></div>
+
+<script type="module">
+import * as T from './vendor/three.min.js';
+import {OrbitControls} from './vendor/OrbitControls.js';
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const KEY='yalla-anatomy-v1';
+const S=Object.assign({best:{},seen:{}},JSON.parse(localStorage.getItem(KEY)||'{}'));
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const REG=[['all','כל השלד','🦴'],['skull','גולגולת','💀'],['neck','צוואר וגרון','🗣️'],['spine','עמוד השדרה','🧍'],['thorax','בית החזה','🫁'],['upper','גפה עליונה','💪'],['hand','כף היד','✋'],['pelvis','אגן','🦴'],['lower','גפה תחתונה','🦵'],['foot','כף הרגל','🦶'],['teeth','שיניים','🦷']];
+const REGC={skull:'#E9C46A',neck:'#90BE6D',spine:'#F4A261',thorax:'#E76F51',upper:'#4D96FF',hand:'#6BCB77',pelvis:'#C77DFF',lower:'#43AA8B',foot:'#F28482',teeth:'#FFFFFF'};
+const sideHe=s=>s==='left'?'צד שמאל':s==='right'?'צד ימין':'';
+
+/* ---------- data + scene ---------- */
+let D=null,N=null,meshes=[],byId={},scene,camera,renderer,controls,ray=new T.Raycaster(),needs=true,stageReady=false;
+const boneMat=()=>new T.MeshStandardMaterial({color:0xEDE4D0,roughness:.62,metalness:0,transparent:false});
+async function loadData(){
+  if(D) return;
+  $('#loading').hidden=false;
+  const [m,n]=await Promise.all([fetch('data/skeleton.json').then(r=>r.json()),fetch('data/names.json').then(r=>r.json())]);
+  const res=await fetch('data/skeleton.bin');const total=+res.headers.get('content-length')||3700000;
+  const reader=res.body.getReader();const chunks=[];let got=0;
+  for(;;){const {done,value}=await reader.read();if(done)break;chunks.push(value);got+=value.length;$('#lbar').style.width=Math.min(98,5+got/total*93)+'%';}
+  const buf=new Uint8Array(got);let o=0;for(const c of chunks){buf.set(c,o);o+=c.length;}
+  D={meta:m,buf:buf.buffer};N=n;$('#loading').hidden=true;
+}
+function initStage(){
+  if(stageReady) return;stageReady=true;
+  const el=$('#stage');
+  renderer=new T.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(2,devicePixelRatio));
+  el.appendChild(renderer.domElement);
+  scene=new T.Scene();
+  camera=new T.PerspectiveCamera(35,1,.01,50);
+  scene.add(new T.HemisphereLight(0xFFFFFF,0x334455,1.1));
+  const d1=new T.DirectionalLight(0xFFFFFF,1.6);d1.position.set(1,2,3);scene.add(d1);
+  const d2=new T.DirectionalLight(0xBFD8FF,.6);d2.position.set(-2,1,-2);scene.add(d2);
+  const {min,scale,parts}=D.meta;
+  for(const p of parts){
+    const q=new Uint16Array(D.buf,p.po,p.v*3),pos=new Float32Array(p.v*3);
+    for(let i=0;i<p.v*3;i++)pos[i]=min[i%3]+q[i]/65535*scale[i%3];
+    const g=new T.BufferGeometry();
+    g.setAttribute('position',new T.BufferAttribute(pos,3));
+    g.setAttribute('normal',new T.BufferAttribute(new Int8Array(D.buf,p.no,p.v*3),3,true));
+    g.setIndex(new T.BufferAttribute(new Uint16Array(D.buf,p.io,p.i),1));
+    g.computeBoundingBox();g.computeBoundingSphere();
+    const mesh=new T.Mesh(g,boneMat());mesh.userData={id:p.id,info:N.names[p.id]};
+    scene.add(mesh);meshes.push(mesh);byId[p.id]=mesh;
+  }
+  controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.12;controls.addEventListener('change',()=>needs=true);
+  controls.minDistance=.05;controls.maxDistance=6;
+  const ro=new ResizeObserver(()=>{const w=el.clientWidth,h=el.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;applyShift();needs=true});ro.observe(el);
+  // tap vs drag
+  let down=null;
+  renderer.domElement.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,t:Date.now()}});
+  renderer.domElement.addEventListener('pointerup',e=>{if(!down)return;const dx=Math.abs(e.clientX-down.x),dy=Math.abs(e.clientY-down.y);if(dx<6&&dy<6&&Date.now()-down.t<500)pick(e);down=null});
+  (function loop(){requestAnimationFrame(loop);if(anim)stepAnim();controls.update();if(needs){renderer.render(scene,camera);needs=false}})();
+}
+let anim=null,shift=0;
+function applyShift(){const el=$('#stage'),w=el.clientWidth||innerWidth,h=el.clientHeight||innerHeight;if(shift)camera.setViewOffset(w,h,0,h*shift,w,h);else camera.clearViewOffset();camera.updateProjectionMatrix();needs=true}
+function setShift(f){shift=f;applyShift()}
+function fitTo(list,instant){
+  const box=new T.Box3();list.forEach(m=>box.union(m.geometry.boundingBox));if(box.isEmpty())return;
+  const c=box.getCenter(new T.Vector3()),sz=box.getSize(new T.Vector3());
+  const asp=(innerWidth/innerHeight)||.5,useH=1-shift*2;
+  const r=Math.max(sz.y/useH,sz.x/asp,sz.z)*.5+.01;
+  const dist=r/Math.tan(T.MathUtils.degToRad(camera.fov/2))*(mode==='quiz'?1.45:1.18);
+  const dir=camera.position.clone().sub(controls.target);if(dir.lengthSq()<1e-6)dir.set(0,0,1);dir.normalize();
+  const toPos=c.clone().add(dir.multiplyScalar(dist));
+  if(instant){camera.position.copy(toPos);controls.target.copy(c);needs=true;return}
+  anim={t0:performance.now(),p0:camera.position.clone(),c0:controls.target.clone(),p1:toPos,c1:c};
+}
+function stepAnim(){const k=Math.min(1,(performance.now()-anim.t0)/550),e=1-Math.pow(1-k,3);camera.position.lerpVectors(anim.p0,anim.p1,e);controls.target.lerpVectors(anim.c0,anim.c1,e);needs=true;if(k>=1)anim=null}
+function frontView(){camera.position.set(0,.9,4);controls.target.set(0,.9,0)}
+
+/* ---------- display state ---------- */
+let region='all',selected=null,isolated=false,colorByRegion=false,mode='explore',quiz=null;
+const inRegion=m=>region==='all'||m.userData.info.r===region;
+function paint(){
+  for(const m of meshes){
+    const inf=m.userData.info,inR=inRegion(m),sel=m===selected;
+    m.visible=isolated?sel:(region==='all'||inR||!isolated);
+    const mat=m.material;
+    let col=colorByRegion?REGC[inf.r]:'#EDE4D0';
+    if(mode==='quiz'&&quiz&&quiz.target===m){col='#F2A516'}
+    else if(sel){col='#22C3BA'}
+    mat.color.set(col);
+    const faded=region!=='all'&&!inR;
+    mat.transparent=faded;mat.opacity=faded?.12:1;mat.depthWrite=!faded;
+    mat.emissive.set(sel||(mode==='quiz'&&quiz&&quiz.target===m)?'#103A38':'#000');
+  }
+  needs=true;
+}
+function pick(e){
+  const r=renderer.domElement.getBoundingClientRect();
+  const v=new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+  ray.setFromCamera(v,camera);
+  const cands=meshes.filter(m=>m.visible&&!(m.material.transparent&&m.material.opacity<.5));
+  const hit=ray.intersectObjects(cands,false)[0];
+  if(mode==='quiz') return;
+  select(hit?hit.object:null);
+}
+function select(m,focus){
+  selected=m;if(!m)isolated=false;if(mode==='explore')setShift(m?.16:0);paint();
+  if(m){S.seen[m.userData.id]=1;save();if(focus)fitTo([m])}
+  renderSheet();
+}
+
+/* ---------- screens ---------- */
+function home(){
+  mode='explore';$('#stage').hidden=true;$('#ui').hidden=true;$('#home').hidden=false;
+  const seen=Object.keys(S.seen).length;
+  const tiles=REG.filter(r=>r[0]!=='all').map(([k,he,e])=>{const b=S.best[k];return `<button class="tile" data-q="${k}" style="--c:${REGC[k]==='#FFFFFF'?'#9AA':REGC[k]}"><span class="e">${e}</span><b>${he}</b><span>${b!=null?'שיא בבוחן: '+b+'/10':'עוד לא נבחנת'}</span></button>`}).join('');
+  $('#home').innerHTML=`
+  <div class="card hero"><div class="label">Yalla Anatomy · שלד האדם בתלת-ממד</div>
+   <h1>לומדים אנטומיה כמו בחדר הדיסקציה</h1>
+   <p>סובבו, הגדילו ולחצו על כל עצם כדי לראות את שמה בעברית, בלטינית ובאנגלית.</p>
+   <button class="btn wide" id="go">🦴 לחקור את השלד</button>
+   <div class="label">צפית ב-${seen} מתוך 280 מבנים</div><div class="meter"><i style="width:${seen/2.8}%;background:#fff"></i></div></div>
+  <h2>🎯 בוחן "זהה את המבנה"</h2>
+  <p class="label">העצם מסומנת בכתום על המודל, ואתם בוחרים את השם הנכון. 10 שאלות בכל בוחן.</p>
+  <button class="btn ghost wide" data-q="all">🎯 בוחן על כל השלד</button>
+  <div class="grid2">${tiles}</div>
+  <div class="card credit"><b>מקור המודל</b>
+   <span>המודל התלת-ממדי מבוסס על BodyParts3D, © The Database Center for Life Science, ברישיון <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. בוצעו התאמות: פישוט הגאומטריה, דחיסה, שמות בעברית ובלטינית. מיועד ללימוד בלבד ואינו כלי רפואי.</span>
+   <span><a href="privacy.html">מדיניות פרטיות</a></span></div>`;
+  $('#go').onclick=()=>explore('all');
+  document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>startQuiz(b.dataset.q));
+}
+async function openStage(){
+  $('#home').hidden=true;await loadData();initStage();$('#stage').hidden=false;$('#ui').hidden=false;
+}
+async function explore(r){
+  await openStage();mode='explore';quiz=null;setShift(0);region=r||'all';selected=null;isolated=false;
+  frontView();paint();fitTo(meshes.filter(inRegion),true);renderUI();
+}
+function chipsHTML(){return `<div class="chips">${REG.map(([k,he])=>`<button data-r="${k}" class="${k===region?'on':''}">${he}</button>`).join('')}</div>`}
+function renderUI(){
+  $('#ui').innerHTML=`
+   <div class="bar"><button class="x" id="back" aria-label="חזרה">→</button><div class="ttl">חקירת השלד</div>
+     <button class="x" id="srch" aria-label="חיפוש">🔍</button><button class="x" id="clr" aria-label="צבע לפי אזור">🎨</button><button class="x" id="reset" aria-label="מבט קדמי">⟲</button></div>
+   <div id="sbox" hidden><div class="search"><input id="sq" placeholder="חיפוש: עצם הירך / femur / צלע…" autocomplete="off"></div><div class="results" id="sres"></div></div>
+   ${chipsHTML()}
+   <div class="spacer"></div>
+   <div id="sheet"></div>`;
+  $('#back').onclick=home;
+  $('#reset').onclick=()=>{frontView();fitTo(meshes.filter(m=>m.visible&&inRegion(m)),true)};
+  $('#clr').onclick=()=>{colorByRegion=!colorByRegion;paint()};
+  $('#srch').onclick=()=>{const b=$('#sbox');b.hidden=!b.hidden;if(!b.hidden)$('#sq').focus()};
+  $('#sq').oninput=e=>search(e.target.value);
+  document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{region=b.dataset.r;isolated=false;if(selected&&!inRegion(selected))selected=null;paint();fitTo(meshes.filter(inRegion));renderUI()});
+  renderSheet();
+}
+function search(q){
+  q=q.trim().toLowerCase();const box=$('#sres');if(q.length<2){box.innerHTML='';return}
+  const seen=new Set(),out=[];
+  for(const m of meshes){const i=m.userData.info;const hay=(i.he+' '+i.la+' '+i.en).toLowerCase();if(hay.includes(q)){const k=i.he+i.side;if(seen.has(k))continue;seen.add(k);out.push(m)}if(out.length>=30)break}
+  box.innerHTML=out.length?out.map(m=>{const i=m.userData.info;return `<button data-id="${m.userData.id}">${esc(i.he)} ${i.side?'· '+sideHe(i.side):''}<small>${esc(i.la)}</small></button>`}).join(''):'<div style="padding:12px">לא נמצא</div>';
+  box.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{$('#sbox').hidden=true;const m=byId[b.dataset.id];region='all';renderUI();select(m,true)});
+}
+function renderSheet(){
+  const el=$('#sheet');if(!el)return;
+  if(!selected){el.innerHTML=`<div class="hint">👆 לחצו על עצם · גררו כדי לסובב · צבטו כדי להגדיל</div>`;return}
+  const i=selected.userData.info,rg=REG.find(r=>r[0]===i.r);
+  el.innerHTML=`<div class="sheet">
+   <div><span class="tag">${rg?rg[1]:''}</span>${i.side?`<span class="tag">${sideHe(i.side)}</span>`:''}</div>
+   <div class="he">${esc(i.he)}</div><div class="la">${esc(i.la)}</div><div class="en">${esc(i.en)}</div>
+   <div class="row" style="flex-wrap:nowrap"><button class="mini" id="iso">${isolated?'👁️ הצג הכל':'🔎 בודד'}</button><button class="mini" id="foc">🎯 התמקד</button><button class="mini" id="say">🔊</button><button class="mini" id="cls">✕</button></div></div>`;
+  $('#iso').onclick=()=>{isolated=!isolated;paint();fitTo(isolated?[selected]:meshes.filter(m=>m.visible&&inRegion(m)));renderSheet()};
+  $('#foc').onclick=()=>fitTo([selected]);
+  $('#cls').onclick=()=>select(null);
+  $('#say').onclick=()=>speak(i);
+}
+function speak(i){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(i.he);u.lang='he-IL';u.rate=.95;speechSynthesis.speak(u);const u2=new SpeechSynthesisUtterance(i.la.replace(/\(.*?\)/g,''));u2.lang='it-IT';u2.rate=.9;speechSynthesis.speak(u2)}catch(e){}}
+
+/* ---------- quiz ---------- */
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+const uniqKey=m=>m.userData.info.he;
+async function startQuiz(r){
+  await openStage();mode='quiz';setShift(.22);region=r;selected=null;isolated=false;
+  const pool=meshes.filter(inRegion);const byName={};pool.forEach(m=>{(byName[uniqKey(m)]??=[]).push(m)});
+  const names=shuffle(Object.keys(byName)).slice(0,10);
+  quiz={r,pool,byName,qs:names.map(n=>byName[n][Math.random()*byName[n].length|0]),i:0,score:0,answered:false,target:null};
+  frontView();fitTo(pool,true);nextQ();
+}
+function nextQ(){
+  const q=quiz;if(q.i>=q.qs.length) return endQuiz();
+  q.target=q.qs[q.i];q.answered=false;
+  const correct=uniqKey(q.target);
+  const others=shuffle(Object.keys(q.byName).filter(n=>n!==correct));
+  // fall back to whole skeleton for distractors when a region is small
+  let pool=others;if(pool.length<3){const all=[...new Set(meshes.map(uniqKey))].filter(n=>n!==correct);pool=shuffle(all)}
+  q.opts=shuffle([correct,...pool.slice(0,3)]);
+  paint();fitTo([q.target,...q.pool.filter(m=>m!==q.target&&m.geometry.boundingSphere.center.distanceTo(q.target.geometry.boundingSphere.center)<Math.max(.05,q.target.geometry.boundingSphere.radius*2.5))].slice(0,25));
+  renderQuiz();
+}
+function infoOf(name){const m=meshes.find(x=>uniqKey(x)===name);return m.userData.info}
+function renderQuiz(){
+  const q=quiz,rg=REG.find(r=>r[0]===q.r);
+  $('#ui').innerHTML=`
+   <div class="bar"><button class="x" id="back" aria-label="יציאה">✕</button><div class="ttl">🎯 ${rg[1]} · ${q.i+1}/${q.qs.length}</div><button class="x" id="foc" aria-label="התמקד">🎯</button></div>
+   <div class="bar" style="margin-top:8px"><div class="qbar"><i style="width:${q.i/q.qs.length*100}%"></i></div></div>
+   <div class="spacer"></div>
+   <div class="sheet"><b>מה שם המבנה המסומן בכתום?</b>${q.target.userData.info.side?`<span class="label">${sideHe(q.target.userData.info.side)} של הגוף</span>`:''}
+    <div class="opts">${q.opts.map((n,k)=>{const i=infoOf(n);return `<button class="opt" data-k="${k}"><span>${esc(i.he)}</span><small>${esc(i.la)}</small></button>`}).join('')}</div>
+    <div id="fb"></div></div>`;
+  $('#back').onclick=home;
+  $('#foc').onclick=()=>fitTo([q.target]);
+  document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(+b.dataset.k,b));
+}
+function answer(k,btn){
+  const q=quiz;if(q.answered)return;q.answered=true;
+  const correct=uniqKey(q.target),ok=q.opts[k]===correct;if(ok)q.score++;
+  document.querySelectorAll('.opt').forEach((b,j)=>{if(q.opts[j]===correct)b.classList.add('ok');else if(j===k)b.classList.add('no')});
+  const i=q.target.userData.info;
+  $('#fb').innerHTML=`<p style="font-weight:600;color:${ok?'var(--good)':'var(--bad)'}">${ok?'נכון! 👏':'לא נכון. התשובה: '+esc(i.he)}</p><button class="btn wide" id="nx">${q.i+1<q.qs.length?'לשאלה הבאה':'לתוצאות'}</button>`;
+  $('#nx').onclick=()=>{q.i++;nextQ()};
+}
+function endQuiz(){
+  const q=quiz;S.best[q.r]=Math.max(S.best[q.r]||0,q.score);save();
+  q.target=null;paint();fitTo(q.pool);
+  $('#ui').innerHTML=`<div class="spacer"></div><div class="sheet" style="text-align:center">
+   <div style="font-size:44px">${q.score>=8?'🏆':q.score>=5?'💪':'📚'}</div><div class="he">${q.score} מתוך ${q.qs.length}</div>
+   <p>${q.score>=8?'מצוין! אתם מכירים את האזור הזה.':q.score>=5?'יפה! עוד סבב אחד ותשלטו.':'כדאי לחקור את האזור ואז לנסות שוב.'}</p>
+   <div class="row"><button class="btn" id="again">שוב</button><button class="btn ghost" id="exp">לחקור</button></div>
+   <button class="mini" id="hm" style="align-self:center">🏠 לדף הבית</button></div>`;
+  $('#again').onclick=()=>startQuiz(q.r);$('#exp').onclick=()=>explore(q.r);$('#hm').onclick=home;
+}
+
+home();
+</script>
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));</script>
+</body></html>
