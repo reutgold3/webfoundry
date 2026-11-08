@@ -58,6 +58,12 @@ h1,h2,h3{font-family:var(--display);margin:0;line-height:1.2}h1{font-size:28px}h
 .qbar{height:7px;border-radius:999px;background:rgba(255,255,255,.2);overflow:hidden;flex:1}.qbar i{display:block;height:100%;background:var(--amber)}
 .loading{position:fixed;inset:0;display:grid;place-items:center;color:#fff;font-family:var(--display);font-size:20px;background:var(--stage);z-index:5;text-align:center;padding:20px}
 .loading .meter{width:220px;margin:14px auto 0;background:rgba(255,255,255,.2)}
+.seg{display:flex;background:rgba(255,255,255,.14);border-radius:999px;padding:3px;gap:2px}
+.seg button{color:#E7F2F4;border-radius:999px;padding:7px 12px;font-weight:600;font-size:15px;white-space:nowrap}
+.seg button.on{background:#fff;color:#16202B}
+.menu{align-self:flex-end;background:#fff;color:#16202B;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.35);margin-top:6px;display:flex;flex-direction:column;min-width:200px;overflow:hidden}
+.menu button{text-align:start;padding:11px 14px;border-bottom:1px solid #EEE;font-weight:500}
+h3{font-size:18px;font-weight:600}
 .credit{font-size:13px;color:var(--soft);line-height:1.6}
 .credit a{color:var(--accent-deep)}
 </style>
@@ -65,7 +71,7 @@ h1,h2,h3{font-family:var(--display);margin:0;line-height:1.2}h1{font-size:28px}h
 <div id="home" class="page"></div>
 <div id="stage" hidden></div>
 <div id="ui" class="ui" hidden></div>
-<div id="loading" class="loading" hidden><div>טוען את המודל התלת-ממדי…<div class="meter"><i id="lbar" style="width:5%"></i></div></div></div>
+<div id="loading" class="loading" hidden><div><span id="ltxt">טוען את המודל התלת-ממדי…</span><div class="meter"><i id="lbar" style="width:5%"></i></div></div></div>
 
 <script type="module">
 import * as T from './vendor/three.min.js';
@@ -77,21 +83,47 @@ const KEY='yalla-anatomy-v1';
 const S=Object.assign({best:{},seen:{}},JSON.parse(localStorage.getItem(KEY)||'{}'));
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const REG=[['all','כל השלד','🦴'],['skull','גולגולת','💀'],['neck','צוואר וגרון','🗣️'],['spine','עמוד השדרה','🧍'],['thorax','בית החזה','🫁'],['upper','גפה עליונה','💪'],['hand','כף היד','✋'],['pelvis','אגן','🦴'],['lower','גפה תחתונה','🦵'],['foot','כף הרגל','🦶'],['teeth','שיניים','🦷']];
-const REGC={skull:'#E9C46A',neck:'#90BE6D',spine:'#F4A261',thorax:'#E76F51',upper:'#4D96FF',hand:'#6BCB77',pelvis:'#C77DFF',lower:'#43AA8B',foot:'#F28482',teeth:'#FFFFFF'};
+const MREG=[['all','כל השרירים','💪'],['headneck','ראש וצוואר','🗣️'],['eye','שרירי העין','👁️'],['larynx','גרון','🎤'],['back','גב','🔙'],['trunk','חזה ובטן','🫁'],['arm','זרוע ואמה','💪'],['handm','כף היד','✋'],['thigh','ירך ואגן','🦵'],['leg','שוק','🦶'],['footm','כף הרגל','👣'],['pelvicfloor','רצפת האגן','⭕']];
+const REGC={skull:'#E9C46A',neck:'#90BE6D',spine:'#F4A261',thorax:'#E76F51',upper:'#4D96FF',hand:'#6BCB77',pelvis:'#C77DFF',lower:'#43AA8B',foot:'#F28482',teeth:'#FFFFFF',
+ headneck:'#E9C46A',eye:'#90E0EF',larynx:'#90BE6D',back:'#F4A261',trunk:'#E76F51',arm:'#4D96FF',handm:'#6BCB77',thigh:'#C77DFF',leg:'#43AA8B',footm:'#F28482',pelvicfloor:'#FFB4A2'};
+const BONE='#EDE4D0',MUSC='#B5473E';
 const sideHe=s=>s==='left'?'צד שמאל':s==='right'?'צד ימין':'';
+const regList=()=>layer==='m'?MREG:REG;
 
 /* ---------- data + scene ---------- */
-let D=null,N=null,meshes=[],byId={},scene,camera,renderer,controls,ray=new T.Raycaster(),needs=true,stageReady=false;
-const boneMat=()=>new T.MeshStandardMaterial({color:0xEDE4D0,roughness:.62,metalness:0,transparent:false});
-async function loadData(){
-  if(D) return;
-  $('#loading').hidden=false;
-  const [m,n]=await Promise.all([fetch('data/skeleton.json').then(r=>r.json()),fetch('data/names.json').then(r=>r.json())]);
-  const res=await fetch('data/skeleton.bin');const total=+res.headers.get('content-length')||3700000;
+let N=null,meshes=[],byId={},scene,camera,renderer,controls,ray=new T.Raycaster(),needs=true,stageReady=false,packs={};
+async function fetchBin(url,label){
+  $('#loading').hidden=false;$('#ltxt').textContent=label;$('#lbar').style.width='5%';
+  const res=await fetch(url);const total=+res.headers.get('content-length')||0;
   const reader=res.body.getReader();const chunks=[];let got=0;
-  for(;;){const {done,value}=await reader.read();if(done)break;chunks.push(value);got+=value.length;$('#lbar').style.width=Math.min(98,5+got/total*93)+'%';}
+  for(;;){const {done,value}=await reader.read();if(done)break;chunks.push(value);got+=value.length;if(total)$('#lbar').style.width=Math.min(98,5+got/total*93)+'%';}
   const buf=new Uint8Array(got);let o=0;for(const c of chunks){buf.set(c,o);o+=c.length;}
-  D={meta:m,buf:buf.buffer};N=n;$('#loading').hidden=true;
+  return buf.buffer;
+}
+async function loadPack(name){
+  if(packs[name]) return;
+  if(!N) N=await fetch('data/names.json').then(r=>r.json());
+  const meta=await fetch(`data/${name}.json`).then(r=>r.json());
+  const buf=await fetchBin(`data/${name}.bin`,name==='skeleton'?'טוען את השלד…':'טוען 413 שרירים… (פעם אחת בלבד)');
+  packs[name]={meta,buf};$('#loading').hidden=true;
+  if(stageReady) addPack(name);
+}
+function addPack(name){
+  const {meta,buf}=packs[name];if(packs[name].added)return;packs[name].added=true;
+  const {min,scale,parts}=meta;
+  for(const p of parts){
+    const q=new Uint16Array(buf,p.po,p.v*3),pos=new Float32Array(p.v*3);
+    for(let i=0;i<p.v*3;i++)pos[i]=min[i%3]+q[i]/65535*scale[i%3];
+    const g=new T.BufferGeometry();
+    g.setAttribute('position',new T.BufferAttribute(pos,3));
+    g.setAttribute('normal',new T.BufferAttribute(new Int8Array(buf,p.no,p.v*3),3,true));
+    g.setIndex(new T.BufferAttribute(new Uint16Array(buf,p.io,p.i),1));
+    g.computeBoundingBox();g.computeBoundingSphere();
+    const info=N.names[p.id];const isM=info.L==='m';
+    const mat=new T.MeshStandardMaterial({color:isM?MUSC:BONE,roughness:isM?.5:.62,metalness:0});
+    const mesh=new T.Mesh(g,mat);mesh.userData={id:p.id,info};mesh.renderOrder=isM?2:1;
+    scene.add(mesh);meshes.push(mesh);byId[p.id]=mesh;
+  }
 }
 function initStage(){
   if(stageReady) return;stageReady=true;
@@ -103,22 +135,10 @@ function initStage(){
   scene.add(new T.HemisphereLight(0xFFFFFF,0x334455,1.1));
   const d1=new T.DirectionalLight(0xFFFFFF,1.6);d1.position.set(1,2,3);scene.add(d1);
   const d2=new T.DirectionalLight(0xBFD8FF,.6);d2.position.set(-2,1,-2);scene.add(d2);
-  const {min,scale,parts}=D.meta;
-  for(const p of parts){
-    const q=new Uint16Array(D.buf,p.po,p.v*3),pos=new Float32Array(p.v*3);
-    for(let i=0;i<p.v*3;i++)pos[i]=min[i%3]+q[i]/65535*scale[i%3];
-    const g=new T.BufferGeometry();
-    g.setAttribute('position',new T.BufferAttribute(pos,3));
-    g.setAttribute('normal',new T.BufferAttribute(new Int8Array(D.buf,p.no,p.v*3),3,true));
-    g.setIndex(new T.BufferAttribute(new Uint16Array(D.buf,p.io,p.i),1));
-    g.computeBoundingBox();g.computeBoundingSphere();
-    const mesh=new T.Mesh(g,boneMat());mesh.userData={id:p.id,info:N.names[p.id]};
-    scene.add(mesh);meshes.push(mesh);byId[p.id]=mesh;
-  }
+  Object.keys(packs).forEach(addPack);
   controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.12;controls.addEventListener('change',()=>needs=true);
   controls.minDistance=.05;controls.maxDistance=6;
   const ro=new ResizeObserver(()=>{const w=el.clientWidth,h=el.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;applyShift();needs=true});ro.observe(el);
-  // tap vs drag
   let down=null;
   renderer.domElement.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,t:Date.now()}});
   renderer.domElement.addEventListener('pointerup',e=>{if(!down)return;const dx=Math.abs(e.clientX-down.x),dy=Math.abs(e.clientY-down.y);if(dx<6&&dy<6&&Date.now()-down.t<500)pick(e);down=null});
@@ -140,32 +160,44 @@ function fitTo(list,instant){
 }
 function stepAnim(){const k=Math.min(1,(performance.now()-anim.t0)/550),e=1-Math.pow(1-k,3);camera.position.lerpVectors(anim.p0,anim.p1,e);controls.target.lerpVectors(anim.c0,anim.c1,e);needs=true;if(k>=1)anim=null}
 function frontView(){camera.position.set(0,.9,4);controls.target.set(0,.9,0)}
+function backView(){camera.position.set(0,.9,-4);controls.target.set(0,.9,0)}
 
 /* ---------- display state ---------- */
-let region='all',selected=null,isolated=false,colorByRegion=false,mode='explore',quiz=null;
-const inRegion=m=>region==='all'||m.userData.info.r===region;
+// layer: 'b' = skeleton only, 'm' = muscles over skeleton
+let layer='b',region='all',selected=null,isolated=false,colorByRegion=false,ghost=false,mode='explore',quiz=null;
+const active=m=>m.userData.info.L===layer;                       // pickable layer
+const inRegion=m=>active(m)&&(region==='all'||m.userData.info.r===region);
 function paint(){
+  const qt=mode==='quiz'&&quiz?quiz.target:null;
   for(const m of meshes){
-    const inf=m.userData.info,inR=inRegion(m),sel=m===selected;
-    m.visible=isolated?sel:(region==='all'||inR||!isolated);
+    const inf=m.userData.info,isM=inf.L==='m',sel=m===selected,act=active(m),inR=inRegion(m);
+    let vis=true;
+    if(isM&&layer==='b') vis=false;
+    if(isolated) vis=sel;
+    m.visible=vis;
     const mat=m.material;
-    let col=colorByRegion?REGC[inf.r]:'#EDE4D0';
-    if(mode==='quiz'&&quiz&&quiz.target===m){col='#F2A516'}
-    else if(sel){col='#22C3BA'}
+    let col=colorByRegion&&act?REGC[inf.r]:(isM?MUSC:BONE);
+    if(qt===m) col='#F2A516'; else if(sel) col='#22C3BA';
     mat.color.set(col);
-    const faded=region!=='all'&&!inR;
-    mat.transparent=faded;mat.opacity=faded?.12:1;mat.depthWrite=!faded;
-    mat.emissive.set(sel||(mode==='quiz'&&quiz&&quiz.target===m)?'#103A38':'#000');
+    // fade: outside the chosen region, or bones under a ghosted muscle layer
+    let op=1;
+    if(region!=='all'&&!inR&&!sel&&qt!==m) op=act?.12:(isM?.06:.35);
+    if(isM&&ghost&&!sel&&qt!==m) op=Math.min(op,.2);
+    if(qt&&isM&&qt!==m) op=Math.min(op,.08);
+    mat.transparent=op<1;mat.opacity=op;mat.depthWrite=op>=1;
+    mat.emissive.set(sel||qt===m?'#103A38':'#000');
+    // the quiz target always shows through other structures
+    mat.depthTest=qt!==m;m.renderOrder=qt===m?10:(isM?2:1);if(qt===m){mat.transparent=true;mat.opacity=1}
   }
   needs=true;
 }
 function pick(e){
+  if(mode==='quiz') return;
   const r=renderer.domElement.getBoundingClientRect();
   const v=new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
   ray.setFromCamera(v,camera);
-  const cands=meshes.filter(m=>m.visible&&!(m.material.transparent&&m.material.opacity<.5));
+  const cands=meshes.filter(m=>m.visible&&active(m)&&!(m.material.transparent&&m.material.opacity<.2));
   const hit=ray.intersectObjects(cands,false)[0];
-  if(mode==='quiz') return;
   select(hit?hit.object:null);
 }
 function select(m,focus){
@@ -175,108 +207,131 @@ function select(m,focus){
 }
 
 /* ---------- screens ---------- */
+function bestTxt(k){const b=S.best[k];return b!=null?'שיא: '+b+'/10':'עוד לא נבחנת'}
 function home(){
   mode='explore';$('#stage').hidden=true;$('#ui').hidden=true;$('#home').hidden=false;
   const seen=Object.keys(S.seen).length;
-  const tiles=REG.filter(r=>r[0]!=='all').map(([k,he,e])=>{const b=S.best[k];return `<button class="tile" data-q="${k}" style="--c:${REGC[k]==='#FFFFFF'?'#9AA':REGC[k]}"><span class="e">${e}</span><b>${he}</b><span>${b!=null?'שיא בבוחן: '+b+'/10':'עוד לא נבחנת'}</span></button>`}).join('');
+  const tile=(k,he,e,pre)=>`<button class="tile" data-q="${pre}${k}" style="--c:${REGC[k]==='#FFFFFF'?'#9AA':REGC[k]}"><span class="e">${e}</span><b>${he}</b><span>${bestTxt(pre+k)}</span></button>`;
   $('#home').innerHTML=`
-  <div class="card hero"><div class="label">Yalla Anatomy · שלד האדם בתלת-ממד</div>
+  <div class="card hero"><div class="label">Yalla Anatomy · גוף האדם בתלת-ממד</div>
    <h1>לומדים אנטומיה כמו בחדר הדיסקציה</h1>
-   <p>סובבו, הגדילו ולחצו על כל עצם כדי לראות את שמה בעברית, בלטינית ובאנגלית.</p>
-   <button class="btn wide" id="go">🦴 לחקור את השלד</button>
-   <div class="label">צפית ב-${seen} מתוך 280 מבנים</div><div class="meter"><i style="width:${seen/2.8}%;background:#fff"></i></div></div>
+   <p>סובבו, הגדילו ולחצו על כל מבנה כדי לראות את שמו בעברית, בלטינית ובאנגלית.</p>
+   <div class="row"><button class="btn" id="go">🦴 שלד</button><button class="btn" id="gom">💪 שרירים</button></div>
+   <div class="label">צפית ב-${seen} מתוך 693 מבנים</div><div class="meter"><i style="width:${seen/6.93}%;background:#fff"></i></div></div>
   <h2>🎯 בוחן "זהה את המבנה"</h2>
-  <p class="label">העצם מסומנת בכתום על המודל, ואתם בוחרים את השם הנכון. 10 שאלות בכל בוחן.</p>
-  <button class="btn ghost wide" data-q="all">🎯 בוחן על כל השלד</button>
-  <div class="grid2">${tiles}</div>
+  <p class="label">המבנה מסומן בכתום על המודל, ואתם בוחרים את השם הנכון. 10 שאלות בכל בוחן.</p>
+  <h3>🦴 עצמות</h3>
+  <button class="btn ghost wide" data-q="b:all">🎯 בוחן על כל השלד</button>
+  <div class="grid2">${REG.filter(r=>r[0]!=='all').map(([k,he,e])=>tile(k,he,e,'b:')).join('')}</div>
+  <h3>💪 שרירים</h3>
+  <button class="btn ghost wide" data-q="m:all">🎯 בוחן על כל השרירים</button>
+  <div class="grid2">${MREG.filter(r=>r[0]!=='all').map(([k,he,e])=>tile(k,he,e,'m:')).join('')}</div>
   <div class="card credit"><b>מקור המודל</b>
    <span>המודל התלת-ממדי מבוסס על BodyParts3D, © The Database Center for Life Science, ברישיון <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. בוצעו התאמות: פישוט הגאומטריה, דחיסה, שמות בעברית ובלטינית. מיועד ללימוד בלבד ואינו כלי רפואי.</span>
    <span><a href="privacy.html">מדיניות פרטיות</a></span></div>`;
-  $('#go').onclick=()=>explore('all');
-  document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>startQuiz(b.dataset.q));
+  $('#go').onclick=()=>explore('b','all');$('#gom').onclick=()=>explore('m','all');
+  document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const [L,r]=b.dataset.q.split(':');startQuiz(L,r)});
 }
-async function openStage(){
-  $('#home').hidden=true;await loadData();initStage();$('#stage').hidden=false;$('#ui').hidden=false;
+async function openStage(L){
+  $('#home').hidden=true;await loadPack('skeleton');if(L==='m')await loadPack('muscles');initStage();$('#stage').hidden=false;$('#ui').hidden=false;
 }
-async function explore(r){
-  await openStage();mode='explore';quiz=null;setShift(0);region=r||'all';selected=null;isolated=false;
+async function explore(L,r){
+  await openStage(L);mode='explore';quiz=null;layer=L;region=r||'all';selected=null;isolated=false;setShift(0);
   frontView();paint();fitTo(meshes.filter(inRegion),true);renderUI();
 }
-function chipsHTML(){return `<div class="chips">${REG.map(([k,he])=>`<button data-r="${k}" class="${k===region?'on':''}">${he}</button>`).join('')}</div>`}
+async function setLayer(L){
+  if(L===layer)return;
+  if(L==='m'&&!packs.muscles){await loadPack('muscles')}
+  layer=L;region='all';selected=null;isolated=false;setShift(0);paint();fitTo(meshes.filter(inRegion));renderUI();
+}
+function chipsHTML(){return `<div class="chips">${regList().map(([k,he])=>`<button data-r="${k}" class="${k===region?'on':''}">${he}</button>`).join('')}</div>`}
 function renderUI(){
   $('#ui').innerHTML=`
-   <div class="bar"><button class="x" id="back" aria-label="חזרה">→</button><div class="ttl">חקירת השלד</div>
-     <button class="x" id="srch" aria-label="חיפוש">🔍</button><button class="x" id="clr" aria-label="צבע לפי אזור">🎨</button><button class="x" id="reset" aria-label="מבט קדמי">⟲</button></div>
-   <div id="sbox" hidden><div class="search"><input id="sq" placeholder="חיפוש: עצם הירך / femur / צלע…" autocomplete="off"></div><div class="results" id="sres"></div></div>
+   <div class="bar"><button class="x" id="back" aria-label="חזרה">→</button>
+     <div class="seg"><button data-l="b" class="${layer==='b'?'on':''}">🦴 שלד</button><button data-l="m" class="${layer==='m'?'on':''}">💪 שרירים</button></div>
+     <div style="flex:1"></div>
+     <button class="x" id="srch" aria-label="חיפוש">🔍</button><button class="x" id="more" aria-label="אפשרויות">⋯</button></div>
+   <div id="menu" class="menu" hidden>
+     <button id="clr">🎨 צבע לפי אזור${colorByRegion?' ✓':''}</button>
+     ${layer==='m'?`<button id="gh">👻 שרירים שקופים${ghost?' ✓':''}</button>`:''}
+     <button id="fv">⟲ מבט מלפנים</button><button id="bv">↺ מבט מאחור</button></div>
+   <div id="sbox" hidden><div class="search"><input id="sq" placeholder="חיפוש: עצם הירך / femur / biceps…" autocomplete="off"></div><div class="results" id="sres"></div></div>
    ${chipsHTML()}
    <div class="spacer"></div>
    <div id="sheet"></div>`;
   $('#back').onclick=home;
-  $('#reset').onclick=()=>{frontView();fitTo(meshes.filter(m=>m.visible&&inRegion(m)),true)};
-  $('#clr').onclick=()=>{colorByRegion=!colorByRegion;paint()};
+  document.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>setLayer(b.dataset.l));
+  $('#more').onclick=()=>{$('#menu').hidden=!$('#menu').hidden};
+  $('#clr').onclick=()=>{colorByRegion=!colorByRegion;paint();renderUI()};
+  if($('#gh'))$('#gh').onclick=()=>{ghost=!ghost;paint();renderUI()};
+  $('#fv').onclick=()=>{frontView();fitTo(meshes.filter(m=>m.visible&&inRegion(m)),true);$('#menu').hidden=true};
+  $('#bv').onclick=()=>{backView();fitTo(meshes.filter(m=>m.visible&&inRegion(m)),true);$('#menu').hidden=true};
   $('#srch').onclick=()=>{const b=$('#sbox');b.hidden=!b.hidden;if(!b.hidden)$('#sq').focus()};
   $('#sq').oninput=e=>search(e.target.value);
-  document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{region=b.dataset.r;isolated=false;if(selected&&!inRegion(selected))selected=null;paint();fitTo(meshes.filter(inRegion));renderUI()});
+  document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{region=b.dataset.r;isolated=false;if(selected&&!inRegion(selected))selected=null;setShift(selected?.16:0);paint();fitTo(meshes.filter(inRegion));renderUI()});
   renderSheet();
 }
 function search(q){
   q=q.trim().toLowerCase();const box=$('#sres');if(q.length<2){box.innerHTML='';return}
   const seen=new Set(),out=[];
   for(const m of meshes){const i=m.userData.info;const hay=(i.he+' '+i.la+' '+i.en).toLowerCase();if(hay.includes(q)){const k=i.he+i.side;if(seen.has(k))continue;seen.add(k);out.push(m)}if(out.length>=30)break}
-  box.innerHTML=out.length?out.map(m=>{const i=m.userData.info;return `<button data-id="${m.userData.id}">${esc(i.he)} ${i.side?'· '+sideHe(i.side):''}<small>${esc(i.la)}</small></button>`}).join(''):'<div style="padding:12px">לא נמצא</div>';
-  box.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{$('#sbox').hidden=true;const m=byId[b.dataset.id];region='all';renderUI();select(m,true)});
+  box.innerHTML=out.length?out.map(m=>{const i=m.userData.info;return `<button data-id="${m.userData.id}">${i.L==='m'?'💪':'🦴'} ${esc(i.he)} ${i.side?'· '+sideHe(i.side):''}<small>${esc(i.la)}</small></button>`}).join(''):'<div style="padding:12px">לא נמצא'+(packs.muscles?'':' (שרירים ייטענו כשתעברו ללשונית "שרירים")')+'</div>';
+  box.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{$('#sbox').hidden=true;const m=byId[b.dataset.id];layer=m.userData.info.L;region='all';renderUI();select(m,true)});
 }
+function regName(i){const l=(i.L==='m'?MREG:REG).find(r=>r[0]===i.r);return l?l[1]:''}
 function renderSheet(){
   const el=$('#sheet');if(!el)return;
-  if(!selected){el.innerHTML=`<div class="hint">👆 לחצו על עצם · גררו כדי לסובב · צבטו כדי להגדיל</div>`;return}
-  const i=selected.userData.info,rg=REG.find(r=>r[0]===i.r);
+  if(!selected){el.innerHTML=`<div class="hint">👆 לחצו על ${layer==='m'?'שריר':'עצם'} · גררו כדי לסובב · צבטו כדי להגדיל</div>`;return}
+  const i=selected.userData.info;
   el.innerHTML=`<div class="sheet">
-   <div><span class="tag">${rg?rg[1]:''}</span>${i.side?`<span class="tag">${sideHe(i.side)}</span>`:''}</div>
+   <div><span class="tag">${i.L==='m'?'💪 שריר':'🦴 עצם'}</span><span class="tag">${regName(i)}</span>${i.side?`<span class="tag">${sideHe(i.side)}</span>`:''}</div>
    <div class="he">${esc(i.he)}</div><div class="la">${esc(i.la)}</div><div class="en">${esc(i.en)}</div>
-   <div class="row" style="flex-wrap:nowrap"><button class="mini" id="iso">${isolated?'👁️ הצג הכל':'🔎 בודד'}</button><button class="mini" id="foc">🎯 התמקד</button><button class="mini" id="say">🔊</button><button class="mini" id="cls">✕</button></div></div>`;
+   <div class="row" style="flex-wrap:nowrap"><button class="mini" id="iso">${isolated?'👁️ הצג הכל':'🔎 בודד'}</button><button class="mini" id="foc">🎯 התמקד</button><button class="mini" id="say" aria-label="השמעה">🔊</button><button class="mini" id="cls" aria-label="סגירה">✕</button></div></div>`;
   $('#iso').onclick=()=>{isolated=!isolated;paint();fitTo(isolated?[selected]:meshes.filter(m=>m.visible&&inRegion(m)));renderSheet()};
   $('#foc').onclick=()=>fitTo([selected]);
   $('#cls').onclick=()=>select(null);
   $('#say').onclick=()=>speak(i);
 }
-function speak(i){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(i.he);u.lang='he-IL';u.rate=.95;speechSynthesis.speak(u);const u2=new SpeechSynthesisUtterance(i.la.replace(/\(.*?\)/g,''));u2.lang='it-IT';u2.rate=.9;speechSynthesis.speak(u2)}catch(e){}}
+function speak(i){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(i.he);u.lang='he-IL';u.rate=.95;speechSynthesis.speak(u);const u2=new SpeechSynthesisUtterance(i.la.replace(/\(.*?\)/g,'').replace(/^Mm?\. /,'musculus '));u2.lang='it-IT';u2.rate=.9;speechSynthesis.speak(u2)}catch(e){}}
 
 /* ---------- quiz ---------- */
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
 const uniqKey=m=>m.userData.info.he;
-async function startQuiz(r){
-  await openStage();mode='quiz';setShift(.22);region=r;selected=null;isolated=false;
+async function startQuiz(L,r){
+  await openStage(L);mode='quiz';setShift(.22);layer=L;region=r;selected=null;isolated=false;ghost=false;colorByRegion=false;
   const pool=meshes.filter(inRegion);const byName={};pool.forEach(m=>{(byName[uniqKey(m)]??=[]).push(m)});
   const names=shuffle(Object.keys(byName)).slice(0,10);
-  quiz={r,pool,byName,qs:names.map(n=>byName[n][Math.random()*byName[n].length|0]),i:0,score:0,answered:false,target:null};
+  quiz={L,r,pool,byName,qs:names.map(n=>byName[n][Math.random()*byName[n].length|0]),i:0,score:0,answered:false,target:null};
   frontView();fitTo(pool,true);nextQ();
 }
 function nextQ(){
   const q=quiz;if(q.i>=q.qs.length) return endQuiz();
   q.target=q.qs[q.i];q.answered=false;
   const correct=uniqKey(q.target);
-  const others=shuffle(Object.keys(q.byName).filter(n=>n!==correct));
-  // fall back to whole skeleton for distractors when a region is small
-  let pool=others;if(pool.length<3){const all=[...new Set(meshes.map(uniqKey))].filter(n=>n!==correct);pool=shuffle(all)}
+  let pool=shuffle(Object.keys(q.byName).filter(n=>n!==correct));
+  if(pool.length<3){pool=shuffle([...new Set(meshes.filter(active).map(uniqKey))].filter(n=>n!==correct))}
   q.opts=shuffle([correct,...pool.slice(0,3)]);
-  paint();fitTo([q.target,...q.pool.filter(m=>m!==q.target&&m.geometry.boundingSphere.center.distanceTo(q.target.geometry.boundingSphere.center)<Math.max(.05,q.target.geometry.boundingSphere.radius*2.5))].slice(0,25));
+  // look at the target from the side it faces (front or back)
+  const c=q.target.geometry.boundingSphere.center,bodyZ=.02;
+  camera.position.set(controls.target.x,controls.target.y,c.z<bodyZ-.03?-4:4);
+  paint();fitTo([q.target,...q.pool.filter(m=>m!==q.target&&m.geometry.boundingSphere.center.distanceTo(c)<Math.max(.04,q.target.geometry.boundingSphere.radius*1.2))].slice(0,12));
   renderQuiz();
 }
 function infoOf(name){const m=meshes.find(x=>uniqKey(x)===name);return m.userData.info}
 function renderQuiz(){
-  const q=quiz,rg=REG.find(r=>r[0]===q.r);
+  const q=quiz,rg=(q.L==='m'?MREG:REG).find(r=>r[0]===q.r);
   $('#ui').innerHTML=`
    <div class="bar"><button class="x" id="back" aria-label="יציאה">✕</button><div class="ttl">🎯 ${rg[1]} · ${q.i+1}/${q.qs.length}</div><button class="x" id="foc" aria-label="התמקד">🎯</button></div>
    <div class="bar" style="margin-top:8px"><div class="qbar"><i style="width:${q.i/q.qs.length*100}%"></i></div></div>
    <div class="spacer"></div>
-   <div class="sheet"><b>מה שם המבנה המסומן בכתום?</b>${q.target.userData.info.side?`<span class="label">${sideHe(q.target.userData.info.side)} של הגוף</span>`:''}
+   <div class="sheet"><b>מה שם ה${q.L==='m'?'שריר':'מבנה'} המסומן בכתום?</b>${q.target.userData.info.side?`<span class="label">${sideHe(q.target.userData.info.side)} של הגוף</span>`:''}
     <div class="opts">${q.opts.map((n,k)=>{const i=infoOf(n);return `<button class="opt" data-k="${k}"><span>${esc(i.he)}</span><small>${esc(i.la)}</small></button>`}).join('')}</div>
     <div id="fb"></div></div>`;
   $('#back').onclick=home;
   $('#foc').onclick=()=>fitTo([q.target]);
-  document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(+b.dataset.k,b));
+  document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(+b.dataset.k));
 }
-function answer(k,btn){
+function answer(k){
   const q=quiz;if(q.answered)return;q.answered=true;
   const correct=uniqKey(q.target),ok=q.opts[k]===correct;if(ok)q.score++;
   document.querySelectorAll('.opt').forEach((b,j)=>{if(q.opts[j]===correct)b.classList.add('ok');else if(j===k)b.classList.add('no')});
@@ -285,16 +340,15 @@ function answer(k,btn){
   $('#nx').onclick=()=>{q.i++;nextQ()};
 }
 function endQuiz(){
-  const q=quiz;S.best[q.r]=Math.max(S.best[q.r]||0,q.score);save();
+  const q=quiz,key=q.L+':'+q.r;S.best[key]=Math.max(S.best[key]||0,q.score);save();
   q.target=null;paint();fitTo(q.pool);
   $('#ui').innerHTML=`<div class="spacer"></div><div class="sheet" style="text-align:center">
    <div style="font-size:44px">${q.score>=8?'🏆':q.score>=5?'💪':'📚'}</div><div class="he">${q.score} מתוך ${q.qs.length}</div>
    <p>${q.score>=8?'מצוין! אתם מכירים את האזור הזה.':q.score>=5?'יפה! עוד סבב אחד ותשלטו.':'כדאי לחקור את האזור ואז לנסות שוב.'}</p>
    <div class="row"><button class="btn" id="again">שוב</button><button class="btn ghost" id="exp">לחקור</button></div>
    <button class="mini" id="hm" style="align-self:center">🏠 לדף הבית</button></div>`;
-  $('#again').onclick=()=>startQuiz(q.r);$('#exp').onclick=()=>explore(q.r);$('#hm').onclick=home;
+  $('#again').onclick=()=>startQuiz(q.L,q.r);$('#exp').onclick=()=>explore(q.L,q.r);$('#hm').onclick=home;
 }
-
 home();
 </script>
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));</script>
