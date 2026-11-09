@@ -109,6 +109,11 @@ h3{font-size:18px;font-weight:600}
 .rev{display:flex;flex-wrap:wrap;gap:6px}.rev button{border:1px solid #E3D6D6;background:#FFF5F5;border-radius:999px;padding:6px 10px;font:inherit;font-size:14px;cursor:pointer}
 .favi{display:block;width:100%;text-align:right;font:inherit;border:0;cursor:pointer}
 .btn[disabled]{opacity:.45}
+.heat{display:grid;grid-template-columns:repeat(14,1fr);gap:4px;margin:10px 0 2px}.heat i{aspect-ratio:1;border-radius:4px;background:var(--good)}
+.sw{display:flex;gap:10px;align-items:center;padding:6px 0;font-size:16px}.sw input{width:22px;height:22px}
+:focus-visible{outline:3px solid #2E6FD8!important;outline-offset:2px}
+body.hc{--soft:#2B3440}body.hc .label,body.hc .desc{color:#1C232C}body.hc .card,body.hc .sheet,body.hc .opt,body.hc .tile{border:2px solid #1C232C!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
 <div id="home" class="page"></div>
@@ -219,7 +224,7 @@ function initStage(){
   if(stageReady) return;stageReady=true;
   const el=$('#stage');
   renderer=new T.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:/[?&]shot/.test(location.search)});renderer.setPixelRatio(Math.min(2,devicePixelRatio));renderer.localClippingEnabled=true;
-  el.appendChild(renderer.domElement);
+  el.appendChild(renderer.domElement);renderer.domElement.setAttribute('role','img');renderer.domElement.setAttribute('aria-label','מודל תלת-ממדי של גוף האדם. אפשר לחפש מבנה בשמו בכפתור החיפוש.');
   scene=new T.Scene();
   camera=new T.PerspectiveCamera(35,1,.01,50);
   scene.add(new T.HemisphereLight(0xFFFFFF,0x334455,1.1));
@@ -300,31 +305,35 @@ function pick(e){
 }
 function select(m,focus){
   selected=m;group=null;custom=null;hiRefs=[];stopPulse();if(!m)isolated=false;if(mode==='explore')setShift(m?.2:0);paint();
-  if(m){S.seen[m.userData.id]=1;save();if(focus)fitTo([m])}
+  if(m){if(!S.seen[m.userData.id])bump();S.seen[m.userData.id]=1;save();if(focus)fitTo([m])}
   renderSheet();
 }
 
 /* ---------- home ---------- */
 function bestTxt(k){const b=S.best[k];return b!=null?'שיא: '+b+'/10':'עוד לא נבחנת'}
 function home(){
-  mode='explore';extraL=null;if(run&&run.tm){clearInterval(run.tm);run.tm=null}$('#stage').hidden=true;$('#ui').hidden=true;$('#home').hidden=false;stopPulse();
+  mode='explore';extraL=null;clearMarker();if(run&&run.tm){clearInterval(run.tm);run.tm=null}$('#stage').hidden=true;$('#ui').hidden=true;$('#home').hidden=false;stopPulse();
   if(clip){clip=null;renderer.clippingPlanes=[]}
   const seen=Object.keys(S.seen).length;
   const tile=(L,k,he,e)=>`<button class="tile" data-q="${L}:${k}" style="--c:${(REGC[k]||LAYERS[L].col)==='#FFFFFF'?'#9AA':(REGC[k]||LAYERS[L].col)}"><span class="e">${e}</span><b>${he}</b><span>${bestTxt(L+':'+k)}</span></button>`;
-  const due=cardsDue().length;
+  const due=allDue();
   $('#home').innerHTML=`
   <div class="card hero"><div class="label">Yalla Anatomy · גוף האדם בתלת-ממד</div>
    <h1>לומדים אנטומיה כמו בחדר הדיסקציה</h1>
    <p>סובבו, הגדילו ולחצו על כל מבנה כדי לראות את שמו בעברית, בלטינית ובאנגלית.</p>
    <div class="layers">${Object.entries(LAYERS).map(([k,l])=>`<button data-go="${k}"><span>${l.e}</span>${l.he}</button>`).join('')}</div>
    <div class="label">צפית ב-${seen} מבנים</div><div class="meter"><i style="width:${Math.min(100,seen/20)}%;background:#fff"></i></div></div>
-  <button class="card fc" id="fc"><div class="row" style="align-items:center"><div style="flex:none;font-size:34px">🗂️</div><div><b>כרטיסיות שרירים לחזרה</b><div class="label">מוצא · אחיזה · פעולה · עצבוב${due?` · ${due} לחזרה היום`:''}</div></div></div></button>
+  <button class="card fc" id="fc"><div class="row" style="align-items:center"><div style="flex:none;font-size:34px">🗂️</div><div><b>כרטיסיות לחזרה</b><div class="label">עצמות · שרירים · רצועות · עצבים · איברים · כלי דם${due?` · ${due} לחזרה היום`:''}</div></div></div></button>
   <div class="grid2">
    <button class="tile" id="exam" style="--c:#2E6FD8"><span class="e">⏱️</span><b>מבחן מסכם</b><span>20 שאלות · 20 דקות${S.exams&&S.exams.length?' · אחרון: '+S.exams[S.exams.length-1].s+'/'+S.exams[S.exams.length-1].n:''}</span></button>
    <button class="tile" id="flow" style="--c:#C0392B"><span class="e">🫀</span><b>זרימת הדם</b><span>מסלול הדם בלב ובגוף, צעד אחר צעד</span></button></div>
   <h2>🩺 מקרים קליניים</h2>
   <p class="label">תיאור של מטופל, ואתם מזהים איזה מבנה נפגע. אחרי התשובה המבנה מסומן על המודל עם הסבר.</p>
   <div class="gchips">${Object.entries(TRACK_HE).map(([k,h])=>`<button data-case="${k}">${h}${S.best['cases:'+k]!=null?' · '+S.best['cases:'+k]+'/10':''}</button>`).join('')}</div>
+  <h2>🩹 מעשי וקליני</h2>
+  <div class="grid2">${Object.entries(TOPICS).map(([k,t])=>`<button class="tile" data-topic="${k}" style="--c:${t.c}"><span class="e">${t.e}</span><b>${t.he}</b><span>${t.items.length} ${t.unit}</span></button>`).join('')}</div>
+  <div class="grid2"><button class="tile" id="prog" style="--c:#16A085"><span class="e">📈</span><b>ההתקדמות שלי</b><span>${streak()?'🔥 '+streakTxt(streak()):'היום: '+todayCount()+'/'+(S.goal||20)}</span></button>
+   <button class="tile" id="sett" style="--c:#6B7A8F"><span class="e">⚙️</span><b>הגדרות ונגישות</b><span>גודל טקסט · ניגודיות · הקראה</span></button></div>
   <button class="card fc" id="favs"><div class="row" style="align-items:center"><div style="flex:none;font-size:30px">⭐</div><div><b>המועדפים וההערות שלי</b><div class="label">${Object.values(S.fav||{}).filter(f=>f.star||f.note).length} מבנים שמורים</div></div></div></button>
   <h2>🧭 מסלולי לימוד</h2>
   <div class="grid2">${TRACKS.map(t=>`<button class="tile" data-track="${t.id}" style="--c:${t.c}"><span class="e">${t.e}</span><b>${t.he}</b><span>${trackDone(t)}/${t.steps.length} שלבים</span></button>`).join('')}</div>
@@ -342,7 +351,7 @@ function home(){
   <div class="card credit"><b>מקור המודל</b>
    <span>המודל התלת-ממדי מבוסס על BodyParts3D, © The Database Center for Life Science, ברישיון <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. בוצעו התאמות: פישוט הגאומטריה, דחיסה, שמות בעברית ובלטינית ותוכן לימודי. שכבות הרצועות והעצבים מבוססות על <a href="https://www.z-anatomy.com" target="_blank" rel="noopener">Z-Anatomy</a> (גם הוא נגזר מ-BodyParts3D), ברישיון <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>; קבצי המודל של שכבות אלה (data/joints, data/nerves), כולל ההתאמות שלנו, מופצים באותו רישיון. מיועד ללימוד בלבד ואינו כלי רפואי.</span>
    <button class="btn ghost wide" id="offl" ${S.offline?'':''}>${S.offline?'✓ הורד לשימוש בלי אינטרנט (לחצו לרענון)':'⬇️ הורדת כל השכבות לשימוש בלי אינטרנט (כ-32MB)'}</button>
-   <span><a href="privacy.html">מדיניות פרטיות</a> · <a href="terms.html">תנאי שימוש</a></span></div>`;
+   <span><a href="accessibility.html">הצהרת נגישות</a> · <a href="privacy.html">מדיניות פרטיות</a> · <a href="terms.html">תנאי שימוש</a></span></div>`;
   const drawTab=()=>{const l=LAYERS[homeTab];
     $('#tabbody').innerHTML=`<button class="btn ghost wide" data-q="${homeTab}:all">🎯 בוחן: ${l.reg[0][1]}</button>
      <button class="btn ghost wide" data-q="${homeTab}:all:tap">👆 מבחן מעשי: מצאו על המודל</button>
@@ -355,8 +364,9 @@ function home(){
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{homeTab=b.dataset.tab;document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));drawTab()});
   document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>explore(b.dataset.go,'all'));
   document.querySelectorAll('[data-grp]').forEach(b=>b.onclick=async()=>{await explore('m','all');showGroup(b.dataset.grp)});
-  $('#fc').onclick=flashcards;
-  $('#exam').onclick=runExam;$('#flow').onclick=bloodFlow;$('#favs').onclick=favList;$('#offl').onclick=e=>downloadAll(e.currentTarget);
+  $('#fc').onclick=flashDecks;
+  $('#exam').onclick=runExam;$('#prog').onclick=progress;$('#sett').onclick=settings;
+  document.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>topic(b.dataset.topic));$('#flow').onclick=bloodFlow;$('#favs').onclick=favList;$('#offl').onclick=e=>downloadAll(e.currentTarget);
   document.querySelectorAll('[data-case]').forEach(b=>b.onclick=()=>runCases(b.dataset.case));
   document.querySelectorAll('[data-track]').forEach(b=>b.onclick=()=>openTrack(b.dataset.track));
   document.querySelectorAll('[data-joint]').forEach(b=>b.onclick=()=>showJoint(b.dataset.joint));
@@ -368,7 +378,7 @@ async function openStage(L){
   $('#home').hidden=true;await loadPack('skeleton');if(L!=='b')await loadPack(LAYERS[L].pack);initStage();$('#stage').hidden=false;$('#ui').hidden=false;
 }
 async function explore(L,r){
-  await openStage(L);mode='explore';extraL=null;quiz=null;layer=L;region=r||'all';selected=null;group=null;custom=null;stopPulse();hiRefs=[];isolated=false;setShift(0);
+  await openStage(L);mode='explore';extraL=null;clearMarker();quiz=null;layer=L;region=r||'all';selected=null;group=null;custom=null;stopPulse();hiRefs=[];isolated=false;setShift(0);
   frontView();paint();fitTo(meshes.filter(inRegion),true);renderUI();
 }
 async function setLayer(L){
@@ -496,7 +506,7 @@ function speak(i,o={}){
     if(!HV&&(!o.quiet||!warnedVoice)){warnedVoice=true;toast('אין קול עברי במכשיר, מוקרא השם הלטיני')}
   }catch(e){if(!o.quiet)toast('שגיאת הקראה')}
 }
-function toast(t){const d=document.createElement('div');d.textContent=t;d.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#16202B;color:#fff;padding:8px 14px;border-radius:999px;z-index:9;font-size:14px';document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}
+function toast(t){const d=document.createElement('div');d.setAttribute('role','status');d.setAttribute('aria-live','polite');d.textContent=t;d.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#16202B;color:#fff;padding:8px 14px;border-radius:999px;z-index:9;font-size:14px';document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}
 
 /* ---------- quiz ---------- */
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -553,7 +563,7 @@ function tapAnswer(e){
   if(hit)tapResult(hit.object);
 }
 function tapResult(m){
-  const q=quiz;q.answered=true;const ok=!!m&&nameOf(m.userData.info)===nameOf(q.target.userData.info);
+  const q=quiz;q.answered=true;bump();const ok=!!m&&nameOf(m.userData.info)===nameOf(q.target.userData.info);
   if(ok){q.score++;q.target=m}else q.wrong=m;
   paint();if(!ok)fitTo([q.target,...(m?[m]:[])]);
   $('#fb').innerHTML=`<p style="font-weight:600;color:${ok?'var(--good)':'var(--bad)'}">${ok?'נכון! 👏':m?'לא. לחצת על: '+esc(nameOf(m.userData.info))+'. המקום הנכון מסומן בכתום.':'המקום הנכון מסומן בכתום.'}</p><button class="btn wide" id="nx">${q.i+1<q.qs.length?'לשאלה הבאה':'לתוצאות'}</button>`;
@@ -561,7 +571,7 @@ function tapResult(m){
 }
 function answer(k){
   const q=quiz;if(q.answered)return;q.answered=true;
-  const correct=ansOf(q.target,q.kind),ok=q.opts[k]===correct;if(ok)q.score++;
+  const correct=ansOf(q.target,q.kind),ok=q.opts[k]===correct;if(ok)q.score++;bump();
   document.querySelectorAll('.opt').forEach((b,j)=>{if(q.opts[j]===correct)b.classList.add('ok');else if(j===k)b.classList.add('no')});
   $('#fb').innerHTML=`<p style="font-weight:600;color:${ok?'var(--good)':'var(--bad)'}">${ok?'נכון! 👏':'לא נכון.'}${q.kind!=='name'||!ok?' '+esc(nameOf(q.target.userData.info)):''}</p><button class="btn wide" id="nx">${q.i+1<q.qs.length?'לשאלה הבאה':'לתוצאות'}</button>`;
   $('#nx').onclick=()=>{q.i++;nextQ()};
@@ -742,13 +752,25 @@ function worksheet(){
 /* ---------- flashcards (Leitner boxes, muscles) ---------- */
 const BOX_DAYS=[0,1,3,7,16];
 const dayNum=()=>Math.floor(Date.now()/864e5);
-function allCards(){if(!N||!N.oian)return [];const seen=new Set(),out=[];for(const [id,i] of Object.entries(N.names)){if(i.L==='m'&&i.k&&N.oian[i.k]&&!seen.has(i.k)){seen.add(i.k);out.push({k:i.k,id,i})}}return out}
-function cardsDue(){const t=dayNum();return allCards().filter(c=>{const s=S.cards[c.k];return !s||s.due<=t})}
+function allCards(L='m'){if(!N)return [];const seen=new Set(),out=[];for(const [id,i] of Object.entries(N.names)){if(i.L!==L)continue;
+  if(L==='m'){if(i.k&&N.oian&&N.oian[i.k]&&!seen.has(i.k)){seen.add(i.k);out.push({k:i.k,id,i,L})}}
+  else{const n=nameOf(i);if(i.s&&!seen.has(n)){seen.add(n);out.push({k:L+':'+(i.la||i.en),id,i,L})}}}return out}
+function cardsDue(L='m'){const t=dayNum();return allCards(L).filter(c=>{const s=S.cards[c.k];return !s||s.due<=t})}
+const FC_DECKS=['b','m','j','n','o','v'];
+function allDue(){return FC_DECKS.reduce((a,L)=>a+cardsDue(L).filter(c=>S.cards[c.k]).length,0)}
 let FC=null;
-async function flashcards(){
+async function flashDecks(){
+  await loadNames();$('#home').hidden=false;$('#stage').hidden=true;$('#ui').hidden=true;
+  $('#home').innerHTML=`<div class="top"><button class="x" id="hb" aria-label="חזרה">→</button><h2>🗂️ כרטיסיות לחזרה</h2></div>
+   <p class="label">חזרה מרווחת: מה שלא ידעתם חוזר מחר, ומה שידעתם חוזר אחרי כמה ימים. כל יום מקבלים עד 20 כרטיסיות.</p>
+   <div class="grid2">${FC_DECKS.map(L=>{const all=allCards(L),due=cardsDue(L),rev=due.filter(c=>S.cards[c.k]).length,mast=all.filter(c=>(S.cards[c.k]||{}).box>=3).length;
+     return `<button class="tile" data-deck="${L}" style="--c:${LAYERS[L].col==='#EDE4D0'?'#B9A77F':LAYERS[L].col}"><span class="e">${LAYERS[L].e}</span><b>${LAYERS[L].he}</b><span>${rev?rev+' לחזרה היום · ':''}${mast}/${all.length} נשלטו</span></button>`}).join('')}</div>`;
+  $('#hb').onclick=home;document.querySelectorAll('[data-deck]').forEach(b=>b.onclick=()=>flashcards(b.dataset.deck));
+}
+async function flashcards(L='m'){
   await loadNames();
-  if(!N.oian){toast('הכרטיסיות עוד לא זמינות');return}
-  const due=shuffle(cardsDue());const fresh=due.filter(c=>!S.cards[c.k]).slice(0,10),rev=due.filter(c=>S.cards[c.k]);
+  if(L==='m'&&!N.oian){toast('הכרטיסיות עוד לא זמינות');return}
+  const due=shuffle(cardsDue(L));const fresh=due.filter(c=>!S.cards[c.k]).slice(0,10),rev=due.filter(c=>S.cards[c.k]);
   FC={list:[...rev,...fresh].slice(0,20),i:0,flip:false,known:0};
   drawCard();
 }
@@ -759,22 +781,22 @@ function drawCard(){
      <div class="card" style="text-align:center"><div style="font-size:44px">🎉</div><h2>${f.list.length?`סיימת! ידעת ${f.known} מתוך ${f.list.length}`:'אין כרטיסיות לחזרה היום'}</h2>
      <p class="label">הכרטיסיות שלא ידעת יחזרו מחר, ואלה שידעת יחזרו בעוד כמה ימים.</p><button class="btn wide" id="hb2">לדף הבית</button></div>`;
     $('#hb').onclick=home;$('#hb2').onclick=home;return}
-  const c=f.list[f.i],o=N.oian[c.k],box=(S.cards[c.k]||{}).box||0;
-  $('#home').innerHTML=`<div class="top"><button class="x" id="hb" aria-label="חזרה">→</button><h2>🗂️ כרטיסיות שרירים</h2><span class="label" style="margin-inline-start:auto">${f.i+1}/${f.list.length}</span></div>
+  const c=f.list[f.i],o=c.L==='m'?N.oian[c.k]:null,box=(S.cards[c.k]||{}).box||0;
+  $('#home').innerHTML=`<div class="top"><button class="x" id="hb" aria-label="חזרה">→</button><h2>🗂️ כרטיסיות ${LAYERS[c.L].he}</h2><span class="label" style="margin-inline-start:auto">${f.i+1}/${f.list.length}</span></div>
    <button class="card flash ${f.flip?'back':''}" id="flip">
     <div class="tag">קופסה ${box+1} מתוך 5</div>
     <div class="he" style="font-family:var(--display);font-size:26px;font-weight:600">${esc(nameOf(c.i).split(' – ')[0])}</div>
-    <div class="la" style="direction:ltr;font-style:italic;color:var(--soft)">${esc(c.i.la.split(',')[0])}</div>
-    ${f.flip?`<div class="oian" style="text-align:start"><div><b>📍 מוצא</b><span>${bd(o.o)}</span></div><div><b>📌 אחיזה</b><span>${bd(o.i)}</span></div><div><b>⚙️ פעולה</b><span>${bd(o.a)}</span></div><div><b>⚡ עצבוב</b><span>${bd(o.n)}</span></div></div>`:`<p class="label">נסו להיזכר: מוצא, אחיזה, פעולה ועצבוב. לחצו כדי להפוך.</p>`}
+ <div class="la" style="direction:ltr;font-style:italic;color:var(--soft)">${esc(c.L==='m'?c.i.la.split(',')[0]:c.i.la)}</div>
+    ${!o?(f.flip?`<div class="desc" style="text-align:start">${esc(c.i.s)}</div>`:`<p class="label">נסו להיזכר: איפה זה נמצא, למה זה מתחבר ומה התפקיד. לחצו כדי להפוך.</p>`):f.flip?`<div class="oian" style="text-align:start"><div><b>📍 מוצא</b><span>${bd(o.o)}</span></div><div><b>📌 אחיזה</b><span>${bd(o.i)}</span></div><div><b>⚙️ פעולה</b><span>${bd(o.a)}</span></div><div><b>⚡ עצבוב</b><span>${bd(o.n)}</span></div></div>`:`<p class="label">נסו להיזכר: מוצא, אחיזה, פעולה ועצבוב. לחצו כדי להפוך.</p>`}
    </button>
    ${f.flip?`<div class="row"><button class="btn" id="yes" style="background:var(--good);box-shadow:0 5px 0 #157048">✓ ידעתי</button><button class="btn" id="no" style="background:var(--bad);box-shadow:0 5px 0 #9B2C38">✗ עוד לא</button></div>`:''}
    <button class="mini" id="see3d" style="align-self:center">👁️ להראות על המודל</button>`;
   $('#hb').onclick=home;
   $('#flip').onclick=()=>{f.flip=!f.flip;drawCard()};
   if($('#yes'))$('#yes').onclick=()=>grade(true);if($('#no'))$('#no').onclick=()=>grade(false);
-  $('#see3d').onclick=async()=>{await explore('m','all');select(byId[c.id],true)};
+  $('#see3d').onclick=async()=>{await explore(c.L,'all');if(byId[c.id])select(byId[c.id],true)};
 }
-function grade(ok){const f=FC,c=f.list[f.i];const s=S.cards[c.k]||{box:0};s.box=ok?Math.min(4,(s.box||0)+1):0;s.due=dayNum()+BOX_DAYS[s.box];S.cards[c.k]=s;save();if(ok)f.known++;f.i++;f.flip=false;drawCard()}
+function grade(ok){const f=FC,c=f.list[f.i];const s=S.cards[c.k]||{box:0};s.box=ok?Math.min(4,(s.box||0)+1):0;s.due=dayNum()+BOX_DAYS[s.box];S.cards[c.k]=s;bump();save();if(ok)f.known++;f.i++;f.flip=false;drawCard()}
 
 /* ---------- study runner: description quiz, clinical cases, timed exam ---------- */
 let run=null,CASES=null;
@@ -783,7 +805,7 @@ const reEsc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 function maskDesc(i){let s=i.s||'';const strip=w=>(w||'').replace(/\s*\([^)]*\)/g,'').replace(/\s+(\d+|[IVX]+)$/,'').trim();const ws=[nameOf(i),nameOf(i).split(' – ')[0],i.he,i.la,i.en,strip(nameOf(i)),strip(i.la),strip(i.en)].filter(w=>w&&w.length>4).sort((a,b)=>b.length-a.length);for(const w of ws)s=s.replace(new RegExp(reEsc(w),'gi'),'＿＿＿');return s}
 const meshesOf=(L,k)=>meshes.filter(m=>m.userData.info.L===L&&keyOf(m.userData.info)===k);
 function heOfKey(L,k){const m=meshes.find(x=>x.userData.info.L===L&&keyOf(x.userData.info)===k);if(m)return nameOf(m.userData.info);const v=N&&Object.values(N.names).find(x=>x.L===L&&keyOf(x)===k);return v?nameOf(v):k}
-async function useLayer(L){await openStage(L);await loadPack(LAYERS[L].pack);layer=L;region='all';selected=null;group=null;custom=null;hiRefs=[];isolated=false;stopPulse();extraL=null}
+async function useLayer(L){await openStage(L);await loadPack(LAYERS[L].pack);layer=L;region='all';selected=null;group=null;custom=null;hiRefs=[];isolated=false;stopPulse();extraL=null;clearMarker();applyA11y()}
 function overview(){custom=null;setShift(.22);frontView();paint();fitTo(meshes.filter(inRegion),true)}
 function spotlight(ms,tight){
   custom={ghost:true,set:new Set(ms),html:''};setShift(.22);
@@ -949,6 +971,143 @@ async function downloadAll(btn){
     S.offline=true;save();btn.textContent='✓ הכל הורד: האפליקציה עובדת גם בלי אינטרנט';toast('הורד! אפשר ללמוד גם בלי אינטרנט')}
   catch(e){btn.disabled=false;btn.textContent='⬇️ ההורדה נכשלה, נסו שוב';toast('אין חיבור לאינטרנט')}
 }
+
+/* ---------- daily activity, streak and goal ---------- */
+function bump(){const d=dayNum();S.days=S.days||{};S.days[d]=(S.days[d]||0)+1;const ks=Object.keys(S.days);if(ks.length>400)delete S.days[ks[0]]}
+const todayCount=()=>(S.days||{})[dayNum()]||0;
+const streakTxt=n=>n===1?'יום אחד ברצף':n+' ימים ברצף';
+function streak(){const D=S.days||{};let d=dayNum(),n=0;if(!D[d])d--;while(D[d]){n++;d--}return n}
+
+/* ---------- marker for exact points (pulses, injection sites, landmarks) ---------- */
+let marker=null;
+function clearMarker(){if(marker){marker.parent&&marker.parent.remove(marker);marker.geometry.dispose();marker=null;needs=true}}
+function placeMarker(m,f){
+  clearMarker();if(!m||f==null)return;const g=m.geometry,p=g.attributes.position;if(!g.boundingBox)g.computeBoundingBox();const bb=g.boundingBox;
+  const h=bb.max.y-bb.min.y,y=bb.min.y+f*h,band=h*.04+.002;let sx=0,sy=0,sz=0,n=0;
+  for(let i=0;i<p.count;i++){const yy=p.getY(i);if(Math.abs(yy-y)<band){sx+=p.getX(i);sy+=yy;sz+=p.getZ(i);n++}}
+  if(!n)return;
+  const rad=Math.min(.014,Math.max(.006,(g.boundingSphere||(g.computeBoundingSphere(),g.boundingSphere)).radius*.12));
+  marker=new T.Mesh(new T.SphereGeometry(rad,20,14),new T.MeshBasicMaterial({color:'#FF6A00',depthTest:false,transparent:true,opacity:.95}));
+  marker.renderOrder=30;const v=new T.Vector3(sx/n,sy/n,sz/n);m.localToWorld(v);m.parent.worldToLocal(v);marker.position.copy(v);m.parent.add(marker);needs=true;
+}
+
+/* ---------- practical and clinical topics ---------- */
+// item: [title, layer, [latin names to highlight], [latin name for marker, height fraction 0=bottom..1=top] | null, text]
+const TOPICS={
+ inj:{he:'זריקות תוך-שריריות',e:'💉',c:'#8E44AD',unit:'אתרים',L:'m',items:[
+  ['דלטואיד (הכתף)','m',['M. deltoideus, pars acromialis','M. deltoideus, pars clavicularis','M. deltoideus, pars spinalis'],['M. deltoideus, pars acromialis',.55],'מזריקים במרכז החלק הצדי של השריר, כ-2.5–5 ס"מ (2–3 אצבעות) מתחת לזיז האקרומיון. לא נמוך מזה, כדי להתרחק מהעצב האקסילרי ומהעצב הרדיאלי. מתאים לנפח קטן (עד כ-1 מ"ל), למשל חיסונים.'],
+  ['ונטרוגלוטאלי (צד הירך)','m',['M. gluteus medius'],['M. gluteus medius',.6],'כף היד על הטרוכנטר הגדול, האצבע המורה על ה-ASIS, והאמה פרושה לאורך ציצת הכסל. מזריקים במרכז ה-V שבין האצבעות, לתוך הגלוטאוס מדיוס. זה האתר המועדף במבוגרים כי הוא רחוק מעצב השת ומכלי דם גדולים; האתר הדורסוגלוטאלי (רבע עליון-חיצוני של העכוז) כבר לא מומלץ.'],
+  ['וסטוס לטרליס (צד הירך)','m',['M. vastus lateralis'],['M. vastus lateralis',.5],'השליש האמצעי של הירך, בצד הקדמי-חיצוני. מחלקים את המרחק בין הטרוכנטר הגדול לקונדיל החיצוני של הברך לשלושה ומזריקים בשליש האמצעי. האתר המועדף בתינוקות ובפעוטות.'],
+  ['רקטוס פמוריס (קדמת הירך)','m',['M. rectus femoris'],['M. rectus femoris',.5],'השליש האמצעי בקדמת הירך. נגיש ונוח להזרקה עצמית, אבל ההזרקה בו כואבת יותר ולכן משמש פחות.'],
+ ]},
+ pulse:{he:'נקודות דופק',e:'💓',c:'#C0392B',unit:'נקודות',L:'v',items:[
+  ['דופק התרדמה (קרוטיד)','v',['A. carotis communis'],['A. carotis communis',.55],'בצוואר, בחריץ שבין קנה הנשימה לשריר ה-SCM, בגובה סחוס התריס. ממששים צד אחד בכל פעם, כדי לא לפגוע בזרימת הדם למוח. משמש לבדיקת דופק בהחייאה במבוגרים.'],
+  ['דופק הזרוע (ברכיאלי)','v',['A. brachialis'],['A. brachialis',.08],'בגומת המרפק, מדיאלית לגיד השריר הדו-ראשי. כאן מניחים את הסטטוסקופ במדידת לחץ דם. בתינוקות ממששים את הדופק בצד הפנימי של הזרוע.'],
+  ['דופק החישור (רדיאלי)','v',['A. radialis'],['A. radialis',.04],'בצד האגודל של שורש כף היד, לטרלית לגיד ה-flexor carpi radialis, מעל קצה עצם החישור. הדופק הנבדק הכי הרבה ביום-יום.'],
+  ['דופק הירך (פמורלי)','v',['A. femoralis'],['A. femoralis',.95],'מתחת לרצועה המפשעתית, באמצע הדרך בין ה-ASIS לסימפיזה הערווה (mid-inguinal point). חשוב בהחייאה ובצנתורים.'],
+  ['דופק חלל הברך (פופליטאלי)','v',['A. poplitea'],['A. poplitea',.5],'עמוק בחלל הברך האחורי. ממששים בשתי הידיים כשהברך מעט כפופה, כדי לרפות את הפאסיה. קשה למישוש.'],
+  ['דופק השוקה האחורי','v',['A. tibialis posterior'],['A. tibialis posterior',.04],'מאחורי הקרסול הפנימי ומתחתיו, בין הקרסול לגיד אכילס. נבדק בהערכת זרימה לכף הרגל, למשל בסוכרתיים.'],
+  ['דופק גב כף הרגל','v',['A. dorsalis pedis'],['A. dorsalis pedis',.5],'בגב כף הרגל, לטרלית לגיד ה-extensor hallucis longus, בין עצמות המסרק הראשונה והשנייה. אצל חלק מהאנשים הוא חלש או לא נמוש באופן תקין.'],
+ ]},
+ palp:{he:'מישוש עצמות',e:'🖐️',c:'#B9A77F',unit:'ציוני דרך',L:'b',items:[
+  ['זיז החוליה C7','b',['Vertebra cervicalis VII (C7)'],['Vertebra cervicalis VII (C7)',.5],'הזיז הבולט ביותר בבסיס הצוואר (vertebra prominens), בולט יותר כשמכופפים את הראש. נקודת התחלה לספירת החוליות.'],
+  ['זיז האקרומיון','b',['Scapula'],['Scapula',.97],'הנקודה העליונה-חיצונית של הכתף, המשך של שדרת השכמה. נקודת ייחוס לזריקה בדלטואיד ולמדידת אורך הזרוע.'],
+  ['האולקרנון (המרפק)','b',['Ulna'],['Ulna',.97],'הבליטה בגב המרפק, הקצה העליון של עצם הגומד. בכיפוף המרפק הוא יוצר משולש עם שני האפיקונדילים של הזרוע.'],
+  ['ציצת הכסל וגובה L4','b',['Os coxae','Vertebra lumbalis IV (L4)'],['Os coxae',.98],'הקו שמחבר את שתי ציצות הכסל (קו Tuffier) עובר בגובה החוליה L4. נקודת ייחוס לניקור מותני ולאפידורל.'],
+  ['הטרוכנטר הגדול','b',['Femur'],['Femur',.94],'בליטה בצד החיצוני של הירך העליונה, כרוחב כף יד מתחת לציצת הכסל. נקודת ייחוס לזריקה ונטרוגלוטאלית ולמדידת אורך הרגל.'],
+  ['פקעת עצם השוקה','b',['Tibia'],['Tibia',.88],'הבליטה בקדמת השוקה, מתחת לפיקה. כאן נאחז גיד הפיקה; כאב בה בבני נוער ספורטאים מאפיין את מחלת אוסגוד-שלאטר.'],
+  ['הקרסול הפנימי','b',['Tibia'],['Tibia',.02],'הבליטה בצד הפנימי של הקרסול, הקצה התחתון של עצם השוקה. מאחוריו עוברים העורק והעצב הטיביאליים האחוריים.'],
+  ['הקרסול החיצוני','b',['Fibula'],['Fibula',.02],'הבליטה בצד החיצוני של הקרסול, הקצה התחתון של עצם השוקית. נמוך ואחורי יותר מהקרסול הפנימי. כאב במישוש אחרי נקע הוא חלק מכללי אוטווה.'],
+ ]},
+ myo:{he:'מיוטומים',e:'⚡',c:'#E8A33A',unit:'שורשים',L:'m',items:[
+  ['C5 · כיפוף המרפק','m',['M. biceps brachii, caput longum','M. biceps brachii, caput breve','M. brachialis'],null,'בודקים כיפוף מרפק נגד התנגדות (biceps, brachialis). גם הרחקת הכתף (דלטואיד) מעוצבבת בעיקר מ-C5. רפלקס הביספס: C5–C6.'],
+  ['C6 · יישור שורש כף היד','m',['M. extensor carpi radialis longus','M. extensor carpi radialis brevis'],null,'בודקים יישור (אקסטנזיה) של שורש כף היד נגד התנגדות. רפלקס הברכיורדיאליס: C6.'],
+  ['C7 · יישור המרפק','m',['M. triceps brachii, caput longum','M. triceps brachii, caput laterale','M. triceps brachii, caput mediale'],null,'בודקים יישור מרפק נגד התנגדות (triceps). רפלקס הטריספס: C7.'],
+  ['C8 · כיפוף האצבעות','m',['M. flexor digitorum profundus'],null,'בודקים כיפוף של הפרק הרחוק של האצבע האמצעית (FDP).'],
+  ['T1 · הרחקת הזרת','m',['M. abductor digiti minimi manus'],null,'בודקים הרחקה של הזרת (abductor digiti minimi), שריר קטן של כף היד.'],
+  ['L2 · כיפוף הירך','m',['M. psoas major','M. iliacus'],null,'בודקים כיפוף של מפרק הירך בשכיבה או בישיבה (iliopsoas).'],
+  ['L3 · יישור הברך','m',['M. rectus femoris','M. vastus lateralis','M. vastus medialis','M. vastus intermedius'],null,'בודקים יישור ברך נגד התנגדות (quadriceps). רפלקס הפיקה: L3–L4.'],
+  ['L4 · הרמת כף הרגל','m',['M. tibialis anterior'],null,'בודקים כיפוף גבי של הקרסול (tibialis anterior). חולשה מתבטאת בהליכה על העקבים.'],
+  ['L5 · יישור הבוהן','m',['M. extensor hallucis longus'],null,'בודקים יישור של הבוהן הגדולה נגד התנגדות (EHL). חולשה אופיינית לפריצת דיסק L4–L5.'],
+  ['S1 · כיפוף כפי של כף הרגל','m',['M. gastrocnemius, caput laterale','M. gastrocnemius, caput mediale','M. soleus'],null,'בודקים עמידה על קצות האצבעות (gastrocnemius ו-soleus). רפלקס אכילס: S1.'],
+ ]},
+ derm:{he:'דרמטומים',e:'🗺️',c:'#2E86C1',unit:'נקודות מפתח',L:'b',items:[
+  ['C2','b',['Os occipitale'],['Os occipitale',.35],'נקודת המפתח: לפחות ס"מ אחד לצד הבליטה העורפית החיצונית, בעורף.'],
+  ['C3','b',['Clavicula'],null,'נקודת המפתח: הגומה שמעל עצם הבריח (supraclavicular fossa), בקו האמצע-בריחי.'],
+  ['C4','b',['Clavicula','Scapula'],null,'נקודת המפתח: מעל המפרק האקרומיו-קלביקולרי, בראש הכתף.'],
+  ['C5','b',['Radius'],['Radius',.97],'נקודת המפתח: הצד החיצוני (לטרלי) של גומת המרפק.'],
+  ['C6','b',['Phalanx proximalis pollicis'],['Phalanx proximalis pollicis',.5],'נקודת המפתח: גב הפרק הקרוב של האגודל.'],
+  ['C7','b',['Phalanx media digiti medii'],['Phalanx media digiti medii',.5],'נקודת המפתח: גב הפרק האמצעי של האצבע האמצעית.'],
+  ['C8','b',['Phalanx media digiti minimi'],['Phalanx media digiti minimi',.5],'נקודת המפתח: גב הפרק האמצעי של הזרת.'],
+  ['T1','b',['Ulna'],['Ulna',.95],'נקודת המפתח: הצד הפנימי (מדיאלי) של גומת המרפק.'],
+  ['T4','b',['Costa IV'],null,'נקודת המפתח: בגובה הפטמה, בקו האמצע-בריחי.'],
+  ['T10','b',['Vertebra thoracica X (T10)'],null,'נקודת המפתח: בגובה הטבור.'],
+  ['L1','b',['Os coxae'],null,'נקודת המפתח: אזור המפשעה, חצי הדרך בין T12 ל-L2.'],
+  ['L2','b',['Femur'],['Femur',.7],'נקודת המפתח: קדמת הירך, באמצע המרחק בין הרצועה המפשעתית לקונדיל הפנימי של הירך.'],
+  ['L3','b',['Femur'],['Femur',.04],'נקודת המפתח: הקונדיל הפנימי של עצם הירך, ליד הברך.'],
+  ['L4','b',['Tibia'],['Tibia',.02],'נקודת המפתח: הקרסול הפנימי.'],
+  ['L5','b',['Os metatarsi III'],['Os metatarsi III',.5],'נקודת המפתח: גב כף הרגל, בגובה המפרק השלישי בין המסרק לאצבע.'],
+  ['S1','b',['Calcaneus'],['Calcaneus',.5],'נקודת המפתח: הצד החיצוני של העקב.'],
+  ['S2','b',['Femur'],['Femur',.02],'נקודת המפתח: אמצע חלל הברך האחורי.'],
+ ]},
+};
+let TP=null;
+async function topic(id){const t=TOPICS[id];await useLayer(t.L);mode='run';TP={id,i:0,quiz:false};topicStep()}
+function topicStep(){
+  const t=TOPICS[TP.id],it=t.items[TP.i],[title,L,las,mk,text]=it;layer=L;
+  const ms=meshes.filter(m=>{const i=m.userData.info;return i.L===L&&las.includes(keyOf(i))&&i.side!=='left'});
+  spotlight(ms,ms.length===1);
+  if(mk){const m=meshes.find(x=>x.userData.info.L===L&&keyOf(x.userData.info)===mk[0]&&x.userData.info.side!=='left');placeMarker(m,mk[1])}else clearMarker();
+  if(TP.quiz){const opts=shuffle([title,...shuffle(t.items.filter(x=>x[0]!==title)).slice(0,3).map(x=>x[0])]);TP.opts=opts}
+  $('#ui').innerHTML=`<div class="bar"><button class="x" id="back" aria-label="יציאה">✕</button><div class="ttl">${t.e} ${t.he} · ${TP.i+1}/${t.items.length}</div>
+    <button class="x" id="tq" aria-label="${TP.quiz?'מצב לימוד':'מצב בוחן'}">${TP.quiz?'📖':'🎯'}</button></div>
+   <div class="bar" style="margin-top:8px"><select id="tsel" aria-label="בחירת פריט" style="width:100%;font:inherit;padding:6px;border-radius:10px">${t.items.map((x,j)=>`<option value="${j}" ${j===TP.i?'selected':''}>${TP.quiz?(j+1):esc(x[0])}</option>`).join('')}</select></div>
+   <div class="spacer"></div>
+   <div class="sheet">${TP.quiz?`<span class="label">🎯 מה מתאים לתיאור?</span><div class="desc">${esc(text)}</div><div class="opts">${TP.opts.map((o,j)=>`<button class="opt" data-o="${j}"><span>${esc(o)}</span></button>`).join('')}</div><div id="fb"></div>`
+     :`<div class="he">${esc(title)}</div><div class="desc">${esc(text)}</div>${mk?'<span class="label">🟠 הנקודה הכתומה מסמנת את המיקום בקירוב.</span>':''}`}
+   <div class="row" style="flex-wrap:nowrap"><button class="btn ghost" id="prv" ${TP.i?'':'disabled'}>→ הקודם</button><button class="mini" id="say" aria-label="הקראה">🔊</button><button class="btn" id="nxt">${TP.i+1<t.items.length?'הבא ←':'סיום'}</button></div></div>`;
+  $('#back').onclick=home;$('#tsel').onchange=e=>{TP.i=+e.target.value;topicStep()};
+  $('#tq').onclick=()=>{TP.quiz=!TP.quiz;TP.i=0;topicStep()};
+  $('#prv').onclick=()=>{TP.i--;topicStep()};$('#nxt').onclick=()=>{if(TP.i+1<t.items.length){TP.i++;topicStep()}else home()};
+  $('#say').onclick=()=>speak({he:TP.quiz?'':title,la:'',en:'',s:text},{full:true,noLatin:true});
+  document.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{if(TP.ans)return;const o=TP.opts[+b.dataset.o],ok=o===title;bump();
+    document.querySelectorAll('[data-o]').forEach(x=>{const v=TP.opts[+x.dataset.o];if(v===title)x.classList.add('ok');else if(x===b)x.classList.add('no')});
+    $('#fb').innerHTML=`<p style="font-weight:600;color:${ok?'var(--good)':'var(--bad)'}">${ok?'נכון! 👏':'התשובה: '+esc(title)}</p>`;TP.ans=true;setTimeout(()=>TP.ans=false,0)});
+}
+
+/* ---------- progress board ---------- */
+function progress(){
+  const byL={};for(const [id,i] of Object.entries(N.names)){const L=i.L;const n=nameOf(i);(byL[L]??={all:new Set(),seen:new Set()}).all.add(n);if(S.seen[id])byL[L].seen.add(n)}
+  const best=L=>{const v=Object.entries(S.best).filter(([k])=>k[0]===L&&k[1]===':').map(([,x])=>x);return v.length?Math.max(...v):null};
+  const days=[];for(let d=dayNum()-27;d<=dayNum();d++)days.push((S.days||{})[d]||0);
+  const goal=S.goal||20,today=todayCount();
+  const ex=(S.exams||[]).slice(-5);
+  $('#home').innerHTML=`<div class="top"><button class="x" id="hb" aria-label="חזרה">→</button><h2>📈 ההתקדמות שלי</h2></div>
+   <div class="card"><div class="row" style="align-items:center"><div style="font-size:36px;flex:none">🔥</div><div><b>${streakTxt(streak())}</b><div class="label">היום: ${today} מתוך יעד של ${goal} פעולות לימוד</div><div class="meter"><i style="width:${Math.min(100,today/goal*100)}%;background:var(--good)"></i></div></div></div>
+    <div class="heat" aria-label="פעילות ב-28 הימים האחרונים">${days.map(n=>`<i style="opacity:${n?Math.min(1,.25+n/goal):.08}"></i>`).join('')}</div><span class="label">28 הימים האחרונים</span></div>
+   <h2>מה כבר ראית</h2>
+   <div class="card cats">${Object.keys(LAYERS).map(L=>{const b=byL[L];if(!b)return '';const p=b.seen.size/b.all.size;const bs=best(L);return `<div><b>${LAYERS[L].e} ${LAYERS[L].he}</b><div class="meter"><i style="width:${p*100}%;background:var(--good)"></i></div><span>${Math.round(p*100)}%</span></div>${bs!=null?`<span class="label" style="margin-top:-4px">שיא בבוחן: ${bs}/10</span>`:''}`}).join('')}</div>
+   <h2>מבחנים מסכמים</h2>
+   <div class="card">${ex.length?ex.map(e=>`<div class="row" style="justify-content:space-between"><span>${new Date(e.d).toLocaleDateString('he-IL')}</span><b>${e.s}/${e.n}</b></div>`).join(''):'<p class="label">עוד לא עשית מבחן מסכם.</p>'}<button class="btn wide" id="ex2">⏱️ למבחן מסכם</button></div>`;
+  $('#hb').onclick=home;$('#ex2').onclick=runExam;
+}
+
+/* ---------- settings and accessibility ---------- */
+function applyA11y(){const z=S.fs||1;['#home','#ui'].forEach(s=>{const e=$(s);if(e)e.style.zoom=z});document.body.classList.toggle('hc',!!S.hc)}
+function settings(){
+  const fs=S.fs||1;
+  $('#home').innerHTML=`<div class="top"><button class="x" id="hb" aria-label="חזרה">→</button><h2>⚙️ הגדרות ונגישות</h2></div>
+   <div class="card"><b>גודל טקסט</b><div class="seg" role="group" aria-label="גודל טקסט">${[[1,'רגיל'],[1.15,'גדול'],[1.3,'גדול מאוד']].map(([v,h])=>`<button data-fs="${v}" class="${fs===v?'on':''}" aria-pressed="${fs===v}">${h}</button>`).join('')}</div></div>
+   <div class="card"><label class="sw"><input type="checkbox" id="hc" ${S.hc?'checked':''}> ניגודיות גבוהה</label>
+    <label class="sw"><input type="checkbox" id="au" ${S.auto!==false?'checked':''}> הקראת שם המבנה בכל לחיצה</label></div>
+   <div class="card"><b>יעד יומי</b><div class="seg" role="group" aria-label="יעד יומי">${[10,20,40].map(v=>`<button data-goal="${v}" class="${(S.goal||20)===v?'on':''}" aria-pressed="${(S.goal||20)===v}">${v} פעולות</button>`).join('')}</div><span class="label">פעולה = מבנה חדש שנפתח, שאלה שנענתה או כרטיסייה.</span></div>
+   <div class="card"><a href="accessibility.html">♿ הצהרת נגישות</a></div>`;
+  $('#hb').onclick=home;
+  document.querySelectorAll('[data-fs]').forEach(b=>b.onclick=()=>{S.fs=+b.dataset.fs;save();applyA11y();settings()});
+  document.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{S.goal=+b.dataset.goal;save();settings()});
+  $('#hc').onchange=e=>{S.hc=e.target.checked;save();applyA11y()};$('#au').onchange=e=>{S.auto=e.target.checked;save()};
+}
+applyA11y();
 
 loadNames().then(home).catch(home);
 </script>
