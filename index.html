@@ -78,7 +78,7 @@ h3{font-size:18px;font-weight:600}
 .seg .sl{display:none}@media (min-width:640px){.seg .sl{display:inline;margin-inline-start:4px}}
 .seg button{padding:7px 10px}
 #ui>.seg{justify-content:space-around}
-.sheet{max-height:58vh;overflow:auto}
+.sheet{max-height:46vh;overflow:auto}
 .desc{font-size:15px;color:var(--soft);line-height:1.5}
 .oian{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .oian>*{background:var(--bg);border-radius:12px;padding:7px 10px;display:flex;flex-direction:column;text-align:start;font-size:14px;line-height:1.4}
@@ -284,8 +284,12 @@ function pick(e){
   const v=new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
   ray.setFromCamera(v,camera);
   const cands=meshes.filter(m=>m.visible&&active(m)&&!(m.material.transparent&&m.material.opacity<.2));
-  const hit=ray.intersectObjects(cands,false).find(h=>!clip||clip.plane.distanceToPoint(h.point)>=0);
+  const cast=(x,y)=>{ray.setFromCamera(new T.Vector2((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1),camera);return ray.intersectObjects(cands,false).find(h=>!clip||clip.plane.distanceToPoint(h.point)>=0)};
+  let hit=cast(e.clientX,e.clientY);
+  // forgiving tap: thin bones/nerves are hard to hit with a finger, so look around the touch point
+  if(!hit){const tol=e.pointerType==='mouse'?8:18;outer:for(const rad of [tol/2,tol])for(let a=0;a<8;a++){const h=cast(e.clientX+rad*Math.cos(a*Math.PI/4),e.clientY+rad*Math.sin(a*Math.PI/4));if(h){hit=h;break outer}}}
   select(hit?hit.object:null);
+  if(hit&&S.auto!==false)speak(hit.object.userData.info,{quiet:true});
 }
 function select(m,focus){
   selected=m;group=null;custom=null;hiRefs=[];stopPulse();if(!m)isolated=false;if(mode==='explore')setShift(m?.2:0);paint();
@@ -361,7 +365,7 @@ function renderUI(){
      <button class="x" id="srch" aria-label="חיפוש">🔍</button><button class="x" id="more" aria-label="אפשרויות">⋯</button></div>
    <div class="seg" style="margin-top:8px">${Object.entries(LAYERS).map(([k,l])=>`<button data-l="${k}" class="${layer===k?'on':''}" aria-label="${l.he}">${l.e}<span class="sl">${l.he}</span></button>`).join('')}</div>
    <div id="menu" class="menu" hidden>
-     <button id="clr">🎨 צבע לפי אזור${colorByRegion?' ✓':''}</button>
+     <button id="autos">🔊 הקראת שם בלחיצה${S.auto!==false?' ✓':''}</button><button id="clr">🎨 צבע לפי אזור${colorByRegion?' ✓':''}</button>
      ${layer==='m'?`<button id="gh">👻 שרירים שקופים${ghost?' ✓':''}</button>`:''}
      <button id="fv">⟲ מבט מלפנים</button><button id="bv">↺ מבט מאחור</button>
      <button id="cut">✂️ חתך${clip?' ✓':''}</button><button id="ws">🖨️ דף עבודה להדפסה</button></div>
@@ -374,6 +378,7 @@ function renderUI(){
   document.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>setLayer(b.dataset.l));
   $('#more').onclick=()=>{$('#menu').hidden=!$('#menu').hidden};
   $('#clr').onclick=()=>{colorByRegion=!colorByRegion;paint();renderUI()};
+  $('#autos').onclick=()=>{S.auto=S.auto===false;save();if(!S.auto)try{speechSynthesis.cancel()}catch(e){};renderUI();toast(S.auto?'השם יוקרא בכל לחיצה':'ההקראה האוטומטית כובתה')};
   if($('#gh'))$('#gh').onclick=()=>{ghost=!ghost;paint();renderUI()};
   $('#fv').onclick=()=>{frontView();fitTo(meshes.filter(m=>m.visible&&inRegion(m)),true);$('#menu').hidden=true};
   $('#bv').onclick=()=>{backView();fitTo(meshes.filter(m=>m.visible&&inRegion(m)),true);$('#menu').hidden=true};
@@ -434,11 +439,11 @@ function renderSheet(){
      <div><b>⚡ עצבוב</b><span>${bd(info.n)}</span></div></div>
      <div class="row" style="flex-wrap:wrap;gap:6px"><button class="mini" id="pulse">▶️ הדמיית כיווץ</button>${nerveOf(info.n)?`<button class="mini" id="nmap">⚡ כל שרירי ${esc(nerveOf(info.n)[1])}</button>`:''}</div>`:''}
    ${(i.L==='v'||i.L==='n'||i.L==='o')?`<button class="mini" id="path" style="align-self:flex-start">${i.L==='v'?'🩸 הראה את כל המסלול והענפים':'🔗 הראה את כל החלקים'}</button>`:''}
-   <div class="row" style="flex-wrap:nowrap"><button class="mini" id="iso">${isolated?'👁️ הצג הכל':'🔎 בודד'}</button><button class="mini" id="foc">🎯 התמקד</button><button class="mini" id="say" aria-label="השמעה">🔊</button><button class="mini" id="cls" aria-label="סגירה">✕</button></div></div>`;
+   <div class="row" style="flex-wrap:nowrap"><button class="mini" id="iso">${isolated?'👁️ הצג הכל':'🔎 בודד'}</button><button class="mini" id="foc">🎯 התמקד</button><button class="mini" id="say" aria-label="הקראת השם וההסבר">🔊 הקראה</button><button class="mini" id="cls" aria-label="סגירה">✕</button></div></div>`;
   $('#iso').onclick=()=>{isolated=!isolated;paint();fitTo(isolated?[selected,...hiRefs]:meshes.filter(m=>m.visible&&inRegion(m)));renderSheet()};
   $('#foc').onclick=()=>fitTo([selected]);
   $('#cls').onclick=()=>select(null);
-  $('#say').onclick=()=>speak(i);
+  $('#say').onclick=()=>speak(i,{full:true});
   if($('#pulse'))$('#pulse').onclick=()=>pulse(selected);
   if($('#nmap'))$('#nmap').onclick=()=>showNerve(nerveOf(info.n)[0]);
   if($('#path'))$('#path').onclick=()=>showPath(selected);
@@ -447,24 +452,26 @@ function renderSheet(){
 }
 let HV=null,EV=null;function pickV(){if(!("speechSynthesis" in window))return;const all=speechSynthesis.getVoices();const he=all.filter(v=>/^he|^iw/i.test(v.lang));HV=he.find(v=>/google|natural|neural/i.test(v.name))||he[0]||null;const en=all.filter(v=>/^en/i.test(v.lang));EV=en.find(v=>/en[-_]US/i.test(v.lang)&&/google|natural|neural|samantha/i.test(v.name))||en.find(v=>/en[-_]US/i.test(v.lang))||en[0]||null}
 if("speechSynthesis" in window){pickV();speechSynthesis.onvoiceschanged=pickV}
-function speak(i){
+let warnedVoice=false;
+function speak(i,o={}){
   const ss=window.speechSynthesis;
-  if(!ss||!window.SpeechSynthesisUtterance){toast('אין הקראה בדפדפן הזה');return}
+  if(!ss||!window.SpeechSynthesisUtterance){if(!o.quiet)toast('אין הקראה בדפדפן הזה');return}
   pickV();
   const mk=(t,lang,v)=>{const u=new SpeechSynthesisUtterance(t);u.lang=lang;if(v)u.voice=v;u.rate=.9;u.volume=1;return u};
   const en=mk(i.la||i.en,EV?EV.lang:'en-US',EV);          // Latin name, read by an English voice: available on every device
   const queue=[];
   if(HV) queue.push(mk(nameOf(i).replace(/[()–]/g,' '),HV.lang,HV));
   queue.push(en);
+  if(o.full&&HV&&i.s)queue.push(mk(i.s.replace(/\([^)]*\)/g,' '),HV.lang,HV));
   try{
     if(ss.speaking||ss.pending) ss.cancel();
     ss.resume();
     queue.forEach(u=>ss.speak(u));                          // called directly inside the tap, so the browser allows it
     let started=false;queue[0].onstart=()=>started=true;
     queue.forEach(u=>u.onerror=e=>{if(e.error!=='interrupted'&&e.error!=='canceled')toast('ההקראה נחסמה: '+e.error)});
-    setTimeout(()=>{if(!started&&!ss.speaking)toast('המכשיר לא הקריא. בדקו שהעוצמה פתוחה ושיש קול הקראה בהגדרות')},2500);
-    if(!HV) toast('אין קול עברי במכשיר, מוקרא השם הלטיני');
-  }catch(e){toast('שגיאת הקראה')}
+    if(!o.quiet)setTimeout(()=>{if(!started&&!ss.speaking)toast('המכשיר לא הקריא. בדקו שהעוצמה פתוחה ושיש קול הקראה בהגדרות')},2500);
+    if(!HV&&(!o.quiet||!warnedVoice)){warnedVoice=true;toast('אין קול עברי במכשיר, מוקרא השם הלטיני')}
+  }catch(e){if(!o.quiet)toast('שגיאת הקראה')}
 }
 function toast(t){const d=document.createElement('div');d.textContent=t;d.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#16202B;color:#fff;padding:8px 14px;border-radius:999px;z-index:9;font-size:14px';document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}
 
