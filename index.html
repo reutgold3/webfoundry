@@ -494,12 +494,12 @@ function speak(i,o={}){
   if(!ss||!window.SpeechSynthesisUtterance){if(!o.quiet)toast('אין הקראה בדפדפן הזה');return}
   pickV();
   const mk=(t,lang,v)=>{const u=new SpeechSynthesisUtterance(t);u.lang=lang;if(v)u.voice=v;u.rate=.9;u.volume=1;return u};
-  const en=mk(i.la||i.en,EV?EV.lang:'en-US',EV);          // Latin name, read by an English voice: available on every device
+  // names are always spoken in English; only the explanation (🔊 button) is read in Hebrew
+  const nm=(i.en||i.la||'').replace(/\s*\([^)]*\)?/g,' ').replace(/[,–_]/g,' ').replace(/\s+/g,' ').trim();
   const queue=[];
-  if(HV) queue.push(mk(nameOf(i).replace(/[()–]/g,' '),HV.lang,HV));
-  if(!o.noLatin&&(i.la||i.en))queue.push(en);
+  if(nm)queue.push(mk(nm,EV?EV.lang:'en-US',EV));
   if(o.full&&HV&&i.s)queue.push(mk(i.s.replace(/\([^)]*\)/g,' '),HV.lang,HV));
-  if(!queue.length){if(!o.quiet)toast('אין קול עברי במכשיר');return}
+  if(!queue.length){if(!o.quiet)toast('אין מה להקריא');return}
   try{
     if(ss.speaking||ss.pending) ss.cancel();
     ss.resume();
@@ -507,7 +507,7 @@ function speak(i,o={}){
     let started=false;queue[0].onstart=()=>started=true;
     queue.forEach(u=>u.onerror=e=>{if(e.error!=='interrupted'&&e.error!=='canceled')toast('ההקראה נחסמה: '+e.error)});
     if(!o.quiet)setTimeout(()=>{if(!started&&!ss.speaking)toast('המכשיר לא הקריא. בדקו שהעוצמה פתוחה ושיש קול הקראה בהגדרות')},2500);
-    if(!HV&&(!o.quiet||!warnedVoice)){warnedVoice=true;toast('אין קול עברי במכשיר, מוקרא השם הלטיני')}
+    if(o.full&&i.s&&!HV&&!warnedVoice){warnedVoice=true;toast('אין קול עברי במכשיר, לכן ההסבר לא מוקרא')}
   }catch(e){if(!o.quiet)toast('שגיאת הקראה')}
 }
 function toast(t){const d=document.createElement('div');d.setAttribute('role','status');d.setAttribute('aria-live','polite');d.textContent=t;d.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#16202B;color:#fff;padding:8px 14px;border-radius:999px;z-index:9;font-size:14px';document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}
@@ -515,7 +515,7 @@ function toast(t){const d=document.createElement('div');d.setAttribute('role','s
 /* ---------- quiz ---------- */
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
 const uniqKey=m=>nameOf(m.userData.info);
-const ansOf=(m,kind)=>{const i=m.userData.info;if(kind==='name')return nameOf(i);const o=oian(i);return o?(kind==='act'?o.a:o.n):null};
+const ansOf=(m,kind)=>{const i=m.userData.info;if(kind==='name'||kind==='tap')return nameOf(i);const o=oian(i);return o?(kind==='act'?o.a:o.n):null};
 async function startQuiz(L,r,kind){
   await openStage(L);custom=null;mode='quiz';setShift(.22);layer=L;region=r;selected=null;group=null;hiRefs=[];isolated=false;ghost=false;colorByRegion=false;
   let pool=meshes.filter(inRegion);if(kind!=='name')pool=pool.filter(m=>ansOf(m,kind));
@@ -892,7 +892,7 @@ function reveal(j,review){
   let ms=q.kind==='name'?[q.m]:meshesOf(q.L,q.key);const rs=ms.filter(m=>m.userData.info.side!=='left');if(rs.length)ms=rs;spotlight(ms,q.kind==='name'||ms.length===1);
   document.querySelectorAll('.opt').forEach((b,x)=>{if(q.opts[x]!==q.key&&x!==j)b.hidden=true});
   const nm=heOfKey(q.L,q.key);
-  if(S.auto!==false)speak({he:nm,la:q.key,en:q.key},{quiet:true});
+  if(S.auto!==false){const mm=meshesOf(q.L,q.key)[0];speak({he:nm,la:q.key,en:mm?mm.userData.info.en:q.key},{quiet:true})}
   $('#fb').innerHTML=`<p style="font-weight:600;color:${ok?'var(--good)':'var(--bad)'}">${j==null?'לא נענתה.':ok?'נכון! 👏':'לא נכון.'} ${esc(nm)} <small dir="ltr">${esc(q.key)}</small></p>
    ${q.why?`<div class="desc">${esc(q.why)}</div>`:''}<span class="label">המבנה מסומן בטורקיז על המודל.</span>
    <button class="btn wide" id="nx">${review?'חזרה לתוצאות':run.i+1<run.qs.length?'לשאלה הבאה':'לתוצאות'}</button>`;
@@ -948,8 +948,8 @@ function flowStep(){
    <div class="row" style="flex-wrap:nowrap"><button class="btn ghost" id="prv" ${flowI?'':'disabled'}>→ הקודם</button><button class="mini" id="say" aria-label="הקראה">🔊</button><button class="btn" id="nxt">${flowI+1<FLOW.length?'הבא ←':'סיום'}</button></div></div>`;
   $('#back').onclick=home;$('#prv').onclick=()=>{flowI--;flowStep()};
   $('#nxt').onclick=()=>{if(flowI+1<FLOW.length){flowI++;flowStep()}else home()};
-  $('#say').onclick=()=>speak({he:t,la:'',en:'',s:d},{full:true,noLatin:true});
-  if(S.auto!==false)speak({he:t,la:'',en:''},{quiet:true,noLatin:true});
+  $('#say').onclick=()=>speak({he:t,la:'',en:FLOW_EN[flowI],s:d},{full:true});
+  if(S.auto!==false)speak({he:t,la:'',en:FLOW_EN[flowI]},{quiet:true});
 }
 
 /* ---------- favorites and personal notes ---------- */
@@ -1073,7 +1073,8 @@ function topicStep(){
   $('#back').onclick=home;$('#tsel').onchange=e=>{TP.i=+e.target.value;topicStep()};
   $('#tq').onclick=()=>{TP.quiz=!TP.quiz;TP.i=0;topicStep()};
   $('#prv').onclick=()=>{TP.i--;topicStep()};$('#nxt').onclick=()=>{if(TP.i+1<t.items.length){TP.i++;topicStep()}else home()};
-  $('#say').onclick=()=>speak({he:TP.quiz?'':title,la:'',en:'',s:text},{full:true,noLatin:true});
+  const ten=TP.quiz?'':(TOPIC_EN[TP.id]?TOPIC_EN[TP.id][TP.i]:title);$('#say').onclick=()=>speak({he:title,la:'',en:ten,s:text},{full:true});
+  if(S.auto!==false&&ten)speak({he:title,la:'',en:ten},{quiet:true});
   document.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{if(TP.ans)return;const o=TP.opts[+b.dataset.o],ok=o===title;bump();
     document.querySelectorAll('[data-o]').forEach(x=>{const v=TP.opts[+x.dataset.o];if(v===title)x.classList.add('ok');else if(x===b)x.classList.add('no')});
     $('#fb').innerHTML=`<p style="font-weight:600;color:${ok?'var(--good)':'var(--bad)'}">${ok?'נכון! 👏':'התשובה: '+esc(title)}</p>`;TP.ans=true;setTimeout(()=>TP.ans=false,0)});
@@ -1173,9 +1174,19 @@ function brainStep(){
     <div class="row" style="flex-wrap:nowrap"><button class="btn ghost" id="prv" ${BI?'':'disabled'}>→ הקודם</button><button class="mini" id="say" aria-label="הקראה">🔊</button><button class="mini" id="bexp" aria-label="חקירה חופשית">🔎</button><button class="btn" id="nxt">${BI+1<BRAIN.length?'הבא ←':'סיום'}</button></div></div>`;
   $('#back').onclick=home;$('#bsel').onchange=e=>{BI=+e.target.value;brainStep()};
   $('#prv').onclick=()=>{BI--;brainStep()};$('#nxt').onclick=()=>{if(BI+1<BRAIN.length){BI++;brainStep()}else home()};
-  $('#say').onclick=()=>speak({he:t,la:'',en:'',s:txt},{full:true,noLatin:true});
+  $('#say').onclick=()=>speak({he:t,la:'',en:BRAIN_EN[BI],s:txt},{full:true});
+  if(S.auto!==false)speak({he:t,la:'',en:BRAIN_EN[BI]},{quiet:true});
   $('#bexp').onclick=()=>{mode='explore';custom=null;renderUI();paint();fitTo(brain,true)};
 }
+
+/* English titles, so tour and topic names are spoken in English */
+const BRAIN_EN=['Lobes of the brain','Frontal lobe','Parietal lobe','Temporal lobe','Occipital lobe','Language, motor and sensory areas','Insula','Limbic system','Basal ganglia','Thalamus and hypothalamus','Corpus callosum','Ventricular system','Brainstem','Cerebellum','Meninges'];
+const FLOW_EN=['Venae cavae','Right atrium','Tricuspid valve','Right ventricle','Pulmonary valve','Pulmonary trunk and arteries','Lungs, gas exchange','Pulmonary veins','Left atrium','Mitral valve','Left ventricle','Aortic valve','Aorta','Coronary arteries'];
+const TOPIC_EN={inj:['Deltoid','Ventrogluteal site','Vastus lateralis','Rectus femoris'],
+ pulse:['Carotid pulse','Brachial pulse','Radial pulse','Femoral pulse','Popliteal pulse','Posterior tibial pulse','Dorsalis pedis pulse'],
+ palp:['Spinous process of C7','Acromion','Olecranon','Iliac crest and the L4 level','Greater trochanter','Tibial tuberosity','Medial malleolus','Lateral malleolus'],
+ myo:['C5, elbow flexion','C6, wrist extension','C7, elbow extension','C8, finger flexion','T1, little finger abduction','L2, hip flexion','L3, knee extension','L4, ankle dorsiflexion','L5, big toe extension','S1, plantar flexion'],
+ derm:null};
 
 loadNames().then(home).catch(home);
 </script>

@@ -1,4 +1,4 @@
-const C='yalla-anatomy-v13';
+const C='yalla-anatomy-v14';
 const CORE=['/','/index.html','/vendor/three.min.js','/vendor/OrbitControls.js','/data/skeleton.json','/data/names.json','/data/skeleton.bin','/icons/icon-192.png','/privacy.html','/terms.html','/accessibility.html'];
 // cache:'reload' so an update never stores a stale copy from the browser's HTTP cache
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(CORE.map(u=>new Request(u,{cache:'reload'})))).then(()=>self.skipWaiting()))});
