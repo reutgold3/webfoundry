@@ -755,5 +755,5 @@ function grade(ok){const f=FC,c=f.list[f.i];const s=S.cards[c.k]||{box:0};s.box=
 
 loadNames().then(home).catch(home);
 </script>
-<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));</script>
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>{const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("/sw.js").then(r=>r.update()).catch(()=>{})});</script>
 </body></html>
