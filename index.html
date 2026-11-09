@@ -103,6 +103,12 @@ h3{font-size:18px;font-weight:600}
 .wsl{columns:2;font-size:15px;line-height:2.1}.wsc{font-size:12px;color:#777}
 .wsbar{position:sticky;bottom:0;display:flex;gap:10px;justify-content:center;padding:10px;background:#fff}
 @media print{body>*:not(#printws){display:none!important}#printws{position:static;overflow:visible;padding:0}.wsbar{display:none}.wsp{page-break-after:always}}
+.case{font-size:16px;line-height:1.55;font-weight:600}
+.note{font-size:14px;background:#FFF6D6;color:#5A4500;border-radius:10px;padding:6px 10px}
+.cats{display:flex;flex-direction:column;gap:6px}.cats>div{display:grid;grid-template-columns:110px 1fr 40px;gap:8px;align-items:center;font-size:14px}
+.rev{display:flex;flex-wrap:wrap;gap:6px}.rev button{border:1px solid #E3D6D6;background:#FFF5F5;border-radius:999px;padding:6px 10px;font:inherit;font-size:14px;cursor:pointer}
+.favi{display:block;width:100%;text-align:right;font:inherit;border:0;cursor:pointer}
+.btn[disabled]{opacity:.45}
 </style>
 
 <div id="home" class="page"></div>
@@ -249,14 +255,14 @@ function backView(){camera.position.set(0,.9,-4);controls.target.set(0,.9,0)}
 let _bz=null;function bodyZ(){if(_bz==null){const b=new T.Box3();meshes.filter(m=>m.userData.info.L==='b').forEach(m=>b.union(m.geometry.boundingBox));_bz=b.getCenter(new T.Vector3()).z}return _bz}
 
 /* ---------- display state ---------- */
-let custom=null,clip=null,group=null,layer='b',region='all',selected=null,isolated=false,colorByRegion=false,ghost=false,mode='explore',quiz=null,hiRefs=[];
+let extraL=null,custom=null,clip=null,group=null,layer='b',region='all',selected=null,isolated=false,colorByRegion=false,ghost=false,mode='explore',quiz=null,hiRefs=[];
 const active=m=>m.userData.info.L===layer;
 const inRegion=m=>active(m)&&(region==='all'||m.userData.info.r===region);
 function paint(){
   const qt=mode==='quiz'&&quiz&&quiz.target&&(quiz.kind!=='tap'||quiz.answered)?quiz.target:null,wrong=mode==='quiz'&&quiz?quiz.wrong:null;
   for(const m of meshes){
     const inf=m.userData.info,L=inf.L,sel=m===selected||(group&&inf.g===group)||(custom&&custom.set.has(m)),act=L===layer,inR=inRegion(m),ref=hiRefs.includes(m);
-    let vis=act||L==='b';                      // bones are always the frame of reference
+    let vis=act||L==='b'||!!(extraL&&extraL.has(L));                      // bones are always the frame of reference
     if(isolated) vis=sel||ref;
     m.visible=vis;
     const mat=m.material;
@@ -269,7 +275,7 @@ function paint(){
     if(L==='m'&&ghost&&!sel&&qt!==m) op=Math.min(op,.2);
     if(qt&&act&&qt!==m&&layer!=='b') op=Math.min(op,.08);
     if(hiRefs.length&&L==='m'&&!sel) op=Math.min(op,.15);
-    if(custom&&custom.ghost&&act&&!sel) op=Math.min(op,.12);
+    if(custom&&custom.ghost&&(act||(extraL&&extraL.has(L)))&&!sel) op=Math.min(op,.12);
     if(custom&&custom.bonesOnly&&L!=='b') vis=false,m.visible=false;
     const tr=op<1||qt===m;if(mat.transparent!==tr)mat.needsUpdate=true;
     mat.transparent=tr;mat.opacity=op;mat.depthWrite=op>=1;
@@ -279,6 +285,7 @@ function paint(){
   needs=true;
 }
 function pick(e){
+  if(mode==='run')return;
   if(mode==='quiz'){if(quiz&&quiz.kind==='tap'&&!quiz.answered)tapAnswer(e);return}
   const r=renderer.domElement.getBoundingClientRect();
   const v=new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
@@ -300,7 +307,7 @@ function select(m,focus){
 /* ---------- home ---------- */
 function bestTxt(k){const b=S.best[k];return b!=null?'שיא: '+b+'/10':'עוד לא נבחנת'}
 function home(){
-  mode='explore';$('#stage').hidden=true;$('#ui').hidden=true;$('#home').hidden=false;stopPulse();
+  mode='explore';extraL=null;if(run&&run.tm){clearInterval(run.tm);run.tm=null}$('#stage').hidden=true;$('#ui').hidden=true;$('#home').hidden=false;stopPulse();
   if(clip){clip=null;renderer.clippingPlanes=[]}
   const seen=Object.keys(S.seen).length;
   const tile=(L,k,he,e)=>`<button class="tile" data-q="${L}:${k}" style="--c:${(REGC[k]||LAYERS[L].col)==='#FFFFFF'?'#9AA':(REGC[k]||LAYERS[L].col)}"><span class="e">${e}</span><b>${he}</b><span>${bestTxt(L+':'+k)}</span></button>`;
@@ -312,6 +319,13 @@ function home(){
    <div class="layers">${Object.entries(LAYERS).map(([k,l])=>`<button data-go="${k}"><span>${l.e}</span>${l.he}</button>`).join('')}</div>
    <div class="label">צפית ב-${seen} מבנים</div><div class="meter"><i style="width:${Math.min(100,seen/20)}%;background:#fff"></i></div></div>
   <button class="card fc" id="fc"><div class="row" style="align-items:center"><div style="flex:none;font-size:34px">🗂️</div><div><b>כרטיסיות שרירים לחזרה</b><div class="label">מוצא · אחיזה · פעולה · עצבוב${due?` · ${due} לחזרה היום`:''}</div></div></div></button>
+  <div class="grid2">
+   <button class="tile" id="exam" style="--c:#2E6FD8"><span class="e">⏱️</span><b>מבחן מסכם</b><span>20 שאלות · 20 דקות${S.exams&&S.exams.length?' · אחרון: '+S.exams[S.exams.length-1].s+'/'+S.exams[S.exams.length-1].n:''}</span></button>
+   <button class="tile" id="flow" style="--c:#C0392B"><span class="e">🫀</span><b>זרימת הדם</b><span>מסלול הדם בלב ובגוף, צעד אחר צעד</span></button></div>
+  <h2>🩺 מקרים קליניים</h2>
+  <p class="label">תיאור של מטופל, ואתם מזהים איזה מבנה נפגע. אחרי התשובה המבנה מסומן על המודל עם הסבר.</p>
+  <div class="gchips">${Object.entries(TRACK_HE).map(([k,h])=>`<button data-case="${k}">${h}${S.best['cases:'+k]!=null?' · '+S.best['cases:'+k]+'/10':''}</button>`).join('')}</div>
+  <button class="card fc" id="favs"><div class="row" style="align-items:center"><div style="flex:none;font-size:30px">⭐</div><div><b>המועדפים וההערות שלי</b><div class="label">${Object.values(S.fav||{}).filter(f=>f.star||f.note).length} מבנים שמורים</div></div></div></button>
   <h2>🧭 מסלולי לימוד</h2>
   <div class="grid2">${TRACKS.map(t=>`<button class="tile" data-track="${t.id}" style="--c:${t.c}"><span class="e">${t.e}</span><b>${t.he}</b><span>${trackDone(t)}/${t.steps.length} שלבים</span></button>`).join('')}</div>
   <h2>🦴 מפרקים</h2>
@@ -327,18 +341,23 @@ function home(){
   <div id="tabbody"></div>
   <div class="card credit"><b>מקור המודל</b>
    <span>המודל התלת-ממדי מבוסס על BodyParts3D, © The Database Center for Life Science, ברישיון <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. בוצעו התאמות: פישוט הגאומטריה, דחיסה, שמות בעברית ובלטינית ותוכן לימודי. שכבות הרצועות והעצבים מבוססות על <a href="https://www.z-anatomy.com" target="_blank" rel="noopener">Z-Anatomy</a> (גם הוא נגזר מ-BodyParts3D), ברישיון <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>; קבצי המודל של שכבות אלה (data/joints, data/nerves), כולל ההתאמות שלנו, מופצים באותו רישיון. מיועד ללימוד בלבד ואינו כלי רפואי.</span>
+   <button class="btn ghost wide" id="offl" ${S.offline?'':''}>${S.offline?'✓ הורד לשימוש בלי אינטרנט (לחצו לרענון)':'⬇️ הורדת כל השכבות לשימוש בלי אינטרנט (כ-32MB)'}</button>
    <span><a href="privacy.html">מדיניות פרטיות</a> · <a href="terms.html">תנאי שימוש</a></span></div>`;
   const drawTab=()=>{const l=LAYERS[homeTab];
     $('#tabbody').innerHTML=`<button class="btn ghost wide" data-q="${homeTab}:all">🎯 בוחן: ${l.reg[0][1]}</button>
      <button class="btn ghost wide" data-q="${homeTab}:all:tap">👆 מבחן מעשי: מצאו על המודל</button>
+     <button class="btn ghost wide" data-desc="${homeTab}">📖 זהה לפי ההסבר ${bestTxt(homeTab+':all:desc').replace('עוד לא נבחנת','')}</button>
      ${homeTab==='m'?`<div class="row"><button class="btn ghost" data-q="m:all:act">⚙️ בוחן פעולות</button><button class="btn ghost" data-q="m:all:nerve">⚡ בוחן עצבוב</button></div>`:''}
      <div class="grid2">${l.reg.filter(r=>r[0]!=='all').map(([k,he,e])=>tile(homeTab,k,he,e)).join('')}</div>`;
+    $('#tabbody [data-desc]').onclick=()=>runDesc(homeTab);
     document.querySelectorAll('#tabbody [data-q]').forEach(b=>b.onclick=()=>{const [L,r,kind]=b.dataset.q.split(':');startQuiz(L,r,kind||'name')})};
   drawTab();
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{homeTab=b.dataset.tab;document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));drawTab()});
   document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>explore(b.dataset.go,'all'));
   document.querySelectorAll('[data-grp]').forEach(b=>b.onclick=async()=>{await explore('m','all');showGroup(b.dataset.grp)});
   $('#fc').onclick=flashcards;
+  $('#exam').onclick=runExam;$('#flow').onclick=bloodFlow;$('#favs').onclick=favList;$('#offl').onclick=e=>downloadAll(e.currentTarget);
+  document.querySelectorAll('[data-case]').forEach(b=>b.onclick=()=>runCases(b.dataset.case));
   document.querySelectorAll('[data-track]').forEach(b=>b.onclick=()=>openTrack(b.dataset.track));
   document.querySelectorAll('[data-joint]').forEach(b=>b.onclick=()=>showJoint(b.dataset.joint));
   document.querySelectorAll('[data-nerve]').forEach(b=>b.onclick=()=>showNerve(b.dataset.nerve));
@@ -349,7 +368,7 @@ async function openStage(L){
   $('#home').hidden=true;await loadPack('skeleton');if(L!=='b')await loadPack(LAYERS[L].pack);initStage();$('#stage').hidden=false;$('#ui').hidden=false;
 }
 async function explore(L,r){
-  await openStage(L);mode='explore';quiz=null;layer=L;region=r||'all';selected=null;group=null;custom=null;stopPulse();hiRefs=[];isolated=false;setShift(0);
+  await openStage(L);mode='explore';extraL=null;quiz=null;layer=L;region=r||'all';selected=null;group=null;custom=null;stopPulse();hiRefs=[];isolated=false;setShift(0);
   frontView();paint();fitTo(meshes.filter(inRegion),true);renderUI();
 }
 async function setLayer(L){
@@ -431,6 +450,7 @@ function renderSheet(){
    <div><span class="tag">${LAYERS[i.L].e} ${LAYERS[i.L].what}</span><span class="tag">${regName(i)}</span>${i.side?`<span class="tag">${sideHe(i.side)}</span>`:''}</div>
    <div class="he">${esc(nameOf(i))}</div>${i.hc?`<div class="label">${esc(i.he)}</div>`:''}<div class="la">${esc(i.la)}</div><div class="en">${esc(i.en)}</div>
    ${i.s?`<div class="desc">${esc(i.s)}</div>`:''}
+   ${noteOf(i)?`<div class="note">📝 ${esc(noteOf(i))}</div>`:''}<div id="notebox"></div>
    ${i.g?`<button class="grpbtn" id="grp">🔗 חלק מקבוצת: <b>${esc(N.groups[i.g][0])}</b> ←</button>`:''}
    ${info?`<div class="oian">
      <button data-ref="o"><b>📍 מוצא</b><span>${bd(info.o)}</span></button>
@@ -439,11 +459,13 @@ function renderSheet(){
      <div><b>⚡ עצבוב</b><span>${bd(info.n)}</span></div></div>
      <div class="row" style="flex-wrap:wrap;gap:6px"><button class="mini" id="pulse">▶️ הדמיית כיווץ</button>${nerveOf(info.n)?`<button class="mini" id="nmap">⚡ כל שרירי ${esc(nerveOf(info.n)[1])}</button>`:''}</div>`:''}
    ${(i.L==='v'||i.L==='n'||i.L==='o')?`<button class="mini" id="path" style="align-self:flex-start">${i.L==='v'?'🩸 הראה את כל המסלול והענפים':'🔗 הראה את כל החלקים'}</button>`:''}
-   <div class="row" style="flex-wrap:nowrap"><button class="mini" id="iso">${isolated?'👁️ הצג הכל':'🔎 בודד'}</button><button class="mini" id="foc">🎯 התמקד</button><button class="mini" id="say" aria-label="הקראת השם וההסבר">🔊 הקראה</button><button class="mini" id="cls" aria-label="סגירה">✕</button></div></div>`;
+   <div class="row" style="flex-wrap:nowrap"><button class="mini" id="iso">${isolated?'👁️ הצג הכל':'🔎 בודד'}</button><button class="mini" id="foc">🎯 התמקד</button><button class="mini" id="say" aria-label="הקראת השם וההסבר">🔊 הקראה</button><button class="mini" id="fav" aria-label="מועדף">${S.fav&&S.fav[favKey(i)]&&S.fav[favKey(i)].star?'⭐':'☆'}</button><button class="mini" id="nt" aria-label="הערה אישית">📝</button><button class="mini" id="cls" aria-label="סגירה">✕</button></div></div>`;
   $('#iso').onclick=()=>{isolated=!isolated;paint();fitTo(isolated?[selected,...hiRefs]:meshes.filter(m=>m.visible&&inRegion(m)));renderSheet()};
   $('#foc').onclick=()=>fitTo([selected]);
   $('#cls').onclick=()=>select(null);
   $('#say').onclick=()=>speak(i,{full:true});
+  $('#fav').onclick=()=>{toggleFav(i);renderSheet();toast(S.fav[favKey(i)]&&S.fav[favKey(i)].star?'נשמר במועדפים ⭐':'הוסר מהמועדפים')};
+  $('#nt').onclick=()=>{$('#notebox').innerHTML=`<textarea id="ntx" rows="2" placeholder="הערה אישית, למשל: היה במבחן" style="width:100%;font:inherit;border-radius:10px;padding:8px;border:1px solid #ccd">${esc(noteOf(i))}</textarea><button class="mini" id="nts">שמירה</button>`;$('#ntx').focus();$('#nts').onclick=()=>{setNote(i,$('#ntx').value);renderSheet();toast('ההערה נשמרה')}};
   if($('#pulse'))$('#pulse').onclick=()=>pulse(selected);
   if($('#nmap'))$('#nmap').onclick=()=>showNerve(nerveOf(info.n)[0]);
   if($('#path'))$('#path').onclick=()=>showPath(selected);
@@ -461,8 +483,9 @@ function speak(i,o={}){
   const en=mk(i.la||i.en,EV?EV.lang:'en-US',EV);          // Latin name, read by an English voice: available on every device
   const queue=[];
   if(HV) queue.push(mk(nameOf(i).replace(/[()–]/g,' '),HV.lang,HV));
-  queue.push(en);
+  if(!o.noLatin&&(i.la||i.en))queue.push(en);
   if(o.full&&HV&&i.s)queue.push(mk(i.s.replace(/\([^)]*\)/g,' '),HV.lang,HV));
+  if(!queue.length){if(!o.quiet)toast('אין קול עברי במכשיר');return}
   try{
     if(ss.speaking||ss.pending) ss.cancel();
     ss.resume();
@@ -752,6 +775,180 @@ function drawCard(){
   $('#see3d').onclick=async()=>{await explore('m','all');select(byId[c.id],true)};
 }
 function grade(ok){const f=FC,c=f.list[f.i];const s=S.cards[c.k]||{box:0};s.box=ok?Math.min(4,(s.box||0)+1):0;s.due=dayNum()+BOX_DAYS[s.box];S.cards[c.k]=s;save();if(ok)f.known++;f.i++;f.flip=false;drawCard()}
+
+/* ---------- study runner: description quiz, clinical cases, timed exam ---------- */
+let run=null,CASES=null;
+const keyOf=i=>i.la||i.en;
+const reEsc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function maskDesc(i){let s=i.s||'';const strip=w=>(w||'').replace(/\s*\([^)]*\)/g,'').replace(/\s+(\d+|[IVX]+)$/,'').trim();const ws=[nameOf(i),nameOf(i).split(' – ')[0],i.he,i.la,i.en,strip(nameOf(i)),strip(i.la),strip(i.en)].filter(w=>w&&w.length>4).sort((a,b)=>b.length-a.length);for(const w of ws)s=s.replace(new RegExp(reEsc(w),'gi'),'＿＿＿');return s}
+const meshesOf=(L,k)=>meshes.filter(m=>m.userData.info.L===L&&keyOf(m.userData.info)===k);
+function heOfKey(L,k){const m=meshes.find(x=>x.userData.info.L===L&&keyOf(x.userData.info)===k);if(m)return nameOf(m.userData.info);const v=N&&Object.values(N.names).find(x=>x.L===L&&keyOf(x)===k);return v?nameOf(v):k}
+async function useLayer(L){await openStage(L);await loadPack(LAYERS[L].pack);layer=L;region='all';selected=null;group=null;custom=null;hiRefs=[];isolated=false;stopPulse();extraL=null}
+function overview(){custom=null;setShift(.22);frontView();paint();fitTo(meshes.filter(inRegion),true)}
+function spotlight(ms,tight){
+  custom={ghost:true,set:new Set(ms),html:''};setShift(.22);
+  const z=ms.reduce((a,m)=>a+m.geometry.boundingSphere.center.z,0)/Math.max(1,ms.length);if(z<bodyZ()-.01)backView();else frontView();
+  paint();
+  if(tight&&ms.length===1){const c=ms[0].geometry.boundingSphere.center;fitTo([ms[0],...meshes.filter(m=>active(m)&&m!==ms[0]&&m.geometry.boundingSphere.center.distanceTo(c)<Math.max(.05,ms[0].geometry.boundingSphere.radius*1.3))].slice(0,10))}
+  else if(ms.length)fitTo(ms,true);
+}
+function distract(i,n=3){
+  const he=nameOf(i),k0=keyOf(i),seen=new Set([he]);const out=[];
+  const pick=list=>{for(const m of shuffle(list)){const x=m.userData.info,h=nameOf(x),k=keyOf(x);if(seen.has(h)||k===k0)continue;seen.add(h);out.push(k);if(out.length>=n)break}};
+  pick(meshes.filter(m=>m.userData.info.L===i.L&&m.userData.info.r===i.r));
+  if(out.length<n)pick(meshes.filter(m=>m.userData.info.L===i.L));
+  return out;
+}
+function uniqByName(list){const by={};list.forEach(m=>{(by[nameOf(m.userData.info)]??=[]).push(m)});return Object.values(by).map(a=>a[Math.random()*a.length|0])}
+function mkQ(kind,m){
+  const i=m.userData.info,key=keyOf(i);
+  return {kind,L:i.L,key,m,opts:shuffle([key,...distract(i)]),before:kind==='name',why:i.s||'',cat:LAYERS[i.L].he,
+    prompt:kind==='name'?`<b>מה שם ה${LAYERS[i.L].what} המסומן?</b>${i.side?`<span class="label">${sideHe(i.side)} של הגוף</span>`:''}`
+      :`<span class="label">📖 לאיזה ${LAYERS[i.L].what} מתאים ההסבר?</span><div class="desc">${esc(maskDesc(i))}</div>`};
+}
+function mkCase(c){return {kind:'case',L:c.L,key:c.a,opts:shuffle([c.a,...c.d]),before:false,why:c.w,cat:'מקרים · '+LAYERS[c.L].he,prompt:`<span class="label">🩺 מקרה קליני</span><div class="case">${esc(c.q)}</div>`}}
+async function loadCases(){if(!CASES)CASES=await fetch('data/cases.json').then(r=>r.json()).catch(()=>[]);return CASES}
+
+async function runDesc(L){
+  await useLayer(L);
+  const pool=uniqByName(meshes.filter(m=>m.userData.info.L===L&&(m.userData.info.s||'').length>=60));
+  startRun({title:'📖 זהה לפי ההסבר',key:L+':all:desc',qs:shuffle(pool).slice(0,10).map(m=>mkQ('desc',m))});
+}
+const TRACK_HE={all:'כל המקרים',med:'רפואה',nurse:'סיעוד',physio:'פיזיותרפיה',dental:'רפואת שיניים'};
+async function runCases(t){
+  const cs=(await loadCases()).filter(c=>t==='all'||c.t.includes(t));
+  if(!cs.length){toast('אין מקרים זמינים');return}
+  await openStage(cs[0].L);
+  startRun({title:'🩺 '+TRACK_HE[t],key:'cases:'+t,qs:shuffle(cs.slice()).slice(0,10).map(mkCase)});
+}
+async function runExam(){
+  await useLayer('b');await loadPack('muscles');await loadPack('organs');
+  const qs=[];const L3=['b','b','b','m','m','m','o','o'];
+  const used=new Set();const grab=(L,cond)=>{const c=shuffle(meshes.filter(m=>m.userData.info.L===L&&!used.has(nameOf(m.userData.info))&&cond(m)))[0];if(c)used.add(nameOf(c.userData.info));return c};
+  L3.forEach(L=>{const m=grab(L,()=>true);if(m)qs.push(mkQ('name',m))});
+  ['b','b','m','m','o','o'].forEach(L=>{const m=grab(L,m=>(m.userData.info.s||'').length>=60);if(m)qs.push(mkQ('desc',m))});
+  shuffle((await loadCases()).slice()).slice(0,6).forEach(c=>qs.push(mkCase(c)));
+  startRun({title:'⏱️ מבחן',key:'exam',qs:shuffle(qs),timed:20});
+}
+function startRun(o){
+  if(!o.qs.length){toast('אין מספיק שאלות כאן');return}
+  if(run&&run.tm)clearInterval(run.tm);
+  run=Object.assign({i:0,ans:[],score:0,answered:false},o);
+  if(run.timed){run.end=Date.now()+run.timed*60000;run.tm=setInterval(()=>{const t=Math.max(0,run.end-Date.now());const el=$('#tmr');if(el)el.textContent=`${t/60000|0}:${String((t/1000|0)%60).padStart(2,'0')}`;if(!t)endRun()},500)}
+  showQ();
+}
+async function showQ(review){
+  const q=run.qs[run.i];await useLayer(q.L);mode='run';run.answered=!!review;
+  if(q.before)spotlight([q.m],true);else overview();
+  const opt=k=>`<span>${esc(heOfKey(q.L,k))}</span><small>${esc(k)}</small>`;
+  $('#ui').innerHTML=`
+   <div class="bar"><button class="x" id="back" aria-label="יציאה">✕</button><div class="ttl">${run.title} · ${run.i+1}/${run.qs.length}${run.timed&&!review?' · ⏱️ <span id="tmr"></span>':''}</div>${q.before?'<button class="x" id="foc" aria-label="התמקד">🎯</button>':''}</div>
+   <div class="bar" style="margin-top:8px"><div class="qbar"><i style="width:${run.i/run.qs.length*100}%"></i></div></div>
+   <div class="spacer"></div>
+   <div class="sheet">${q.prompt}
+    <div class="opts">${q.opts.map((k,j)=>`<button class="opt" data-k="${j}">${opt(k)}</button>`).join('')}</div>
+    <div id="fb"></div></div>`;
+  $('#back').onclick=review?endRun:()=>{if(!run.timed||confirmExit())home()};
+  if($('#foc'))$('#foc').onclick=()=>spotlight([q.m],true);
+  document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>runAnswer(+b.dataset.k));
+  if(review)reveal(run.ans[run.i],true);
+}
+let exitAsk=0;function confirmExit(){if(Date.now()-exitAsk<3000)return true;exitAsk=Date.now();toast('לחצו שוב על ✕ כדי לצאת מהמבחן');return false}
+function runAnswer(j){
+  if(run.answered)return;run.answered=true;const q=run.qs[run.i];run.ans[run.i]=j;
+  if(q.opts[j]===q.key)run.score++;
+  if(run.timed){run.i++;run.i<run.qs.length?showQ():endRun();return}
+  reveal(j,false);
+}
+function reveal(j,review){
+  const q=run.qs[run.i],ok=q.opts[j]===q.key;
+  document.querySelectorAll('.opt').forEach((b,x)=>{if(q.opts[x]===q.key)b.classList.add('ok');else if(x===j)b.classList.add('no')});
+  let ms=q.kind==='name'?[q.m]:meshesOf(q.L,q.key);const rs=ms.filter(m=>m.userData.info.side!=='left');if(rs.length)ms=rs;spotlight(ms,q.kind==='name'||ms.length===1);
+  document.querySelectorAll('.opt').forEach((b,x)=>{if(q.opts[x]!==q.key&&x!==j)b.hidden=true});
+  const nm=heOfKey(q.L,q.key);
+  if(S.auto!==false)speak({he:nm,la:q.key,en:q.key},{quiet:true});
+  $('#fb').innerHTML=`<p style="font-weight:600;color:${ok?'var(--good)':'var(--bad)'}">${j==null?'לא נענתה.':ok?'נכון! 👏':'לא נכון.'} ${esc(nm)} <small dir="ltr">${esc(q.key)}</small></p>
+   ${q.why?`<div class="desc">${esc(q.why)}</div>`:''}<span class="label">המבנה מסומן בטורקיז על המודל.</span>
+   <button class="btn wide" id="nx">${review?'חזרה לתוצאות':run.i+1<run.qs.length?'לשאלה הבאה':'לתוצאות'}</button>`;
+  $('#nx').onclick=review?endRun:()=>{run.i++;run.i<run.qs.length?showQ():endRun()};
+}
+function endRun(){
+  if(run.tm){clearInterval(run.tm);run.tm=null}
+  if(!run.done){run.done=true;S.best[run.key]=Math.max(S.best[run.key]||0,run.score);if(run.timed){(S.exams=S.exams||[]).push({d:Date.now(),s:run.score,n:run.qs.length});S.exams=S.exams.slice(-20)}save()}
+  overview();mode='run';
+  const cats={};run.qs.forEach((q,x)=>{const c=cats[q.cat]??={ok:0,n:0};c.n++;if(q.opts[run.ans[x]]===q.key)c.ok++});
+  const weak=Object.entries(cats).filter(([,c])=>c.ok/c.n<.6).map(([k])=>k);
+  const wrong=run.qs.map((q,x)=>[q,x]).filter(([q,x])=>q.opts[run.ans[x]]!==q.key);
+  const pct=Math.round(run.score/run.qs.length*100);
+  $('#ui').innerHTML=`<div class="spacer"></div><div class="sheet">
+   <div style="text-align:center"><div style="font-size:40px">${pct>=80?'🏆':pct>=55?'💪':'📚'}</div><div class="he">${run.score} מתוך ${run.qs.length} · ${pct}%</div></div>
+   <div class="cats">${Object.entries(cats).map(([k,c])=>`<div><b>${esc(k)}</b><div class="meter"><i style="width:${c.ok/c.n*100}%;background:${c.ok/c.n>=.6?'var(--good)':'var(--bad)'}"></i></div><span>${c.ok}/${c.n}</span></div>`).join('')}</div>
+   ${weak.length?`<p class="label">כדאי לחזור על: <b>${weak.map(esc).join(', ')}</b></p>`:''}
+   ${wrong.length?`<span class="label">טעויות לחזרה (לחצו כדי לראות על המודל):</span><div class="rev">${wrong.map(([q,x])=>`<button data-rv="${x}">${q.kind==='case'?'🩺':q.kind==='desc'?'📖':'🎯'} ${esc(heOfKey(q.L,q.key))}</button>`).join('')}</div>`:''}
+   <div class="row"><button class="btn" id="again">שוב</button><button class="btn ghost" id="hm">🏠 לדף הבית</button></div></div>`;
+  document.querySelectorAll('[data-rv]').forEach(b=>b.onclick=()=>{run.i=+b.dataset.rv;showQ(true)});
+  const o=run;$('#again').onclick=()=>o.key==='exam'?runExam():o.key.startsWith('cases:')?runCases(o.key.slice(6)):runDesc(o.key[0]);$('#hm').onclick=home;
+}
+
+/* ---------- blood flow walkthrough ---------- */
+const FLOW=[
+ ['הוורידים הנבובים',[['v',/superior vena cava|inferior vena cava/i]],'דם דל בחמצן חוזר מהגוף: הווריד הנבוב העליון מביא דם מהראש, מהצוואר ומהגפיים העליונות, והתחתון מהגפיים התחתונות, מהבטן ומהאגן.'],
+ ['העלייה הימנית',[['o',/atrium/i,'right','cardiac']],'שני הוורידים הנבובים והסינוס הכלילי נשפכים לעלייה הימנית. היא אוספת את הדם ודוחפת אותו לחדר הימני.'],
+ ['המסתם התלת-צניפי',[['o',/tricuspid/i,null,'cardiac']],'מסתם בעל שלושה עלים בין העלייה הימנית לחדר הימני. נפתח במילוי החדר ונסגר בכיווצו, כדי שהדם לא יחזור לעלייה.'],
+ ['החדר הימני',[['o',/ventricle/i,'right','cardiac']],'החדר הימני שואב דם לריאות בלחץ נמוך יחסית, ולכן הדופן שלו דקה מזו של החדר השמאלי.'],
+ ['מסתם עורק הריאה',[['o',/pulmonary valve/i,null,'cardiac']],'מסתם חצי-ירחי בפתח גזע עורק הריאה. מונע חזרת דם מעורק הריאה לחדר הימני בזמן ההרפיה.'],
+ ['גזע עורק הריאה ועורקי הריאה',[['v',/^pulmonary trunk|^pulmonary artery/i]],'גזע עורק הריאה מתפצל לעורק ריאה ימני ושמאלי. אלה העורקים היחידים במבוגר שמובילים דם דל בחמצן.'],
+ ['הריאות: חילוף גזים',[['o',/bronchial tree|main bronchus/i]],'בנאדיות הריאה הדם פולט פחמן דו-חמצני וקולט חמצן. בתמונה מסומן העץ הסימפוני, שמוביל אוויר עד הנאדיות.'],
+ ['ורידי הריאה',[['v',/pulmonary vein/i]],'ארבעה ורידי ריאה (שניים מכל ריאה) מחזירים דם עשיר בחמצן אל העלייה השמאלית.'],
+ ['העלייה השמאלית',[['o',/atrium/i,'left','cardiac']],'העלייה השמאלית קולטת את הדם המחומצן מהריאות ומעבירה אותו לחדר השמאלי.'],
+ ['המסתם המיטרלי',[['o',/mitral/i,null,'cardiac']],'מסתם דו-צניפי בין העלייה השמאלית לחדר השמאלי. היצרות או דליפה שלו הן ממחלות המסתמים השכיחות.'],
+ ['החדר השמאלי',[['o',/ventricle/i,'left','cardiac']],'החדר השמאלי שואב דם לכל הגוף בלחץ גבוה, ולכן הדופן השרירית שלו העבה ביותר בלב.'],
+ ['מסתם אבי העורקים',[['o',/aortic valve/i,null,'cardiac']],'מסתם חצי-ירחי בפתח אבי העורקים. מעליו יוצאים העורקים הכליליים שמזינים את שריר הלב.'],
+ ['אבי העורקים',[['v',/aorta/i]],'אבי העורקים עולה, יוצר קשת ויורד דרך בית החזה והבטן. ממנו יוצאים העורקים שמספקים דם מחומצן לכל הגוף.'],
+ ['העורקים הכליליים',[['v',/coronary|interventricular branch/i]],'העורקים הכליליים מזינים את שריר הלב עצמו. חסימה שלהם גורמת לאוטם שריר הלב (התקף לב).'],
+];
+let flowI=0;
+async function bloodFlow(){
+  await useLayer('v');await loadPack('organs');mode='run';flowI=0;flowStep();
+}
+function flowStep(){
+  layer='v';extraL=new Set(['o']);const [t,ms_,d]=FLOW[flowI];
+  const ms=meshes.filter(m=>{const i=m.userData.info;return ms_.some(([L,re,side,r])=>i.L===L&&re.test(i.en)&&(!side||i.side===side)&&(!r||i.r===r))});
+  spotlight(ms);
+  $('#ui').innerHTML=`<div class="bar"><button class="x" id="back" aria-label="יציאה">✕</button><div class="ttl">🫀 זרימת הדם · ${flowI+1}/${FLOW.length}</div></div>
+   <div class="bar" style="margin-top:8px"><div class="qbar"><i style="width:${(flowI+1)/FLOW.length*100}%"></i></div></div><div class="spacer"></div>
+   <div class="sheet"><div><span class="tag" style="background:${flowI<7?'#DCE8FB':'#FBDCDC'}">${flowI<7?'🔵 דם דל בחמצן':'🔴 דם עשיר בחמצן'}</span></div><div class="he">${esc(t)}</div><div class="desc">${esc(d)}</div>
+   ${ms.length?'':'<span class="label">החלק הזה לא מופיע במודל.</span>'}
+   <div class="row" style="flex-wrap:nowrap"><button class="btn ghost" id="prv" ${flowI?'':'disabled'}>→ הקודם</button><button class="mini" id="say" aria-label="הקראה">🔊</button><button class="btn" id="nxt">${flowI+1<FLOW.length?'הבא ←':'סיום'}</button></div></div>`;
+  $('#back').onclick=home;$('#prv').onclick=()=>{flowI--;flowStep()};
+  $('#nxt').onclick=()=>{if(flowI+1<FLOW.length){flowI++;flowStep()}else home()};
+  $('#say').onclick=()=>speak({he:t,la:'',en:'',s:d},{full:true,noLatin:true});
+  if(S.auto!==false)speak({he:t,la:'',en:''},{quiet:true,noLatin:true});
+}
+
+/* ---------- favorites and personal notes ---------- */
+const favKey=i=>i.L+'|'+keyOf(i);
+function isFav(i){return !!(S.fav&&S.fav[favKey(i)])}
+function toggleFav(i){S.fav=S.fav||{};const k=favKey(i);if(S.fav[k]&&!S.fav[k].note)delete S.fav[k];else if(S.fav[k])S.fav[k].star=!S.fav[k].star;else S.fav[k]={n:nameOf(i),star:true,note:''};save()}
+function noteOf(i){return S.fav&&S.fav[favKey(i)]&&S.fav[favKey(i)].note||''}
+function setNote(i,t){S.fav=S.fav||{};const k=favKey(i);const f=S.fav[k]||{n:nameOf(i),star:false,note:''};f.note=t.trim();if(!f.note&&!f.star)delete S.fav[k];else S.fav[k]=f;save()}
+function favList(){
+  const items=Object.entries(S.fav||{}).filter(([,f])=>f.star||f.note);
+  $('#home').innerHTML=`<div class="bar"><button class="x" id="hb" aria-label="חזרה">→</button><div class="ttl">⭐ המועדפים וההערות שלי</div></div>
+   ${items.length?items.map(([k,f])=>{const [L,key]=k.split('|');return `<button class="card favi" data-fk="${esc(k)}"><b>${LAYERS[L]?LAYERS[L].e:''} ${esc(f.n)}</b> <small dir="ltr">${esc(key)}</small>${f.star?' ⭐':''}${f.note?`<div class="note">📝 ${esc(f.note)}</div>`:''}</button>`}).join(''):'<p class="label">עוד אין מועדפים. בכרטיס של כל מבנה לחצו ☆ כדי לשמור, או 📝 כדי לכתוב הערה.</p>'}`;
+  $('#hb').onclick=home;
+  document.querySelectorAll('[data-fk]').forEach(b=>b.onclick=async()=>{const [L,key]=b.dataset.fk.split('|');await explore(L,'all');const m=meshesOf(L,key)[0];if(m)select(m,true);else toast('המבנה לא נמצא במודל')});
+}
+
+/* ---------- download everything for offline use ---------- */
+const PACKS=['skeleton','muscles','organs','joints','nerves','vessels'];
+async function downloadAll(btn){
+  const files=['data/names.json','data/cases.json',...PACKS.flatMap(p=>[`data/${p}.json`,`data/${p}.bin`])];
+  let done=0;btn.disabled=true;
+  try{for(const f of files){await fetch(f).then(r=>r.arrayBuffer());done++;btn.textContent=`⬇️ מוריד… ${Math.round(done/files.length*100)}%`}
+    S.offline=true;save();btn.textContent='✓ הכל הורד: האפליקציה עובדת גם בלי אינטרנט';toast('הורד! אפשר ללמוד גם בלי אינטרנט')}
+  catch(e){btn.disabled=false;btn.textContent='⬇️ ההורדה נכשלה, נסו שוב';toast('אין חיבור לאינטרנט')}
+}
 
 loadNames().then(home).catch(home);
 </script>
