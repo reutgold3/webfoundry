@@ -114,6 +114,7 @@ h3{font-size:18px;font-weight:600}
 :focus-visible{outline:3px solid #2E6FD8!important;outline-offset:2px}
 body.hc{--soft:#2B3440}body.hc .label,body.hc .desc{color:#1C232C}body.hc .card,body.hc .sheet,body.hc .opt,body.hc .tile{border:2px solid #1C232C!important}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px}.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-end:4px;vertical-align:-1px;border:1px solid #0002}
 </style>
 
 <div id="home" class="page"></div>
@@ -272,7 +273,7 @@ function paint(){
     m.visible=vis;
     const mat=m.material;
     let col=colorByRegion&&act?(REGC[inf.r]||baseCol(inf)):baseCol(inf);
-    if(qt===m) col='#F2A516'; else if(wrong===m) col='#E04B5A'; else if(sel) col='#22C3BA'; else if(ref) col='#F2A516';
+    if(qt===m) col='#F2A516'; else if(wrong===m) col='#E04B5A'; else if(sel&&custom&&custom.col&&custom.col.has(m)) col=custom.col.get(m); else if(sel) col='#22C3BA'; else if(ref) col='#F2A516';
     mat.color.set(col);
     let op=1;
     if(L==='b'&&layer!=='b'&&layer!=='m'&&layer!=='j'&&!ref) op=.18;   // faded skeleton behind organs / nerves / vessels
@@ -280,17 +281,19 @@ function paint(){
     if(L==='m'&&ghost&&!sel&&qt!==m) op=Math.min(op,.2);
     if(qt&&act&&qt!==m&&layer!=='b') op=Math.min(op,.08);
     if(hiRefs.length&&L==='m'&&!sel) op=Math.min(op,.15);
-    if(custom&&custom.ghost&&(act||(extraL&&extraL.has(L)))&&!sel) op=Math.min(op,.12);
+    if(custom&&custom.ghost&&(act||(extraL&&extraL.has(L)))&&!sel) op=Math.min(op,custom.ghostOp||.12);
     if(custom&&custom.bonesOnly&&L!=='b') vis=false,m.visible=false;
+    if(custom&&custom.hide&&(L!=='n'||custom.hide(m))) vis=false,m.visible=false;
     const tr=op<1||qt===m;if(mat.transparent!==tr)mat.needsUpdate=true;
     mat.transparent=tr;mat.opacity=op;mat.depthWrite=op>=1;
     mat.emissive.set(sel||qt===m||ref?'#103A38':'#000');
+    {const po=!!(sel&&custom&&custom.col);if(mat.polygonOffset!==po){mat.polygonOffset=po;mat.polygonOffsetFactor=po?-2:0;mat.polygonOffsetUnits=po?-8:0;mat.needsUpdate=true}}
     mat.depthTest=qt!==m;m.renderOrder=qt===m?10:(L==='b'?1:2);if(qt===m)mat.opacity=1
   }
   needs=true;
 }
 function pick(e){
-  if(mode==='run')return;
+  if(mode==='run'){if(custom&&custom.hide){const r=renderer.domElement.getBoundingClientRect();ray.setFromCamera(new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);const h=ray.intersectObjects(meshes.filter(m=>m.visible),false)[0];if(h){const i=h.object.userData.info;toast(nameOf(i));if(S.auto!==false)speak(i,{quiet:true})}}return}
   if(mode==='quiz'){if(quiz&&quiz.kind==='tap'&&!quiz.answered)tapAnswer(e);return}
   const r=renderer.domElement.getBoundingClientRect();
   const v=new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
@@ -326,6 +329,7 @@ function home(){
   <button class="card fc" id="fc"><div class="row" style="align-items:center"><div style="flex:none;font-size:34px">🗂️</div><div><b>כרטיסיות לחזרה</b><div class="label">עצמות · שרירים · רצועות · עצבים · איברים · כלי דם${due?` · ${due} לחזרה היום`:''}</div></div></div></button>
   <div class="grid2">
    <button class="tile" id="exam" style="--c:#2E6FD8"><span class="e">⏱️</span><b>מבחן מסכם</b><span>20 שאלות · 20 דקות${S.exams&&S.exams.length?' · אחרון: '+S.exams[S.exams.length-1].s+'/'+S.exams[S.exams.length-1].n:''}</span></button>
+   <button class="tile" id="brainT" style="--c:#8E44AD"><span class="e">🧠</span><b>מבנה המוח</b><span>אונות, אזורים תפקודיים ומבנים עמוקים</span></button>
    <button class="tile" id="flow" style="--c:#C0392B"><span class="e">🫀</span><b>זרימת הדם</b><span>מסלול הדם בלב ובגוף, צעד אחר צעד</span></button></div>
   <h2>🩺 מקרים קליניים</h2>
   <p class="label">תיאור של מטופל, ואתם מזהים איזה מבנה נפגע. אחרי התשובה המבנה מסומן על המודל עם הסבר.</p>
@@ -366,7 +370,7 @@ function home(){
   document.querySelectorAll('[data-grp]').forEach(b=>b.onclick=async()=>{await explore('m','all');showGroup(b.dataset.grp)});
   $('#fc').onclick=flashDecks;
   $('#exam').onclick=runExam;$('#prog').onclick=progress;$('#sett').onclick=settings;
-  document.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>topic(b.dataset.topic));$('#flow').onclick=bloodFlow;$('#favs').onclick=favList;$('#offl').onclick=e=>downloadAll(e.currentTarget);
+  document.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>topic(b.dataset.topic));$('#flow').onclick=bloodFlow;$('#brainT').onclick=brainTour;$('#favs').onclick=favList;$('#offl').onclick=e=>downloadAll(e.currentTarget);
   document.querySelectorAll('[data-case]').forEach(b=>b.onclick=()=>runCases(b.dataset.case));
   document.querySelectorAll('[data-track]').forEach(b=>b.onclick=()=>openTrack(b.dataset.track));
   document.querySelectorAll('[data-joint]').forEach(b=>b.onclick=()=>showJoint(b.dataset.joint));
@@ -1108,6 +1112,70 @@ function settings(){
   $('#hc').onchange=e=>{S.hc=e.target.checked;save();applyA11y()};$('#au').onchange=e=>{S.auto=e.target.checked;save()};
 }
 applyA11y();
+
+/* ---------- brain structure tour ---------- */
+const BRG={
+ temporal:[/temporal/i,'#2ECC71','אונה רקתית'],parietal:[/postcentral|parietal|supramarginal|\bangular|precuneus|interm_prim/i,'#F1C40F','אונה קודקודית'],
+ occipital:[/occipital|cuneus|lingual|calcarine|lunate/i,'#E74C3C','אונה עורפית'],frontal:[/frontal|precentral|orbital|straight gyrus|olfactory sulcus|frontopolar|paracentral|opercular|triangular/i,'#3498DB','אונה מצחית'],
+ insula:[/insula|circular sulcus/i,'#9B59B6','אינסולה'],limbic:[/cingulate|parahippocampal|hippocamp|amygdal|fornix|septal|stria terminalis/i,'#E67E22','מערכת לימבית'],
+ basal:[/caudate|putamen|pallidus|lentiform/i,'#1ABC9C','גרעיני הבסיס'],dien:[/thalamus|hypothalamus|geniculate|habenula|stria medullaris|mamillary|optic chiasm|optic tract/i,'#D35400','דיאנצפלון'],
+ comm:[/corpus callosum|commissure/i,'#ECF0F1','קומיסורות'],vent:[/ventricle|aqueduct|choroid plexus|septum pellucidum/i,'#5DADE2','חדרים'],
+ stem:[/midbrain|pons|medulla|olive|colliculus|cerebral peduncle|^base of peduncle|red nucleus|nucleus|vestibular nuclei|interpeduncular/i,'#AF7AC5','גזע המוח'],
+ cereb:[/lobule|vermis|culmen|declive|flocculus|tonsil of cerebellum|lingula of cerebellum|nodule|uvula|pyramis|tuber of|folium|cerebellar peduncle|wing of central/i,'#F5B7B1','מוחון'],
+ men:[/falx|tentorium/i,'#BDC3C7','קרומים'],
+};
+// order matters: the first group whose pattern matches a structure owns it
+const BR_ORDER=['vent','comm','basal','dien','limbic','insula','cereb','stem','men','temporal','parietal','occipital','frontal'];
+function brGroup(i){for(const k of BR_ORDER)if(BRG[k][0].test(i.en))return k;return null}
+// step: [title, groups to colour, view, hemisphere shown ('left'|'right'|null), text]
+const BRAIN=[
+ ['האונות של המוח',['frontal','parietal','temporal','occipital','cereb','stem'],'lat','right','כל המיספרה מחולקת לארבע אונות עיקריות: מצחית (כחול), קודקודית (צהוב), רקתית (ירוק) ועורפית (אדום). מתחתן נמצאים המוחון (ורוד) וגזע המוח (סגול). החריץ המרכזי מפריד בין האונה המצחית לקודקודית, והחריץ הצדי (סילביוס) מפריד את האונה הרקתית.'],
+ ['האונה המצחית',['frontal'],'lat','right','האונה הגדולה ביותר. אחראית על תכנון, קבלת החלטות, ריכוז, אישיות ושליטה עצמית. הפיתול שלפני החריץ המרכזי (precentral gyrus) הוא קליפת המוח המוטורית הראשונית. פגיעה באונה המצחית יכולה לשנות התנהגות ואישיות.'],
+ ['האונה הקודקודית',['parietal'],'lat','right','קולטת ומעבדת תחושה: הפיתול שאחרי החריץ המרכזי (postcentral gyrus) הוא קליפת התחושה הראשונית. האונה אחראית גם על תפיסה מרחבית ותחושת מיקום הגוף. פגיעה בצד הימני גורמת לעיתים להזנחה של צד שמאל של הגוף והמרחב (neglect).'],
+ ['האונה הרקתית',['temporal'],'lat','left','אחראית על שמיעה (פיתולי Heschl בתוך החריץ הצדי), הבנת שפה (אזור ורניקה, בדרך כלל בצד שמאל) וזיכרון, בעזרת ההיפוקמפוס שבחלקה הפנימי. פגיעה באזור ורניקה גורמת לדיבור שוטף אך חסר משמעות ולקושי בהבנה.'],
+ ['האונה העורפית',['occipital'],'med','left','מרכז הראייה. קליפת הראייה הראשונית נמצאת משני צידי החריץ הקלקריני, בצד הפנימי של האונה. כל צד מקבל את שדה הראייה הנגדי, ולכן שבץ באונה העורפית גורם לאובדן חצי שדה ראייה (hemianopia).'],
+ ['אזורי השפה, התנועה והתחושה',['frontal','parietal','temporal'],'lat','left','בהמיספרה השמאלית (הדומיננטית ברוב האנשים) נמצאים שני מרכזי השפה: אזור ברוקה בחלק האחורי של הפיתול המצחי התחתון, שאחראי על הפקת דיבור, ואזור ורניקה בחלק האחורי של הפיתול הרקתי העליון, שאחראי על הבנה. הקליפה המוטורית והתחושתית מסודרות לפי ה"הומונקולוס": לכל איבר בגוף יש אזור משלו.'],
+ ['האינסולה',['insula'],'lat','right','אונה קטנה החבויה בעומק החריץ הצדי, מתחת לאונות המצחית, הקודקודית והרקתית. מעורבת בתחושות מתוך הגוף (כמו דופק ורעב), בטעם, בכאב וברגשות.'],
+ ['המערכת הלימבית',['limbic'],'med','left','רשת של מבנים בצד הפנימי של המוח: הפיתול החגורתי (cingulate), ההיפוקמפוס, האמיגדלה והפורניקס. ההיפוקמפוס חיוני ליצירת זיכרונות חדשים והוא נפגע מוקדם במחלת אלצהיימר. האמיגדלה אחראית על פחד ועיבוד רגשי.'],
+ ['גרעיני הבסיס',['basal'],'top',null,'גרעינים של חומר אפור בעומק ההמיספרות: הגרעין הזנבי (caudate), הפוטמן והגלובוס פלידוס. הם מווסתים תנועה רצונית ולמידת הרגלים. פגיעה במערכת הזו גורמת למחלת פרקינסון (חוסר דופמין) ולמחלת הנטינגטון.'],
+ ['התלמוס וההיפותלמוס',['dien'],'med','left','התלמוס הוא תחנת הממסר של המוח: כמעט כל מידע תחושתי עובר דרכו בדרך לקליפה. ההיפותלמוס, מתחתיו, שולט בחום הגוף, ברעב, בצמא, בשינה ובהפרשת הורמונים דרך בלוטת יותרת המוח. כאן גם מצטלבים עצבי הראייה (optic chiasm).'],
+ ['כפיס המוח',['comm'],'med','left','כפיס המוח (corpus callosum) הוא צרור הסיבים הגדול ביותר במוח, ומחבר בין שתי ההמיספרות. הוא מאפשר להן לשתף מידע. הקומיסורות הקדמית והאחורית הן חיבורים קטנים יותר.'],
+ ['מערכת החדרים',['vent'],'top',null,'ארבעה חללים מלאים בנוזל השדרה (CSF): שני חדרים צדיים, חדר שלישי וחדר רביעי, המחוברים דרך אמת המים של המוח התיכון (aqueduct). הנוזל מיוצר ברשת הכורואידית. חסימה בזרימתו גורמת להצטברות נוזל ולהרחבת החדרים (הידרוצפלוס).'],
+ ['גזע המוח',['stem'],'med','left','מחבר בין המוח לחוט השדרה, ובנוי משלושה חלקים: המוח התיכון, הגשר (pons) והמוח המוארך (medulla). בו נמצאים המרכזים של נשימה, דופק ולחץ דם, ורוב הגרעינים של עצבי הגולגולת (III עד XII). פגיעה בגזע המוח מסכנת חיים.'],
+ ['המוחון',['cereb'],'back',null,'יושב מאחורי גזע המוח, מתחת לאונה העורפית. אחראי על קואורדינציה, שיווי משקל ודיוק בתנועה. פגיעה בו גורמת לחוסר יציבות בהליכה, רעד בכוונה ודיבור מקוטע, באותו צד של הגוף. החלק האמצעי נקרא ורמיס.'],
+ ['קרומי המוח',['men'],'top',null,'הקרום הקשה (dura) יוצר שתי מחיצות: מגל המוח (falx cerebri) בין שתי ההמיספרות, ואוהל המוחון (tentorium) בין המוח למוחון. לחץ גבוה בתוך הגולגולת עלול לדחוק חלקי מוח מתחת למחיצות האלה (הרניאציה).'],
+];
+let BI=0;
+if(/[?&]shot/.test(location.search))window.__dbg={get meshes(){return meshes},brGroup,get custom(){return custom},get camera(){return camera},T,ray};
+async function brainTour(){await useLayer('n');region='brain';mode='run';BI=0;brainStep()}
+function brainStep(){
+  const [t,gs,view,hemi,txt]=BRAIN[BI];layer='n';region='brain';clearMarker();
+  const brain=meshes.filter(m=>m.userData.info.L==='n'&&m.userData.info.r==='brain'&&!/white matter|spinal dura/i.test(m.userData.info.en));
+  const col=new Map(),set=[];
+  for(const m of brain){const g=brGroup(m.userData.info);if(g&&gs.includes(g)){col.set(m,BRG[g][1]);set.push(m)}}
+  const shown=brain.filter(m=>(!hemi||m.userData.info.side!==(hemi==='left'?'right':'left'))&&brGroup(m.userData.info));
+  const shownSet=new Set(shown);
+  const deep=gs.some(g=>['insula','limbic','basal','dien','vent','men'].includes(g));
+  custom={ghost:deep,ghostOp:.025,set:new Set(set),col,html:'',hide:m=>!shownSet.has(m)};setShift(.24);
+  // camera direction around the brain
+  const b=new T.Box3();shown.forEach(m=>b.union(m.geometry.boundingBox));const c=b.getCenter(new T.Vector3());
+  const R=brain.filter(m=>m.userData.info.side==='right'),Lf=brain.filter(m=>m.userData.info.side==='left');
+  const mx=a=>a.reduce((s,m)=>s+m.geometry.boundingSphere.center.x,0)/Math.max(1,a.length);const rs=Math.sign(mx(R)-mx(Lf))||1;
+  const side=hemi==='left'?-rs:rs;
+  const d={lat:[side,0,0],med:[-side,0,0],top:[0,1,.35],back:[0,.2,-1],front:[0,0,1]}[view];
+  controls.target.copy(c);camera.position.copy(c).add(new T.Vector3(...d).normalize());paint();fitTo(shown,true);
+  const legend=gs.length>1?`<div class="legend">${gs.map(g=>`<span><i style="background:${BRG[g][1]}"></i>${BRG[g][2]}</span>`).join('')}</div>`:'';
+  $('#ui').innerHTML=`<div class="bar"><button class="x" id="back" aria-label="יציאה">✕</button><div class="ttl">🧠 מבנה המוח · ${BI+1}/${BRAIN.length}</div></div>
+   <div class="bar" style="margin-top:8px"><select id="bsel" aria-label="בחירת נושא" style="width:100%;font:inherit;padding:6px;border-radius:10px">${BRAIN.map((x,j)=>`<option value="${j}" ${j===BI?'selected':''}>${esc(x[0])}</option>`).join('')}</select></div>
+   <div class="spacer"></div>
+   <div class="sheet"><div class="he">${esc(t)}</div>${legend}<div class="desc">${esc(txt)}</div>
+    <span class="label">${hemi?`מוצגת ההמיספרה ה${hemi==='left'?'שמאלית':'ימנית'} · `:''}אפשר לסובב את המוח באצבע. לחיצה על מבנה תציג את שמו.</span>
+    <div class="row" style="flex-wrap:nowrap"><button class="btn ghost" id="prv" ${BI?'':'disabled'}>→ הקודם</button><button class="mini" id="say" aria-label="הקראה">🔊</button><button class="mini" id="bexp" aria-label="חקירה חופשית">🔎</button><button class="btn" id="nxt">${BI+1<BRAIN.length?'הבא ←':'סיום'}</button></div></div>`;
+  $('#back').onclick=home;$('#bsel').onchange=e=>{BI=+e.target.value;brainStep()};
+  $('#prv').onclick=()=>{BI--;brainStep()};$('#nxt').onclick=()=>{if(BI+1<BRAIN.length){BI++;brainStep()}else home()};
+  $('#say').onclick=()=>speak({he:t,la:'',en:'',s:txt},{full:true,noLatin:true});
+  $('#bexp').onclick=()=>{mode='explore';custom=null;renderUI();paint();fitTo(brain,true)};
+}
 
 loadNames().then(home).catch(home);
 </script>
