@@ -232,7 +232,7 @@ function initStage(){
   const d1=new T.DirectionalLight(0xFFFFFF,1.6);d1.position.set(1,2,3);scene.add(d1);
   const d2=new T.DirectionalLight(0xBFD8FF,.6);d2.position.set(-2,1,-2);scene.add(d2);
   Object.keys(packs).forEach(addPack);
-  controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.12;controls.addEventListener('change',()=>needs=true);
+  controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.12;controls.addEventListener('change',()=>needs=true);controls.addEventListener('start',()=>userMoved=true);
   controls.minDistance=.03;controls.maxDistance=6;
   const ro=new ResizeObserver(()=>{const w=el.clientWidth,h=el.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;applyShift();needs=true});ro.observe(el);
   let down=null;
@@ -245,7 +245,12 @@ function applyShift(){const el=$('#stage'),w=el.clientWidth||innerWidth,h=el.cli
 function setShift(f){shift=f;applyShift()}
 function fitTo(list,instant){
   const box=new T.Box3();list.forEach(m=>box.union(m.geometry.boundingBox));fitBox(box,instant)}
-function fitBox(box,instant){if(box.isEmpty())return;
+// true when the camera shows the whole region (the user did not zoom in on a detail)
+function zoomedOut(){const box=new T.Box3();meshes.filter(inRegion).forEach(m=>box.union(m.geometry.boundingBox));if(box.isEmpty())return false;
+  const sz=box.getSize(new T.Vector3()),asp=(innerWidth/innerHeight)||.5,r=Math.max(sz.y,sz.x/asp,sz.z)*.5;
+  const full=r/Math.tan(T.MathUtils.degToRad(camera.fov/2))*1.18;return camera.position.distanceTo(controls.target)>=full*.8}
+let userMoved=false;
+function fitBox(box,instant){if(box.isEmpty())return;userMoved=false;
   const c=box.getCenter(new T.Vector3()),sz=box.getSize(new T.Vector3());
   const asp=(innerWidth/innerHeight)||.5,useH=1-shift*2;
   const r=Math.max(sz.y/useH,sz.x/asp,sz.z)*.5+.008;
@@ -307,7 +312,10 @@ function pick(e){
   if(hit&&S.auto!==false)speak(hit.object.userData.info,{quiet:true});
 }
 function select(m,focus){
-  selected=m;group=null;custom=null;hiRefs=[];stopPulse();if(!m)isolated=false;if(mode==='explore')setShift(m?.2:0);paint();
+  selected=m;group=null;custom=null;hiRefs=[];stopPulse();if(!m)isolated=false;
+  // the info sheet covers the lower part of the screen: lift the model and, unless the user zoomed or rotated by hand, re-frame it so the whole body stays visible above the sheet
+  if(mode==='explore'){const was=shift;const wide=zoomedOut();setShift(m?.2:0);if(!focus&&wide&&!isolated&&(!!was!==!!m))fitTo(meshes.filter(inRegion))}
+  paint();
   if(m){if(!S.seen[m.userData.id])bump();S.seen[m.userData.id]=1;save();if(focus)fitTo([m])}
   renderSheet();
 }
@@ -331,6 +339,9 @@ function home(){
    <button class="tile" id="exam" style="--c:#2E6FD8"><span class="e">⏱️</span><b>מבחן מסכם</b><span>20 שאלות · 20 דקות${S.exams&&S.exams.length?' · אחרון: '+S.exams[S.exams.length-1].s+'/'+S.exams[S.exams.length-1].n:''}</span></button>
    <button class="tile" id="brainT" style="--c:#8E44AD"><span class="e">🧠</span><b>מבנה המוח</b><span>אונות, אזורים תפקודיים ומבנים עמוקים</span></button>
    <button class="tile" id="flow" style="--c:#C0392B"><span class="e">🫀</span><b>זרימת הדם</b><span>מסלול הדם בלב ובגוף, צעד אחר צעד</span></button></div>
+  <h2>📝 מבחנים לפי נושא</h2>
+  <p class="label">כמו מבחן בקורס: 25 שאלות מכל השכבות של הנושא, כולל מקרים קליניים, 25 דקות. בסוף מקבלים ציון ורשימת טעויות לחזרה.</p>
+  <div class="grid2">${TEXAMS.map(x=>`<button class="tile" data-texam="${x.id}" style="--c:${x.c}"><span class="e">${x.e}</span><b>${x.he}</b><span>${S.best['exam:'+x.id]!=null?'שיא: '+S.best['exam:'+x.id]+'/25':'25 שאלות · 25 דקות'}</span></button>`).join('')}</div>
   <h2>🩺 מקרים קליניים</h2>
   <p class="label">תיאור של מטופל, ואתם מזהים איזה מבנה נפגע. אחרי התשובה המבנה מסומן על המודל עם הסבר.</p>
   <div class="gchips">${Object.entries(TRACK_HE).map(([k,h])=>`<button data-case="${k}">${h}${S.best['cases:'+k]!=null?' · '+S.best['cases:'+k]+'/10':''}</button>`).join('')}</div>
@@ -371,6 +382,7 @@ function home(){
   $('#fc').onclick=flashDecks;
   $('#exam').onclick=runExam;$('#prog').onclick=progress;$('#sett').onclick=settings;
   document.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>topic(b.dataset.topic));$('#flow').onclick=bloodFlow;$('#brainT').onclick=brainTour;$('#favs').onclick=favList;$('#offl').onclick=e=>downloadAll(e.currentTarget);
+  document.querySelectorAll('[data-texam]').forEach(b=>b.onclick=()=>runTopicExam(b.dataset.texam));
   document.querySelectorAll('[data-case]').forEach(b=>b.onclick=()=>runCases(b.dataset.case));
   document.querySelectorAll('[data-track]').forEach(b=>b.onclick=()=>openTrack(b.dataset.track));
   document.querySelectorAll('[data-joint]').forEach(b=>b.onclick=()=>showJoint(b.dataset.joint));
@@ -913,7 +925,7 @@ function endRun(){
    ${wrong.length?`<span class="label">טעויות לחזרה (לחצו כדי לראות על המודל):</span><div class="rev">${wrong.map(([q,x])=>`<button data-rv="${x}">${q.kind==='case'?'🩺':q.kind==='desc'?'📖':'🎯'} ${esc(heOfKey(q.L,q.key))}</button>`).join('')}</div>`:''}
    <div class="row"><button class="btn" id="again">שוב</button><button class="btn ghost" id="hm">🏠 לדף הבית</button></div></div>`;
   document.querySelectorAll('[data-rv]').forEach(b=>b.onclick=()=>{run.i=+b.dataset.rv;showQ(true)});
-  const o=run;$('#again').onclick=()=>o.key==='exam'?runExam():o.key.startsWith('cases:')?runCases(o.key.slice(6)):runDesc(o.key[0]);$('#hm').onclick=home;
+  const o=run;$('#again').onclick=()=>o.key==='exam'?runExam():o.key.startsWith('exam:')?runTopicExam(o.key.slice(5)):o.key.startsWith('cases:')?runCases(o.key.slice(6)):runDesc(o.key[0]);$('#hm').onclick=home;
 }
 
 /* ---------- blood flow walkthrough ---------- */
@@ -1187,6 +1199,37 @@ const TOPIC_EN={inj:['Deltoid','Ventrogluteal site','Vastus lateralis','Rectus f
  palp:['Spinous process of C7','Acromion','Olecranon','Iliac crest and the L4 level','Greater trochanter','Tibial tuberosity','Medial malleolus','Lateral malleolus'],
  myo:['C5, elbow flexion','C6, wrist extension','C7, elbow extension','C8, finger flexion','T1, little finger abduction','L2, hip flexion','L3, knee extension','L4, ankle dorsiflexion','L5, big toe extension','S1, plantar flexion'],
  derm:null};
+
+/* ---------- topic exams, like a course exam: one body region, all layers mixed ---------- */
+// per layer: region keys from the model; v (vessels) and o use name patterns where the model has no body region
+const TEXAMS=[
+ {id:'upper',he:'גפה עליונה',e:'💪',c:'#2E86C1',sel:{b:['upper','hand'],m:['arm','handm'],j:['shoulder','girdle','elbow','wristj'],n:['upperlimb'],v:/brachial|radial|ulnar|axillary|subclavian|palmar|digital|cephalic|basilic|interosseous/i}},
+ {id:'lower',he:'גפה תחתונה',e:'🦵',c:'#27AE60',sel:{b:['lower','foot'],m:['thigh','leg','footm'],j:['hip','knee','ankle'],n:['lowerlimb'],v:/femoral|popliteal|tibial|fibular|peroneal|dorsalis pedis|plantar|saphenous|genicular|obturator|gluteal/i}},
+ {id:'headneck',he:'ראש וצוואר',e:'🗣️',c:'#8E44AD',sel:{b:['skull','neck','teeth'],m:['headneck','larynx','eye'],j:['tmjj','skullj'],n:['cranial'],o:['sensory'],v:/carotid|jugular|facial|lingual|maxillary|temporal|thyroid|vertebral|ophthalmic|occipital/i}},
+ {id:'back',he:'גב ועמוד השדרה',e:'🧍',c:'#B9770E',sel:{b:['spine'],m:['back'],j:['spinej'],n:['cord']}},
+ {id:'trunk',he:'חזה, בטן ואגן',e:'🫁',c:'#16A085',sel:{b:['thorax','pelvis'],m:['trunk','pelvicfloor'],j:['thoraxj','pelvisj'],o:['respiratory','digestive','urinary','reproductive','endocrine','lymphatic'],n:['trunkn'],v:/mesenteric|renal|gastric|hepatic|splenic|portal|celiac|coeliac|intercostal|lumbar|iliac|epigastric|azygos/i}},
+ {id:'neuro',he:'מוח ומערכת העצבים',e:'🧠',c:'#6C3483',sel:{n:['brain','cranial','cord'],o:['brain']}},
+ {id:'cardio',he:'לב וכלי דם',e:'🫀',c:'#C0392B',sel:{o:['cardiac'],v:/coronary|aorta|aortic|pulmonary|vena cava|cardiac|brachiocephalic|subclavian|carotid/i}},
+];
+const PACK_OF={b:'skeleton',m:'muscles',o:'organs',j:'joints',n:'nerves',v:'vessels'};
+function inTopic(i,sel){const s=sel[i.L];if(!s)return false;return s instanceof RegExp?s.test(i.en||''):s.includes(i.r)}
+async function runTopicExam(id){
+  const ex=TEXAMS.find(x=>x.id===id),Ls=Object.keys(ex.sel);
+  await useLayer(Ls.includes('b')?'b':Ls[0]);for(const L of Ls)await loadPack(PACK_OF[L]);
+  const pool=uniqByName(meshes.filter(m=>inTopic(m.userData.info,ex.sel)));
+  const qs=[];const used=new Set();
+  // clinical cases whose answer belongs to this region
+  const cs=(await loadCases()).filter(c=>{const m=meshes.find(x=>x.userData.info.L===c.L&&keyOf(x.userData.info)===c.a);return m&&inTopic(m.userData.info,ex.sel)});
+  shuffle(cs.slice()).slice(0,6).forEach(c=>{qs.push(mkCase(c));used.add(c.a)});
+  // spread the rest over the layers of the topic, name and description questions mixed
+  const per={};shuffle(pool).forEach(m=>{(per[m.userData.info.L]??=[]).push(m)});
+  const order=Object.keys(per);let k=0;
+  while(qs.length<25&&order.some(L=>per[L].length)){
+    const L=order[k++%order.length],m=per[L].shift();if(!m)continue;const i=m.userData.info;if(used.has(keyOf(i)))continue;used.add(keyOf(i));
+    const kind=(i.s||'').length>=60&&Math.random()<.35?'desc':'name';const q=mkQ(kind,m);if(q.opts.length>=3)qs.push(q);
+  }
+  startRun({title:ex.e+' מבחן: '+ex.he,key:'exam:'+id,qs:shuffle(qs),timed:25});
+}
 
 loadNames().then(home).catch(home);
 </script>
